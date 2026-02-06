@@ -1,7 +1,7 @@
 import { Layout } from "../../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Play, Pause, Lock, Clock } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const hosts = [
   {
@@ -19,12 +19,46 @@ const hosts = [
 ];
 
 const freeSamples = [
-  { id: 1, title: "Episode Preview: Disco Nights", duration: "3:45", type: "sample" },
-  { id: 2, title: "Funk Groove Session", duration: "4:12", type: "sample" },
-  { id: 3, title: "Soulful House Mix", duration: "5:30", type: "sample" },
-  { id: 4, title: "Nu-Disco Journey", duration: "4:58", type: "sample" },
-  { id: 5, title: "Classic Soul Selections", duration: "3:22", type: "sample" },
-  { id: 6, title: "Full Episode: Summer Memories", duration: "58:30", type: "full" },
+  { 
+    id: 1, 
+    title: "Episode Sample 1: Soulful Vibes", 
+    duration: "3:15", 
+    size: "1.3MB",
+    url: "/c9dd9cef-0a41-4279-a114-b14a016183e2.mp3",
+    type: "sample" 
+  },
+  { 
+    id: 2, 
+    title: "Disco Mix Preview", 
+    duration: "4:45", 
+    size: "4.3MB",
+    url: "/98666497-b9b7-449f-ba06-3cb8d2329ce2.mp3",
+    type: "sample" 
+  },
+  { 
+    id: 3, 
+    title: "Funk Heritage Selection", 
+    duration: "5:20", 
+    size: "3.5MB",
+    url: "/9e2c402f-eb6f-436e-bd8d-77a9576e7e67.mp3",
+    type: "sample" 
+  },
+  { 
+    id: 4, 
+    title: "Nu-Disco Experience", 
+    duration: "4:10", 
+    size: "2.0MB",
+    url: "/7ab57cc7-73f1-4fdb-b245-1392e6d36681.mp3",
+    type: "sample" 
+  },
+  { 
+    id: 5, 
+    title: "Soulful House Journey", 
+    duration: "3:55", 
+    size: "3.2MB",
+    url: "/f29e60ac-f1ae-476e-832c-642635baca1c.mp3",
+    type: "sample" 
+  }
 ];
 
 const memberEpisodes = [
@@ -38,30 +72,62 @@ interface AudioPlayerProps {
   title: string;
   duration: string;
   type: string;
+  url: string;
+  size: string;
 }
 
-function AudioPlayer({ title, duration, type }: AudioPlayerProps) {
+function AudioPlayer({ title, duration, type, url, size }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        // Pause all other audio elements first
+        const allAudios = document.querySelectorAll('audio');
+        allAudios.forEach(audio => {
+          if (audio !== audioRef.current) {
+            audio.pause();
+          }
+        });
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   return (
-    <div className="flex items-center gap-4 bg-[#111111] border border-white/5 rounded-lg p-4 hover:border-[#d4a843]/30 transition-all duration-300">
+    <div className="flex items-center gap-4 bg-[#111111] border border-white/5 rounded-lg p-4 hover:border-[#d4a843]/30 transition-all duration-300 group">
+      <audio 
+        ref={audioRef} 
+        src={url} 
+        onEnded={() => setIsPlaying(false)}
+        onPause={() => setIsPlaying(false)}
+        onPlay={() => setIsPlaying(true)}
+      />
       <button
-        onClick={() => setIsPlaying(!isPlaying)}
-        className="w-12 h-12 rounded-full bg-[#d4a843] flex items-center justify-center shrink-0 hover:bg-[#e8c574] transition-colors"
+        onClick={togglePlay}
+        className="w-12 h-12 rounded-full bg-[#d4a843] flex items-center justify-center shrink-0 hover:bg-[#e8c574] transition-all duration-300 group-hover:scale-105"
       >
         {isPlaying ? (
-          <Pause className="text-[#0a0a0a]" size={20} />
+          <Pause className="text-[#0a0a0a]" size={20} fill="currentColor" />
         ) : (
-          <Play className="text-[#0a0a0a] ml-1" size={20} />
+          <Play className="text-[#0a0a0a] ml-1" size={20} fill="currentColor" />
         )}
       </button>
       <div className="flex-1 min-w-0">
-        <h4 className="font-body text-white font-medium truncate">{title}</h4>
-        <div className="flex items-center gap-2 text-white/50 text-sm">
-          <Clock size={14} />
-          <span>{duration}</span>
+        <h4 className="font-body text-white font-medium truncate group-hover:text-[#d4a843] transition-colors">{title}</h4>
+        <div className="flex items-center gap-3 text-white/50 text-sm mt-1">
+          <div className="flex items-center gap-1.5">
+            <Clock size={14} className="text-[#d4a843]/60" />
+            <span>{duration}</span>
+          </div>
+          <span className="text-white/20">•</span>
+          <span className="text-white/40">{size}</span>
           {type === "full" && (
-            <span className="px-2 py-0.5 bg-[#d4a843]/20 text-[#d4a843] text-xs rounded">
+            <span className="px-2 py-0.5 bg-[#d4a843]/20 text-[#d4a843] text-[10px] uppercase tracking-wider rounded font-bold">
               Full Episode
             </span>
           )}
@@ -211,6 +277,8 @@ function SamplesSection() {
               title={sample.title}
               duration={sample.duration}
               type={sample.type}
+              url={sample.url}
+              size={sample.size}
             />
           ))}
         </div>
