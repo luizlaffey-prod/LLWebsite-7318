@@ -7,19 +7,19 @@ const hosts = [
   {
     name: "Paulinho Ribeiro",
     role: "Host & Creator",
-    description: "A career in electronic music since 1987, Paulinho brings decades of expertise and passion for sonic exploration to every episode.",
+    description: "Paulinho began his career as a commercial announcer in 1987 and became an FM radio host the following year, a role he continues to this day. A music enthusiast, he worked as a professional DJ between 1987 and 1988 and, after years of research and study, became a composer and music producer, creating remixes, albums, and film soundtracks. Today, Paulinho hosts Zero Point Zero, a weekly journey through the world of electronic music and its many branches. On air since the 1990s, the show blends fresh tracks, exclusive interviews, and international contributions, establishing itself as a unique space connecting audiences with the global underground dance scene. With Paulinho Ribeiro's voice and charisma — Zero Point Zero is more than just a radio show: it's a space of discovery, emotion, and connection for everyone who truly lives music.",
     image: "/6ea770b1-15be-4c48-8ef5-52b329805968.jpg",
   },
   {
     name: "Tony Caldeira",
     role: "DJ & Producer",
-    description: "Fitness entrepreneur and radio enthusiast since 1990, Tony combines energy and musical knowledge to create unforgettable moments.",
+    description: "Tony Caldeira is a fitness industry entrepreneur, a music lover, and a radio enthusiast. In 1990, invited by his friend Nilton Rabello, he co-produced Hot Dance for Manchete FM—a show tailored for the underground dance scene. Following the show's success, his entrepreneurial spirit led him to open Mega Rink in 1991, a roller skating venue in São Paulo's north side, always set to great music. His growing recognition in the radio scene opened doors to produce shows for several stations, including Adrenalina on Transamérica, Pool After Hours on Pool FM, Zero Point Zero on Nova FM, Night Sessions Late Edition on Energia 97, and today, he continues Zero Point Zero on Pool FM Web Radio. For over three decades, his work has been celebrated by both listeners and the radio industry.",
     image: "/96212d13-3911-42df-8679-1edc3485bdbe.jpeg",
   },
   {
     name: "Nilton Rabello",
     role: "DJ & Vinyl Curator",
-    description: "With over 1,500 vinyl records and a base in Philadelphia, Nilton brings rare gems and deep cuts to the sonic journey.",
+    description: "Nilton Rabello is a very private guy—not much of a talker, but all about the music. His collection, made up entirely of vinyl, has already surpassed 1,500 records. A true lover of quality music, he began selling rare vinyl in the mid-80s. By the early 90s, he launched his own record import business, DISCOBOX, supplying nightclubs and FM radio stations. With his exceptional musical knowledge, Nilton was invited to produce specialized radio shows like Hot Dance on Manchete FM (1991), Pool After Hours on Pool FM (1995), and that same year, Zero Point Zero on Nova FM—an international collaboration with DJs from London's Kiss FM and New York's Victor Simonelli from Bassline Records. For nearly 11 years, he shared the DJ booth with longtime friend and musical partner Tony Caldeira on the Night Sessions show for Energia 97 FM. Originally from São Paulo, Nilton Rabello has lived in London and now resides in Philadelphia, shipping records to Brazil and around the globe through his online store.",
     image: "/8b032f74-e303-40c4-bf52-121fc4a63606.jpg",
   },
   {
@@ -182,14 +182,14 @@ function HostsSection() {
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 gap-8">
           {hosts.map((host) => (
             <div
               key={host.name}
-              className="bg-[#111111] border border-white/5 rounded-xl p-6 hover:border-[#e67e22]/30 transition-all duration-500 group"
+              className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#e67e22]/30 transition-all duration-500 group"
             >
               {/* Host Image */}
-              <div className="w-28 h-28 rounded-full mx-auto mb-4 overflow-hidden border-2 border-[#e67e22]/30 group-hover:border-[#e67e22]/60 transition-all duration-500">
+              <div className="w-56 h-56 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[#e67e22]/30 group-hover:border-[#e67e22]/60 transition-all duration-500">
                 <img 
                   src={host.image} 
                   alt={host.name}
@@ -197,10 +197,10 @@ function HostsSection() {
                 />
               </div>
               
-              <h3 className="font-heading text-xl text-white text-center mb-1">
+              <h3 className="font-heading text-2xl text-white text-center mb-2">
                 {host.name}
               </h3>
-              <p className="text-[#e67e22] text-xs text-center mb-3 uppercase tracking-wider">{host.role}</p>
+              <p className="text-[#e67e22] text-xs text-center mb-4 uppercase tracking-wider">{host.role}</p>
               <p className="font-body text-white/60 text-sm text-center leading-relaxed">
                 {host.description}
               </p>

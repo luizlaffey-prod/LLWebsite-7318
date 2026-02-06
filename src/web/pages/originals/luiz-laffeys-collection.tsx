@@ -7,13 +7,13 @@ const hosts = [
   {
     name: "Luiz Laffey",
     role: "Host, Curator & Storyteller",
-    description: "With over 40 years of DJ experience, Luiz brings unparalleled depth to every musical selection. His storytelling transforms each episode into a journey through sound and memory.",
+    description: "Luiz is the heartbeat and architect of Luiz Laffey's Collection. As the creator and lead host, he brings over four decades of experience as a DJ, actor, and voice actor to the microphone. His role is to curate the journey — weaving disco, funk, soulful house, and nu-disco into a narrative that connects eras, cultures, and personal memories. On-air, Luiz is the guide and storyteller: confident, playful, and deeply knowledgeable. He sets the tone, shares behind-the-scenes history, and frames each track with context that transforms songs into stories. His warmth and charisma make every transition feel like a conversation with an old friend. Beyond the music, Luiz integrates sponsorships, community, and brand identity, making the show not just a playlist, but a living experience that bridges past and present on the dancefloor.",
     image: "/b4f4b29f-52b6-4321-8139-6e847492f0da.png",
   },
   {
     name: "Alexis Hart",
     role: "Co-Host, Storyteller & Connector",
-    description: "Alexis brings spontaneous, curious energy to every show. Her natural ability to connect with listeners and draw out stories makes each episode feel like a conversation with friends.",
+    description: "Alexis is the spark and balance of Luiz Laffey's Collection. While Luiz drives the deep dives into music history and curates the flow of the show, Alexis brings the voice of spontaneity, curiosity, and connection. She reacts authentically to stories, asks the questions listeners are thinking, and delivers witty asides that keep the mood light and conversational. Her energy creates a natural back-and-forth rhythm with Luiz — setup and punchline, depth and levity, groove and laughter. On-air, she is the listener's companion, making sure every track feels accessible, every fact becomes a moment of connection, and every segue feels like part of a shared experience. She embodies the inviting, playful, and relatable tone that makes the audience feel less like an audience and more like friends hanging out in the same room.",
     image: "/9b9dbfab-e36f-4db6-952c-888bcd40048b.png",
   },
 ];
@@ -220,14 +220,14 @@ function HostsSection() {
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {hosts.map((host) => (
             <div
               key={host.name}
               className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#d4a843]/30 transition-all duration-500"
             >
               {/* Host Image */}
-              <div className="w-40 h-40 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[#d4a843]/30">
+              <div className="w-56 h-56 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[#d4a843]/30">
                 <img 
                   src={host.image}
                   alt={host.name}
@@ -239,7 +239,7 @@ function HostsSection() {
               <h3 className="font-heading text-2xl text-white text-center mb-2">
                 {host.name}
               </h3>
-              <p className="text-[#d4a843] text-sm text-center mb-4">{host.role}</p>
+              <p className="text-[#d4a843] text-sm text-center mb-4 uppercase tracking-wider">{host.role}</p>
               <p className="font-body text-white/60 text-sm text-center leading-relaxed">
                 {host.description}
               </p>

@@ -1,7 +1,6 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Play, Film, Mic, Subtitles, Languages } from "lucide-react";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const portfolioItems = [
@@ -118,43 +117,13 @@ function HeroSection() {
 
 function PortfolioGrid() {
   const { t } = useTranslation();
-  const [activeCategory, setActiveCategory] = useState("all");
-
-  const categories = [
-    { id: "all", labelKey: "portfolio.categories.all" },
-    { id: "dubbing", labelKey: "portfolio.categories.dubbing" },
-    { id: "voiceover", labelKey: "portfolio.categories.voiceover" },
-    { id: "subtitling", labelKey: "portfolio.categories.subtitling" },
-    { id: "translation", labelKey: "portfolio.categories.translation" },
-  ];
-
-  const filteredItems = activeCategory === "all" 
-    ? portfolioItems 
-    : portfolioItems.filter(item => item.category === activeCategory);
 
   return (
     <section className="py-16 relative">
       <div className="max-w-7xl mx-auto px-6">
-        {/* Category Filters */}
-        <div className="flex flex-wrap gap-3 mb-12 justify-center">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-5 py-2.5 rounded-full font-body text-sm uppercase tracking-wider transition-all duration-300 ${
-                activeCategory === cat.id
-                  ? "bg-[#d4a843] text-[#0a0a0a]"
-                  : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              {t(cat.labelKey)}
-            </button>
-          ))}
-        </div>
-
-        {/* Portfolio Grid */}
+        {/* Portfolio Grid - Clean Gallery */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
+          {portfolioItems.map((item) => (
             <div
               key={item.id}
               className="group bg-[#111111] border border-white/5 rounded-xl overflow-hidden hover:border-[#d4a843]/30 transition-all duration-500"
@@ -173,12 +142,6 @@ function PortfolioGrid() {
 
               {/* Content */}
               <div className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="px-2 py-1 bg-[#d4a843]/10 text-[#d4a843] text-xs uppercase tracking-wider rounded">
-                    {t(`portfolio.categories.${item.category}`)}
-                  </span>
-                </div>
-                
                 <h3 className="font-heading text-xl text-white mb-2 group-hover:text-[#d4a843] transition-colors">
                   {item.title}
                 </h3>
