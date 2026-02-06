@@ -111,14 +111,6 @@ export function Navigation() {
                 </div>
               )}
             </div>
-
-            {/* Login Button */}
-            <Link
-              href="/login"
-              className="px-5 py-2 bg-[#d4a843] text-[#0a0a0a] font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-lg hover:shadow-[#d4a843]/20"
-            >
-              {t("nav.login")}
-            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -163,14 +155,6 @@ export function Navigation() {
                   </button>
                 ))}
               </div>
-              
-              <Link
-                href="/login"
-                onClick={() => setIsOpen(false)}
-                className="mt-4 px-5 py-3 bg-[#d4a843] text-[#0a0a0a] font-medium text-center text-sm uppercase tracking-wider rounded"
-              >
-                {t("nav.login")}
-              </Link>
             </div>
           </div>
         )}

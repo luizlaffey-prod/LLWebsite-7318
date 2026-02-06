@@ -289,7 +289,7 @@ function MemberLibraryPreview() {
             href="/plans"
             className="inline-flex items-center gap-3 px-8 py-4 bg-[#e67e22] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#f39c12] hover:shadow-xl hover:shadow-[#e67e22]/25"
           >
-            Unlock Full Access
+            Get Broadcast License
             <ArrowRight size={18} />
           </Link>
         </div>

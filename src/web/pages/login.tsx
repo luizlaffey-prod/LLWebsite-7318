@@ -5,14 +5,19 @@ import { Mail, Lock, User, ArrowRight, Check, Radio, Download, Sparkles } from "
 import { FaGoogle, FaApple } from "react-icons/fa";
 
 const benefits = [
-  { icon: Radio, text: "Access to all radio shows" },
-  { icon: Download, text: "Download episodes anytime" },
-  { icon: Sparkles, text: "Exclusive member content" },
+  { icon: Radio, text: "Access to licensed broadcast files" },
+  { icon: Download, text: "High-quality weekly episodes" },
+  { icon: Sparkles, text: "Station-branded promotional assets" },
 ];
 
 function LoginPage() {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
-  const [selectedPlan, setSelectedPlan] = useState<"standard" | "annual">("annual");
+  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "dual">("annual");
+
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    window.location.href = "/broadcasts";
+  };
 
   return (
     <Layout>
@@ -27,16 +32,15 @@ function LoginPage() {
             {/* Left - Benefits Sidebar */}
             <div className="hidden lg:block">
               <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-                Member Access
+                Broadcaster Access
               </span>
               <h1 className="font-heading text-4xl md:text-5xl text-white mb-6 leading-[1.1]">
-                Unlock Your{" "}
-                <span className="text-[#d4a843]">Premium</span>{" "}
-                Experience
+                Access Your{" "}
+                <span className="text-[#d4a843]">Licensed</span>{" "}
+                Programs
               </h1>
               <p className="font-body text-lg text-white/70 mb-8">
-                Join our community of radio professionals and music enthusiasts. 
-                Get instant access to premium content and exclusive features.
+                Enter your credentials to access your broadcast library, download episodes, and retrieve promotional materials for your station.
               </p>
 
               <div className="space-y-4 mb-8">
@@ -87,7 +91,7 @@ function LoginPage() {
 
               {activeTab === "signin" ? (
                 /* Sign In Form */
-                <form className="space-y-5">
+                <form className="space-y-5" onSubmit={handleSignIn}>
                   <div>
                     <label className="block font-body text-white/80 text-sm mb-2">
                       Email
@@ -139,20 +143,20 @@ function LoginPage() {
                   {/* Plan Selection */}
                   <div className="space-y-3 mb-6">
                     <label className="block font-body text-white/80 text-sm">
-                      Select Plan
+                      Select License Tier
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                       <button
                         type="button"
-                        onClick={() => setSelectedPlan("standard")}
+                        onClick={() => setSelectedPlan("monthly")}
                         className={`p-4 rounded-lg border text-left transition-all ${
-                          selectedPlan === "standard"
+                          selectedPlan === "monthly"
                             ? "border-[#d4a843] bg-[#d4a843]/10"
                             : "border-white/10 hover:border-white/20"
                         }`}
                       >
-                        <div className="font-body text-white font-medium">Standard</div>
-                        <div className="font-body text-[#d4a843]">$9.99/mo</div>
+                        <div className="font-body text-white font-medium">Monthly Broadcast</div>
+                        <div className="font-body text-[#d4a843]">$29/mo</div>
                       </button>
                       <button
                         type="button"
@@ -164,10 +168,25 @@ function LoginPage() {
                         }`}
                       >
                         <span className="absolute -top-2 right-2 px-2 py-0.5 bg-[#d4a843] text-[#0a0a0a] text-xs font-bold rounded">
-                          BEST
+                          BEST VALUE
                         </span>
-                        <div className="font-body text-white font-medium">Annual</div>
-                        <div className="font-body text-[#d4a843]">$99/yr</div>
+                        <div className="font-body text-white font-medium">Annual Broadcast</div>
+                        <div className="font-body text-[#d4a843]">$299/yr</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPlan("dual")}
+                        className={`p-4 rounded-lg border text-left transition-all relative ${
+                          selectedPlan === "dual"
+                            ? "border-[#0047ab] bg-[#0047ab]/10"
+                            : "border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <span className="absolute -top-2 right-2 px-2 py-0.5 bg-[#0047ab] text-white text-xs font-bold rounded">
+                          30% PREFERENTIAL
+                        </span>
+                        <div className="font-body text-white font-medium">Dual-Program Annual</div>
+                        <div className="font-body text-[#0047ab]">$418/yr</div>
                       </button>
                     </div>
                   </div>

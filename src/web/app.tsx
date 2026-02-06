@@ -12,7 +12,7 @@ import ZeroPointZero from "./pages/originals/zero-point-zero";
 import Plans from "./pages/plans";
 import Contact from "./pages/contact";
 import Login from "./pages/login";
-import Dashboard from "./pages/dashboard";
+import Broadcasts from "./pages/broadcasts";
 import AIVideoAds from "./pages/services/ai-video-ads";
 
 function App() {
@@ -30,7 +30,7 @@ function App() {
         <Route path="/plans" component={Plans} />
         <Route path="/contact" component={Contact} />
         <Route path="/login" component={Login} />
-        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/broadcasts" component={Broadcasts} />
         {/* Fallback to Home for unknown routes */}
         <Route component={Home} />
       </Switch>

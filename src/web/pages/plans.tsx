@@ -20,8 +20,7 @@ function HeroSection() {
         </span>
         <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white mb-6 leading-[1.1] animate-fade-in-delay-1">
           {t("plans.hero.title1")}{" "}
-          <span className="text-[#d4a843]">{t("plans.hero.titleHighlight")}</span>{" "}
-          {t("plans.hero.title2")}
+          <span className="text-[#d4a843]">{t("plans.hero.titleHighlight")}</span>
         </h1>
         <p className="font-body text-lg md:text-xl text-white/70 max-w-3xl mx-auto animate-fade-in-delay-2">
           {t("plans.subtitle")}
@@ -36,14 +35,14 @@ function PricingSection() {
 
   const plans = [
     {
-      id: "standard",
-      nameKey: "plans.pricing.standard.name",
-      priceKey: "plans.pricing.standard.price",
-      periodKey: "plans.pricing.standard.period",
-      descriptionKey: "plans.pricing.standard.description",
-      featuresPrefix: "plans.pricing.standard.features",
-      featureKeys: ["access", "shows", "weekly", "quality", "promo", "rights"],
-      ctaKey: "plans.pricing.standard.cta",
+      id: "monthly",
+      nameKey: "plans.pricing.monthly.name",
+      priceKey: "plans.pricing.monthly.price",
+      periodKey: "plans.pricing.monthly.period",
+      descriptionKey: "plans.pricing.monthly.description",
+      featuresPrefix: "plans.pricing.monthly.features",
+      featureKeys: ["perProgram", "weekly", "download", "promo", "cancel"],
+      ctaKey: "plans.pricing.monthly.cta",
       popular: false,
     },
     {
@@ -54,29 +53,44 @@ function PricingSection() {
       descriptionKey: "plans.pricing.annual.description",
       badgeKey: "plans.pricing.annual.badge",
       featuresPrefix: "plans.pricing.annual.features",
-      featureKeys: ["everything", "custom", "branded", "priority", "early", "free"],
+      featureKeys: ["perProgram", "weekly", "fullYear", "promo", "support"],
       ctaKey: "plans.pricing.annual.cta",
       popular: true,
+    },
+    {
+      id: "dual",
+      nameKey: "plans.pricing.dual.name",
+      priceKey: "plans.pricing.dual.price",
+      periodKey: "plans.pricing.dual.period",
+      descriptionKey: "plans.pricing.dual.description",
+      badgeKey: "plans.pricing.dual.badge",
+      featuresPrefix: "plans.pricing.dual.features",
+      featureKeys: ["bothPrograms", "preferential", "strategic", "allBenefits", "priority"],
+      ctaKey: "plans.pricing.dual.cta",
+      popular: false,
+      isDual: true
     },
   ];
 
   return (
     <section className="py-16 relative">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative bg-[#111111] border rounded-2xl p-8 transition-all duration-500 ${
+              className={`relative bg-[#111111] border rounded-2xl p-8 transition-all duration-500 flex flex-col ${
                 plan.popular
                   ? "border-[#d4a843]/50 shadow-xl shadow-[#d4a843]/10"
                   : "border-white/5 hover:border-white/10"
-              }`}
+              } ${plan.isDual ? "md:border-[#0047ab]/30" : ""}`}
             >
-              {/* Popular Badge */}
-              {plan.popular && plan.badgeKey && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="px-4 py-1.5 bg-[#d4a843] text-[#0a0a0a] text-xs font-bold uppercase tracking-wider rounded-full">
+              {/* Badge */}
+              {plan.badgeKey && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                  <span className={`px-4 py-1.5 text-[#0a0a0a] text-xs font-bold uppercase tracking-wider rounded-full ${
+                    plan.isDual ? "bg-[#0047ab] text-white" : "bg-[#d4a843]"
+                  }`}>
                     {t(plan.badgeKey)}
                   </span>
                 </div>
@@ -86,17 +100,17 @@ function PricingSection() {
               <div className="text-center mb-8">
                 <h3 className="font-heading text-2xl text-white mb-2">{t(plan.nameKey)}</h3>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="font-heading text-5xl text-[#d4a843]">{t(plan.priceKey)}</span>
+                  <span className={`font-heading text-5xl ${plan.isDual ? "text-[#0047ab]" : "text-[#d4a843]"}`}>{t(plan.priceKey)}</span>
                   <span className="font-body text-white/50">{t(plan.periodKey)}</span>
                 </div>
                 <p className="font-body text-white/60 text-sm mt-4">{t(plan.descriptionKey)}</p>
               </div>
 
               {/* Features */}
-              <ul className="space-y-4 mb-8">
+              <ul className="space-y-4 mb-8 flex-1">
                 {plan.featureKeys.map((featureKey) => (
                   <li key={featureKey} className="flex items-start gap-3">
-                    <Check className="text-[#d4a843] shrink-0 mt-0.5" size={18} />
+                    <Check className={`${plan.isDual ? "text-[#0047ab]" : "text-[#d4a843]"} shrink-0 mt-0.5`} size={18} />
                     <span className="font-body text-white/80 text-sm">
                       {t(`${plan.featuresPrefix}.${featureKey}`)}
                     </span>
@@ -110,6 +124,8 @@ function PricingSection() {
                 className={`block w-full text-center py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
                   plan.popular
                     ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
+                    : plan.isDual
+                    ? "bg-[#0047ab] text-white hover:bg-[#005ce6]"
                     : "border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843]/10"
                 }`}
               >
