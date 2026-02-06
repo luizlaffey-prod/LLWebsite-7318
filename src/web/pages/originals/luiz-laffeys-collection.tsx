@@ -8,13 +8,13 @@ const hosts = [
     name: "Luiz Laffey",
     role: "Host, Curator & Storyteller",
     description: "With over 40 years of DJ experience, Luiz brings unparalleled depth to every musical selection. His storytelling transforms each episode into a journey through sound and memory.",
-    image: "./b4f4b29f-52b6-4321-8139-6e847492f0da.png",
+    image: "/b4f4b29f-52b6-4321-8139-6e847492f0da.png",
   },
   {
     name: "Alexis Hart",
     role: "Co-Host, Storyteller & Connector",
     description: "Alexis brings spontaneous, curious energy to every show. Her natural ability to connect with listeners and draw out stories makes each episode feel like a conversation with friends.",
-    image: "./9b9dbfab-e36f-4db6-952c-888bcd40048b.png",
+    image: "/9b9dbfab-e36f-4db6-952c-888bcd40048b.png",
   },
 ];
 
@@ -123,7 +123,7 @@ function HeroSection() {
           <div className="relative">
             <div className="aspect-[3/4] rounded-2xl overflow-hidden">
               <img 
-                src="./2f7da195-88b8-4d89-83c8-d010b07ac8e4.png"
+                src="/2f7da195-88b8-4d89-83c8-d010b07ac8e4.png"
                 alt="Luiz Laffey's Collection - Neon Card"
                 className="w-full h-full object-cover object-center"
                 style={{ filter: 'brightness(1.12) contrast(1.15) saturate(1.2)' }}

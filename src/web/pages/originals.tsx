@@ -15,7 +15,7 @@ const shows = [
     borderColor: "border-[#d4a843]/20",
     hoverBorder: "hover:border-[#d4a843]/50",
     shadowColor: "shadow-[#d4a843]/10",
-    image: "./30e00d6a-e059-418d-bfe9-be9d58a0cf3a.png",
+    image: "/30e00d6a-e059-418d-bfe9-be9d58a0cf3a.png",
   },
   {
     id: "zero-point-zero",
@@ -28,7 +28,7 @@ const shows = [
     borderColor: "border-[#e67e22]/20",
     hoverBorder: "hover:border-[#e67e22]/50",
     shadowColor: "shadow-[#e67e22]/10",
-    image: "./bd7bb9af-1a4b-4ddc-8571-d73ef2e2f1ff.png",
+    image: "/bd7bb9af-1a4b-4ddc-8571-d73ef2e2f1ff.png",
   },
 ];
 

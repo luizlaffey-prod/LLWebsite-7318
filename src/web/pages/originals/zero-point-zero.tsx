@@ -8,25 +8,25 @@ const hosts = [
     name: "Paulinho Ribeiro",
     role: "Host & Creator",
     description: "A career in electronic music since 1987, Paulinho brings decades of expertise and passion for sonic exploration to every episode.",
-    image: "./6ea770b1-15be-4c48-8ef5-52b329805968.jpg",
+    image: "/6ea770b1-15be-4c48-8ef5-52b329805968.jpg",
   },
   {
     name: "Tony Caldeira",
     role: "DJ & Producer",
     description: "Fitness entrepreneur and radio enthusiast since 1990, Tony combines energy and musical knowledge to create unforgettable moments.",
-    image: "./96212d13-3911-42df-8679-1edc3485bdbe.jpeg",
+    image: "/96212d13-3911-42df-8679-1edc3485bdbe.jpeg",
   },
   {
     name: "Nilton Rabello",
     role: "DJ & Vinyl Curator",
     description: "With over 1,500 vinyl records and a base in Philadelphia, Nilton brings rare gems and deep cuts to the sonic journey.",
-    image: "./8b032f74-e303-40c4-bf52-121fc4a63606.jpg",
+    image: "/8b032f74-e303-40c4-bf52-121fc4a63606.jpg",
   },
   {
     name: "Caio Eduardo",
     role: "Technical Support",
     description: "The technical backbone of Zero Point Zero, ensuring every episode sounds pristine and professional.",
-    image: "./f70963f4-6c01-4eff-949d-92a18c14881c.jpeg",
+    image: "/f70963f4-6c01-4eff-949d-92a18c14881c.jpeg",
   },
 ];
 
@@ -150,7 +150,7 @@ function HeroSection() {
           <div className="relative">
             <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-[#e67e22]/30 relative">
               <img 
-                src="./bc51e756-947c-401e-974a-ad2113b8aa8b.jpg" 
+                src="/bc51e756-947c-401e-974a-ad2113b8aa8b.jpg" 
                 alt="Zero Point Zero - Cosmic Journey"
                 className="w-full h-full object-cover image-enhance"
               />
