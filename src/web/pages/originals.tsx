@@ -15,6 +15,7 @@ const shows = [
     borderColor: "border-[#d4a843]/20",
     hoverBorder: "hover:border-[#d4a843]/50",
     shadowColor: "shadow-[#d4a843]/10",
+    image: null,
   },
   {
     id: "zero-point-zero",
@@ -27,6 +28,7 @@ const shows = [
     borderColor: "border-[#e67e22]/20",
     hoverBorder: "hover:border-[#e67e22]/50",
     shadowColor: "shadow-[#e67e22]/10",
+    image: "./bd7bb9af-1a4b-4ddc-8571-d73ef2e2f1ff.png",
   },
 ];
 
@@ -86,23 +88,34 @@ function ShowsGrid() {
           {shows.map((show) => (
             <Link key={show.id} href={show.href} className="group">
               <div className={`relative aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br ${show.gradient} border ${show.borderColor} transition-all duration-500 ${show.hoverBorder} group-hover:shadow-2xl group-hover:${show.shadowColor}`}>
-                {/* Decorative Sound Waves */}
-                <div className="absolute inset-0 opacity-30">
-                  <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="none">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <circle
-                        key={i}
-                        cx={200}
-                        cy={150}
-                        r={30 + i * 12}
-                        fill="none"
-                        stroke={show.accentColor}
-                        strokeWidth="1"
-                        opacity={1 - i * 0.05}
-                      />
-                    ))}
-                  </svg>
-                </div>
+                {/* Show Image or Decorative Sound Waves */}
+                {show.image ? (
+                  <div className="absolute inset-0">
+                    <img 
+                      src={show.image} 
+                      alt={show.title}
+                      className="w-full h-full object-cover image-enhance opacity-80 group-hover:opacity-90 transition-opacity duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 opacity-30">
+                    <svg className="w-full h-full" viewBox="0 0 400 300" preserveAspectRatio="none">
+                      {Array.from({ length: 20 }).map((_, i) => (
+                        <circle
+                          key={i}
+                          cx={200}
+                          cy={150}
+                          r={30 + i * 12}
+                          fill="none"
+                          stroke={show.accentColor}
+                          strokeWidth="1"
+                          opacity={1 - i * 0.05}
+                        />
+                      ))}
+                    </svg>
+                  </div>
+                )}
 
                 {/* Content Overlay */}
                 <div className="absolute inset-0 flex flex-col justify-end p-8">
@@ -120,9 +133,13 @@ function ShowsGrid() {
                   </div>
                 </div>
 
-                {/* Decorative Elements */}
-                <div className="absolute top-4 right-4 w-20 h-20 border rounded-full opacity-30" style={{ borderColor: show.accentColor }} />
-                <div className="absolute top-8 right-8 w-12 h-12 rounded-full opacity-20" style={{ backgroundColor: show.accentColor }} />
+                {/* Decorative Elements (only show when no image) */}
+                {!show.image && (
+                  <>
+                    <div className="absolute top-4 right-4 w-20 h-20 border rounded-full opacity-30" style={{ borderColor: show.accentColor }} />
+                    <div className="absolute top-8 right-8 w-12 h-12 rounded-full opacity-20" style={{ backgroundColor: show.accentColor }} />
+                  </>
+                )}
               </div>
             </Link>
           ))}

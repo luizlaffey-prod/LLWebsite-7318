@@ -1,6 +1,6 @@
 import { Layout } from "../../components/shared";
 import { Link } from "wouter";
-import { ArrowRight, Play, Pause, Lock, Zap, Clock } from "lucide-react";
+import { ArrowRight, Play, Pause, Lock, Clock } from "lucide-react";
 import { useState } from "react";
 
 const hosts = [
@@ -8,25 +8,25 @@ const hosts = [
     name: "Paulinho Ribeiro",
     role: "Host & Creator",
     description: "A career in electronic music since 1987, Paulinho brings decades of expertise and passion for sonic exploration to every episode.",
-    image: null,
+    image: "./6ea770b1-15be-4c48-8ef5-52b329805968.jpg",
   },
   {
     name: "Tony Caldeira",
     role: "DJ & Producer",
     description: "Fitness entrepreneur and radio enthusiast since 1990, Tony combines energy and musical knowledge to create unforgettable moments.",
-    image: null,
+    image: "./96212d13-3911-42df-8679-1edc3485bdbe.jpeg",
   },
   {
     name: "Nilton Rabello",
     role: "DJ & Vinyl Curator",
     description: "With over 1,500 vinyl records and a base in Philadelphia, Nilton brings rare gems and deep cuts to the sonic journey.",
-    image: null,
+    image: "./8b032f74-e303-40c4-bf52-121fc4a63606.jpg",
   },
   {
     name: "Caio Eduardo",
     role: "Technical Support",
     description: "The technical backbone of Zero Point Zero, ensuring every episode sounds pristine and professional.",
-    image: null,
+    image: "./f70963f4-6c01-4eff-949d-92a18c14881c.jpeg",
   },
 ];
 
@@ -146,47 +146,20 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Visual - Show Artwork */}
+          {/* Visual - Hero Artwork (Astronaut) */}
           <div className="relative">
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-[#e67e22]/30 via-[#1a1a1a] to-[#0a0a0a] border border-[#e67e22]/30 overflow-hidden image-enhance">
-              {/* Cosmic decorative element */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative">
-                  <Zap className="text-[#e67e22]" size={120} strokeWidth={1} />
-                  <div className="absolute inset-0 blur-xl">
-                    <Zap className="text-[#e67e22]" size={120} strokeWidth={1} />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Orbital rings */}
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#e67e22]/20"
-                  style={{
-                    width: `${60 + i * 25}%`,
-                    height: `${60 + i * 25}%`,
-                    transform: `translate(-50%, -50%) rotate(${i * 15}deg)`,
-                  }}
-                />
-              ))}
-              
-              {/* Cosmic particles */}
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-1 h-1 bg-[#e67e22]/60 rounded-full"
-                  style={{
-                    top: `${Math.random() * 100}%`,
-                    left: `${Math.random() * 100}%`,
-                  }}
-                />
-              ))}
+            <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-[#e67e22]/30 relative">
+              <img 
+                src="./bc51e756-947c-401e-974a-ad2113b8aa8b.jpg" 
+                alt="Zero Point Zero - Cosmic Journey"
+                className="w-full h-full object-cover image-enhance"
+              />
+              {/* Overlay for depth */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/60 via-transparent to-transparent" />
             </div>
             
             {/* Orange glow */}
-            <div className="absolute -inset-4 bg-[#e67e22]/10 rounded-3xl blur-2xl -z-10" />
+            <div className="absolute -inset-4 bg-[#e67e22]/15 rounded-3xl blur-2xl -z-10" />
           </div>
         </div>
       </div>
@@ -213,13 +186,15 @@ function HostsSection() {
           {hosts.map((host) => (
             <div
               key={host.name}
-              className="bg-[#111111] border border-white/5 rounded-xl p-6 hover:border-[#e67e22]/30 transition-all duration-500"
+              className="bg-[#111111] border border-white/5 rounded-xl p-6 hover:border-[#e67e22]/30 transition-all duration-500 group"
             >
-              {/* Host Image Placeholder */}
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#e67e22]/20 to-[#1a1a1a] mx-auto mb-4 flex items-center justify-center image-enhance">
-                <span className="font-heading text-2xl text-[#e67e22]/50">
-                  {host.name.split(' ').map(n => n[0]).join('')}
-                </span>
+              {/* Host Image */}
+              <div className="w-28 h-28 rounded-full mx-auto mb-4 overflow-hidden border-2 border-[#e67e22]/30 group-hover:border-[#e67e22]/60 transition-all duration-500">
+                <img 
+                  src={host.image} 
+                  alt={host.name}
+                  className="w-full h-full object-cover image-enhance"
+                />
               </div>
               
               <h3 className="font-heading text-xl text-white text-center mb-1">
