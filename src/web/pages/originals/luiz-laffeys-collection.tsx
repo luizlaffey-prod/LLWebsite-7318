@@ -1,20 +1,20 @@
 import { Layout } from "../../components/shared";
 import { Link } from "wouter";
-import { ArrowRight, Play, Pause, Lock, Music, Clock, Download } from "lucide-react";
-import { useState, useRef } from "react";
+import { ArrowRight, Play, Pause, Lock, Clock } from "lucide-react";
+import { useState } from "react";
 
 const hosts = [
   {
     name: "Luiz Laffey",
     role: "Host, Curator & Storyteller",
     description: "With over 40 years of DJ experience, Luiz brings unparalleled depth to every musical selection. His storytelling transforms each episode into a journey through sound and memory.",
-    image: null,
+    image: "./b4f4b29f-52b6-4321-8139-6e847492f0da.png",
   },
   {
     name: "Alexis Hart",
     role: "Co-Host, Storyteller & Connector",
     description: "Alexis brings spontaneous, curious energy to every show. Her natural ability to connect with listeners and draw out stories makes each episode feel like a conversation with friends.",
-    image: null,
+    image: "./9b9dbfab-e36f-4db6-952c-888bcd40048b.png",
   },
 ];
 
@@ -119,34 +119,19 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Visual - Show Artwork */}
+          {/* Visual - Show Artwork with Neon Card */}
           <div className="relative">
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-[#d4a843]/30 via-[#1a1a1a] to-[#0a0a0a] border border-[#d4a843]/30 overflow-hidden image-enhance">
-              {/* Neon-style decorative element */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative">
-                  <Music className="text-[#d4a843]" size={120} strokeWidth={1} />
-                  <div className="absolute inset-0 blur-xl">
-                    <Music className="text-[#d4a843]" size={120} strokeWidth={1} />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Rings */}
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#d4a843]/20"
-                  style={{
-                    width: `${60 + i * 25}%`,
-                    height: `${60 + i * 25}%`,
-                  }}
-                />
-              ))}
+            <div className="aspect-[3/4] rounded-2xl overflow-hidden">
+              <img 
+                src="./2f7da195-88b8-4d89-83c8-d010b07ac8e4.png"
+                alt="Luiz Laffey's Collection - Neon Card"
+                className="w-full h-full object-cover object-center"
+                style={{ filter: 'brightness(1.12) contrast(1.15) saturate(1.2)' }}
+              />
             </div>
             
-            {/* Gold glow */}
-            <div className="absolute -inset-4 bg-[#d4a843]/10 rounded-3xl blur-2xl -z-10" />
+            {/* Gold glow effect */}
+            <div className="absolute -inset-4 bg-[#d4a843]/15 rounded-3xl blur-2xl -z-10" />
           </div>
         </div>
       </div>
@@ -175,11 +160,14 @@ function HostsSection() {
               key={host.name}
               className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#d4a843]/30 transition-all duration-500"
             >
-              {/* Host Image Placeholder */}
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#d4a843]/20 to-[#1a1a1a] mx-auto mb-6 flex items-center justify-center image-enhance">
-                <span className="font-heading text-4xl text-[#d4a843]/50">
-                  {host.name.split(' ').map(n => n[0]).join('')}
-                </span>
+              {/* Host Image */}
+              <div className="w-40 h-40 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[#d4a843]/30">
+                <img 
+                  src={host.image}
+                  alt={host.name}
+                  className="w-full h-full object-cover object-top"
+                  style={{ filter: 'brightness(1.12) contrast(1.15) saturate(1.2)' }}
+                />
               </div>
               
               <h3 className="font-heading text-2xl text-white text-center mb-2">
