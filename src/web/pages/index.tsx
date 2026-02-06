@@ -1,52 +1,11 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Mic, Globe, Languages, Subtitles, Quote, Star } from "lucide-react";
-
-const services = [
-  {
-    icon: Mic,
-    title: "Dubbing",
-    description: "Professional multilingual dubbing with authentic voice performances that preserve the original intent.",
-  },
-  {
-    icon: Globe,
-    title: "Voice-Over",
-    description: "Compelling narration for commercials, documentaries, e-learning, and corporate content.",
-  },
-  {
-    icon: Languages,
-    title: "Translation",
-    description: "Expert localization services that capture nuance and cultural context across languages.",
-  },
-  {
-    icon: Subtitles,
-    title: "Subtitling",
-    description: "Precise subtitling and closed captioning that enhances accessibility worldwide.",
-  },
-];
-
-const testimonials = [
-  {
-    quote: "Luiz and his team brought our content to life in ways we never imagined. Their attention to cultural nuance is unmatched.",
-    author: "Creative Director",
-    company: "Major Streaming Platform",
-    rating: 5,
-  },
-  {
-    quote: "The dubbing quality exceeded our expectations. Every voice felt authentic to the character's essence.",
-    author: "Production Manager",
-    company: "International Media Group",
-    rating: 5,
-  },
-  {
-    quote: "Working with Luiz Laffey Productions transformed our global reach. True professionals in every sense.",
-    author: "Head of Localization",
-    company: "Entertainment Studio",
-    rating: 5,
-  },
-];
+import { useTranslation } from "react-i18next";
 
 function Hero() {
+  const { t } = useTranslation();
+  
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
       {/* Background Effects */}
@@ -65,24 +24,22 @@ function Hero() {
           {/* Overline */}
           <div className="animate-fade-in-up mb-6">
             <span className="inline-block px-4 py-2 bg-[#d4a843]/10 border border-[#d4a843]/30 rounded-full text-[#d4a843] text-sm font-medium uppercase tracking-widest">
-              Creative Production Studio
+              {t("home.badge")}
             </span>
           </div>
 
           {/* Main Heading */}
           <h1 className="font-heading text-5xl md:text-7xl lg:text-8xl font-semibold leading-[0.95] mb-8 animate-fade-in-delay-1">
-            <span className="text-white">Where </span>
-            <span className="text-[#d4a843]">Stories</span>
+            <span className="text-white">{t("home.hero.title1")} </span>
+            <span className="text-[#d4a843]">{t("home.hero.stories")}</span>
             <br />
-            <span className="text-white">Find Their </span>
-            <span className="text-[#0047ab]">Voice</span>
+            <span className="text-white">{t("home.hero.title2")} </span>
+            <span className="text-[#0047ab]">{t("home.hero.voice")}</span>
           </h1>
 
           {/* Subheadline */}
           <p className="font-body text-lg md:text-xl text-white/70 max-w-2xl mb-10 leading-relaxed animate-fade-in-delay-2">
-            At the intersection of storytelling, sound, language, and culture. 
-            We bring voices to life across borders, connecting audiences through 
-            the art of authentic audio production.
+            {t("home.subtitle")}
           </p>
 
           {/* CTA Buttons */}
@@ -91,14 +48,14 @@ function Hero() {
               href="/services"
               className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-xl hover:shadow-[#d4a843]/25"
             >
-              Explore Our Services
+              {t("home.cta.services")}
               <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               href="/portfolio"
               className="group inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
             >
-              View Our Work
+              {t("home.cta.work")}
               <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
@@ -116,6 +73,31 @@ function Hero() {
 }
 
 function ServicesPreview() {
+  const { t } = useTranslation();
+
+  const services = [
+    {
+      icon: Mic,
+      titleKey: "home.services.dubbing.title",
+      descriptionKey: "home.services.dubbing.description",
+    },
+    {
+      icon: Globe,
+      titleKey: "home.services.voiceover.title",
+      descriptionKey: "home.services.voiceover.description",
+    },
+    {
+      icon: Languages,
+      titleKey: "home.services.translation.title",
+      descriptionKey: "home.services.translation.description",
+    },
+    {
+      icon: Subtitles,
+      titleKey: "home.services.subtitling.title",
+      descriptionKey: "home.services.subtitling.description",
+    },
+  ];
+
   return (
     <section className="py-24 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0d1117] to-transparent" />
@@ -124,14 +106,13 @@ function ServicesPreview() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-            What We Do
+            {t("home.services.overline")}
           </span>
           <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-6">
-            Our <span className="text-[#d4a843]">Services</span>
+            {t("home.services.title")} <span className="text-[#d4a843]">{t("home.services.titleHighlight")}</span>
           </h2>
           <p className="font-body text-white/60 max-w-2xl mx-auto">
-            Professional audio production services that transcend language barriers 
-            and bring stories to global audiences.
+            {t("home.services.subtitle")}
           </p>
         </div>
 
@@ -139,7 +120,7 @@ function ServicesPreview() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((service, index) => (
             <div
-              key={service.title}
+              key={service.titleKey}
               className="group relative bg-[#111111] border border-white/5 rounded-xl p-8 transition-all duration-500 hover:border-[#d4a843]/30 hover:bg-[#111111]/80"
               style={{ animationDelay: `${index * 100}ms` }}
             >
@@ -150,10 +131,10 @@ function ServicesPreview() {
 
               {/* Content */}
               <h3 className="font-heading text-2xl text-white mb-3 group-hover:text-[#d4a843] transition-colors">
-                {service.title}
+                {t(service.titleKey)}
               </h3>
               <p className="font-body text-sm text-white/60 leading-relaxed">
-                {service.description}
+                {t(service.descriptionKey)}
               </p>
 
               {/* Hover Accent */}
@@ -168,7 +149,7 @@ function ServicesPreview() {
             href="/services"
             className="inline-flex items-center gap-2 text-[#d4a843] font-medium hover:text-[#e8c574] transition-colors group"
           >
-            View All Services
+            {t("home.services.viewAll")}
             <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -178,6 +159,8 @@ function ServicesPreview() {
 }
 
 function OriginalsTeaser() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background */}
@@ -189,13 +172,13 @@ function OriginalsTeaser() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-            Original Content
+            {t("home.originals.overline")}
           </span>
           <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-6">
-            Our <span className="text-[#d4a843]">Radio Shows</span>
+            {t("home.originals.title")} <span className="text-[#d4a843]">{t("home.originals.titleHighlight")}</span>
           </h2>
           <p className="font-body text-white/60 max-w-2xl mx-auto">
-            Original radio programming that blends music, storytelling, and cultural exploration.
+            {t("home.originals.subtitle")}
           </p>
         </div>
 
@@ -206,15 +189,17 @@ function OriginalsTeaser() {
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#d4a843]/20 via-[#1a1a1a] to-[#0a0a0a] border border-[#d4a843]/20 transition-all duration-500 group-hover:border-[#d4a843]/50 group-hover:shadow-2xl group-hover:shadow-[#d4a843]/10">
               {/* Content Overlay */}
               <div className="absolute inset-0 flex flex-col justify-end p-8">
-                <span className="text-[#d4a843] text-xs uppercase tracking-widest mb-2">Music • Storytelling</span>
+                <span className="text-[#d4a843] text-xs uppercase tracking-widest mb-2">
+                  {t("home.originals.collection.tag")}
+                </span>
                 <h3 className="font-heading text-3xl md:text-4xl text-white mb-3 group-hover:text-[#d4a843] transition-colors">
-                  Luiz Laffey's Collection
+                  {t("home.originals.collection.title")}
                 </h3>
                 <p className="font-body text-white/60 text-sm line-clamp-2">
-                  A musical journey through disco, funk, soulful house, and nu-disco with storytelling.
+                  {t("home.originals.collection.description")}
                 </p>
                 <div className="flex items-center gap-2 mt-4 text-[#d4a843] font-medium text-sm group-hover:gap-3 transition-all">
-                  Explore Show <ArrowRight size={16} />
+                  {t("home.originals.collection.cta")} <ArrowRight size={16} />
                 </div>
               </div>
               
@@ -229,15 +214,17 @@ function OriginalsTeaser() {
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#e67e22]/20 via-[#1a1a1a] to-[#0a0a0a] border border-[#e67e22]/20 transition-all duration-500 group-hover:border-[#e67e22]/50 group-hover:shadow-2xl group-hover:shadow-[#e67e22]/10">
               {/* Content Overlay */}
               <div className="absolute inset-0 flex flex-col justify-end p-8">
-                <span className="text-[#e67e22] text-xs uppercase tracking-widest mb-2">Electronic • Cosmic</span>
+                <span className="text-[#e67e22] text-xs uppercase tracking-widest mb-2">
+                  {t("home.originals.zero.tag")}
+                </span>
                 <h3 className="font-heading text-3xl md:text-4xl text-white mb-3 group-hover:text-[#e67e22] transition-colors">
-                  Zero Point Zero
+                  {t("home.originals.zero.title")}
                 </h3>
                 <p className="font-body text-white/60 text-sm line-clamp-2">
-                  A 60-minute cosmic journey through electronic music since the 1990s.
+                  {t("home.originals.zero.description")}
                 </p>
                 <div className="flex items-center gap-2 mt-4 text-[#e67e22] font-medium text-sm group-hover:gap-3 transition-all">
-                  Explore Show <ArrowRight size={16} />
+                  {t("home.originals.zero.cta")} <ArrowRight size={16} />
                 </div>
               </div>
               
@@ -254,7 +241,7 @@ function OriginalsTeaser() {
             href="/originals"
             className="inline-flex items-center gap-2 text-[#d4a843] font-medium hover:text-[#e8c574] transition-colors group"
           >
-            View All Originals
+            {t("home.originals.viewAll")}
             <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -264,6 +251,29 @@ function OriginalsTeaser() {
 }
 
 function Testimonials() {
+  const { t } = useTranslation();
+
+  const testimonials = [
+    {
+      quoteKey: "home.testimonials.quote1",
+      authorKey: "home.testimonials.author1",
+      companyKey: "home.testimonials.company1",
+      rating: 5,
+    },
+    {
+      quoteKey: "home.testimonials.quote2",
+      authorKey: "home.testimonials.author2",
+      companyKey: "home.testimonials.company2",
+      rating: 5,
+    },
+    {
+      quoteKey: "home.testimonials.quote3",
+      authorKey: "home.testimonials.author3",
+      companyKey: "home.testimonials.company3",
+      rating: 5,
+    },
+  ];
+
   return (
     <section className="py-24 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-[#0d1117] via-[#0a0a0a] to-[#0a0a0a]" />
@@ -272,10 +282,10 @@ function Testimonials() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-            Client Stories
+            {t("home.testimonials.overline")}
           </span>
           <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-6">
-            What They <span className="text-[#d4a843]">Say</span>
+            {t("home.testimonials.title")} <span className="text-[#d4a843]">{t("home.testimonials.titleHighlight")}</span>
           </h2>
         </div>
 
@@ -298,13 +308,13 @@ function Testimonials() {
 
               {/* Quote */}
               <p className="font-body text-white/80 leading-relaxed mb-6 italic">
-                "{testimonial.quote}"
+                "{t(testimonial.quoteKey)}"
               </p>
 
               {/* Author */}
-              <div>
-                <p className="font-heading text-white font-medium">{testimonial.author}</p>
-                <p className="font-body text-white/50 text-sm">{testimonial.company}</p>
+              <div className="border-t border-white/10 pt-4">
+                <div className="font-heading text-white">{t(testimonial.authorKey)}</div>
+                <div className="font-body text-white/50 text-sm">{t(testimonial.companyKey)}</div>
               </div>
             </div>
           ))}
@@ -315,9 +325,10 @@ function Testimonials() {
 }
 
 function ContactCTA() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-24 relative overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0d1628] to-[#0a0a0a]" />
       <div className="absolute inset-0 opacity-30" style={{
         backgroundImage: `radial-gradient(circle at 2px 2px, rgba(212, 168, 67, 0.1) 1px, transparent 0)`,
@@ -325,26 +336,25 @@ function ContactCTA() {
       }} />
       
       <div className="relative max-w-4xl mx-auto px-6 text-center">
-        <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-6">
-          Ready to <span className="text-[#d4a843]">Start</span>?
+        <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
+          {t("home.contact.title")} <span className="text-[#d4a843]">{t("home.contact.titleHighlight")}</span>?
         </h2>
         <p className="font-body text-lg text-white/70 mb-10 max-w-2xl mx-auto">
-          Let's bring your story to life. Whether you need dubbing, voice-over, 
-          translation, or subtitling, we're here to help you reach global audiences.
+          {t("home.contact.subtitle")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/contact"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-xl hover:shadow-[#d4a843]/25"
           >
-            Get in Touch
+            {t("home.contact.cta")}
             <ArrowRight size={18} />
           </Link>
           <Link
             href="/services"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
           >
-            View Services
+            {t("home.contact.services")}
           </Link>
         </div>
       </div>

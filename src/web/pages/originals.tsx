@@ -1,6 +1,7 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Radio, Music, Waves } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const shows = [
   {
@@ -30,6 +31,8 @@ const shows = [
 ];
 
 function HeroSection() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative py-24 overflow-hidden">
       {/* Background */}
@@ -58,15 +61,14 @@ function HeroSection() {
       <div className="relative max-w-7xl mx-auto px-6">
         <div className="max-w-4xl">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block animate-fade-in">
-            Original Content
+            {t("originals.overline")}
           </span>
           <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white mb-8 leading-[1.1] animate-fade-in-delay-1">
-            <span className="text-[#d4a843]">Radio</span> Programs{" "}
-            <span className="text-[#e67e22]">Original</span> Content
+            <span className="text-[#d4a843]">{t("originals.hero.radio")}</span> {t("originals.hero.title1")}{" "}
+            <span className="text-[#e67e22]">{t("originals.hero.original")}</span> {t("originals.hero.title2")}
           </h1>
           <p className="font-body text-lg md:text-xl text-white/70 leading-relaxed animate-fade-in-delay-2 max-w-3xl">
-            Original radio programming that blends music, storytelling, and cultural exploration. 
-            Crafted by passionate hosts, delivered to stations worldwide.
+            {t("originals.subtitle")}
           </p>
         </div>
       </div>
@@ -75,6 +77,8 @@ function HeroSection() {
 }
 
 function ShowsGrid() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-16 relative">
       <div className="max-w-7xl mx-auto px-6">
@@ -112,7 +116,7 @@ function ShowsGrid() {
                     {show.description}
                   </p>
                   <div className="flex items-center gap-2 font-medium text-sm group-hover:gap-3 transition-all" style={{ color: show.accentColor }}>
-                    Explore Show <ArrowRight size={16} />
+                    {t("originals.exploreShow")} <ArrowRight size={16} />
                   </div>
                 </div>
 
@@ -129,6 +133,26 @@ function ShowsGrid() {
 }
 
 function FeaturesSection() {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      icon: Radio,
+      titleKey: "originals.features.readyToAir.title",
+      descriptionKey: "originals.features.readyToAir.description",
+    },
+    {
+      icon: Music,
+      titleKey: "originals.features.curatedContent.title",
+      descriptionKey: "originals.features.curatedContent.description",
+    },
+    {
+      icon: Waves,
+      titleKey: "originals.features.consistentDelivery.title",
+      descriptionKey: "originals.features.consistentDelivery.description",
+    },
+  ];
+
   return (
     <section className="py-24 relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4a843]/20 to-transparent" />
@@ -136,43 +160,25 @@ function FeaturesSection() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-            Why Choose Our Shows
+            {t("originals.features.overline")}
           </span>
           <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
-            Premium <span className="text-[#d4a843]">Radio</span> Programming
+            {t("originals.features.title")} <span className="text-[#d4a843]">{t("originals.features.titleHighlight")}</span> {t("originals.features.titleEnd")}
           </h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#d4a843]/30 transition-all duration-500">
-            <div className="w-14 h-14 rounded-lg bg-[#d4a843]/10 flex items-center justify-center mb-6">
-              <Radio className="text-[#d4a843]" size={28} />
+          {features.map((feature) => (
+            <div key={feature.titleKey} className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#d4a843]/30 transition-all duration-500">
+              <div className="w-14 h-14 rounded-lg bg-[#d4a843]/10 flex items-center justify-center mb-6">
+                <feature.icon className="text-[#d4a843]" size={28} />
+              </div>
+              <h3 className="font-heading text-2xl text-white mb-3">{t(feature.titleKey)}</h3>
+              <p className="font-body text-white/60 text-sm leading-relaxed">
+                {t(feature.descriptionKey)}
+              </p>
             </div>
-            <h3 className="font-heading text-2xl text-white mb-3">Ready to Air</h3>
-            <p className="font-body text-white/60 text-sm leading-relaxed">
-              Professionally produced episodes ready for broadcast. Just download and play.
-            </p>
-          </div>
-
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#d4a843]/30 transition-all duration-500">
-            <div className="w-14 h-14 rounded-lg bg-[#d4a843]/10 flex items-center justify-center mb-6">
-              <Music className="text-[#d4a843]" size={28} />
-            </div>
-            <h3 className="font-heading text-2xl text-white mb-3">Curated Content</h3>
-            <p className="font-body text-white/60 text-sm leading-relaxed">
-              Expertly selected music and storytelling from hosts with decades of experience.
-            </p>
-          </div>
-
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#d4a843]/30 transition-all duration-500">
-            <div className="w-14 h-14 rounded-lg bg-[#d4a843]/10 flex items-center justify-center mb-6">
-              <Waves className="text-[#d4a843]" size={28} />
-            </div>
-            <h3 className="font-heading text-2xl text-white mb-3">Consistent Delivery</h3>
-            <p className="font-body text-white/60 text-sm leading-relaxed">
-              New episodes delivered on schedule. Build your programming around our reliability.
-            </p>
-          </div>
+          ))}
         </div>
       </div>
     </section>
@@ -180,31 +186,32 @@ function FeaturesSection() {
 }
 
 function CTASection() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0d1628] to-[#0a0a0a]" />
       
       <div className="relative max-w-4xl mx-auto px-6 text-center">
         <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
-          License Our <span className="text-[#d4a843]">Shows</span>
+          {t("originals.cta.title")} <span className="text-[#d4a843]">{t("originals.cta.titleHighlight")}</span>
         </h2>
         <p className="font-body text-lg text-white/70 mb-10 max-w-2xl mx-auto">
-          Radio stations worldwide trust our programming. Join them and bring 
-          premium content to your listeners.
+          {t("originals.cta.subtitle")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/plans"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-xl hover:shadow-[#d4a843]/25"
           >
-            View Plans
+            {t("originals.cta.plans")}
             <ArrowRight size={18} />
           </Link>
           <Link
             href="/contact"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
           >
-            Contact Us
+            {t("originals.cta.contact")}
           </Link>
         </div>
       </div>

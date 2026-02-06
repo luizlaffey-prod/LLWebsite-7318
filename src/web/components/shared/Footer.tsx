@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Mail } from "lucide-react";
 import { FaInstagram, FaLinkedin, FaYoutube, FaSpotify } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
 
 const socialLinks = [
   { icon: FaInstagram, href: "#", label: "Instagram" },
@@ -9,37 +10,39 @@ const socialLinks = [
   { icon: FaSpotify, href: "#", label: "Spotify" },
 ];
 
-const footerLinks = [
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "/about" },
-      { label: "Services", href: "/services" },
-      { label: "Portfolio", href: "/portfolio" },
-      { label: "Contact", href: "/contact" },
-    ],
-  },
-  {
-    title: "Originals",
-    links: [
-      { label: "All Shows", href: "/originals" },
-      { label: "Luiz Laffey's Collection", href: "/originals/luiz-laffeys-collection" },
-      { label: "Zero Point Zero", href: "/originals/zero-point-zero" },
-      { label: "Plans", href: "/plans" },
-    ],
-  },
-  {
-    title: "Services",
-    links: [
-      { label: "Dubbing", href: "/services" },
-      { label: "Voice-Over", href: "/services" },
-      { label: "Translation", href: "/services" },
-      { label: "Subtitling", href: "/services" },
-    ],
-  },
-];
-
 export function Footer() {
+  const { t } = useTranslation();
+
+  const footerLinks = [
+    {
+      titleKey: "company",
+      links: [
+        { labelKey: "nav.about", href: "/about" },
+        { labelKey: "nav.services", href: "/services" },
+        { labelKey: "nav.portfolio", href: "/portfolio" },
+        { labelKey: "nav.contact", href: "/contact" },
+      ],
+    },
+    {
+      titleKey: "originalsTitle",
+      links: [
+        { labelKey: "footer.allShows", href: "/originals" },
+        { label: "Luiz Laffey's Collection", href: "/originals/luiz-laffeys-collection" },
+        { label: "Zero Point Zero", href: "/originals/zero-point-zero" },
+        { labelKey: "nav.plans", href: "/plans" },
+      ],
+    },
+    {
+      titleKey: "servicesTitle",
+      links: [
+        { labelKey: "services.dubbing.title", href: "/services" },
+        { labelKey: "services.voiceover.title", href: "/services" },
+        { labelKey: "services.translation.title", href: "/services" },
+        { labelKey: "services.subtitling.title", href: "/services" },
+      ],
+    },
+  ];
+
   return (
     <footer className="bg-[#0a0a0a] border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -53,8 +56,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-white/60 font-body text-sm leading-relaxed max-w-sm mb-6">
-              A creative production company at the intersection of storytelling, 
-              sound, language, and culture. Bringing voices to life across borders.
+              {t("footer.description")}
             </p>
             
             {/* Contact Email */}
@@ -85,16 +87,18 @@ export function Footer() {
 
           {/* Link Columns */}
           {footerLinks.map((column) => (
-            <div key={column.title}>
-              <h4 className="font-heading text-lg text-white mb-4">{column.title}</h4>
+            <div key={column.titleKey}>
+              <h4 className="font-heading text-lg text-white mb-4">
+                {t(`footer.${column.titleKey}`)}
+              </h4>
               <ul className="space-y-3">
                 {column.links.map((link) => (
-                  <li key={link.label}>
+                  <li key={link.href + (link.labelKey || link.label)}>
                     <Link
                       href={link.href}
                       className="font-body text-sm text-white/60 hover:text-[#d4a843] transition-colors"
                     >
-                      {link.label}
+                      {link.label || t(link.labelKey!)}
                     </Link>
                   </li>
                 ))}
@@ -106,20 +110,20 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="font-body text-xs text-white/40">
-            © {new Date().getFullYear()} Luiz Laffey Productions. All rights reserved.
+            © {new Date().getFullYear()} Luiz Laffey Productions. {t("footer.copyright")}
           </p>
           <div className="flex gap-6">
             <Link
               href="/privacy"
               className="font-body text-xs text-white/40 hover:text-white/60 transition-colors"
             >
-              Privacy Policy
+              {t("footer.privacy")}
             </Link>
             <Link
               href="/terms"
               className="font-body text-xs text-white/40 hover:text-white/60 transition-colors"
             >
-              Terms of Service
+              {t("footer.terms")}
             </Link>
           </div>
         </div>

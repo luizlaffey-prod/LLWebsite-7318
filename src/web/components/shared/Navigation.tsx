@@ -1,20 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface NavLink {
-  label: string;
+  key: string;
   href: string;
 }
 
 const navLinks: NavLink[] = [
-  { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
-  { label: "Services", href: "/services" },
-  { label: "Portfolio", href: "/portfolio" },
-  { label: "Originals", href: "/originals" },
-  { label: "Plans", href: "/plans" },
-  { label: "Contact", href: "/contact" },
+  { key: "home", href: "/" },
+  { key: "about", href: "/about" },
+  { key: "services", href: "/services" },
+  { key: "portfolio", href: "/portfolio" },
+  { key: "originals", href: "/originals" },
+  { key: "plans", href: "/plans" },
+  { key: "contact", href: "/contact" },
 ];
 
 const languages = [
@@ -24,16 +25,18 @@ const languages = [
 ];
 
 export function Navigation() {
+  const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [language, setLanguage] = useState("en");
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [location] = useLocation();
 
   useEffect(() => {
     const saved = localStorage.getItem("lang");
-    if (saved) setLanguage(saved);
-  }, []);
+    if (saved && saved !== i18n.language) {
+      i18n.changeLanguage(saved);
+    }
+  }, [i18n]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,7 +47,7 @@ export function Navigation() {
   }, []);
 
   const handleLanguageChange = (code: string) => {
-    setLanguage(code);
+    i18n.changeLanguage(code);
     localStorage.setItem("lang", code);
     setShowLangDropdown(false);
   };
@@ -77,7 +80,7 @@ export function Navigation() {
                     : "text-white/80 hover:text-[#d4a843]"
                 }`}
               >
-                {link.label}
+                {t(`nav.${link.key}`)}
               </Link>
             ))}
 
@@ -88,7 +91,7 @@ export function Navigation() {
                 className="flex items-center gap-2 text-white/80 hover:text-[#d4a843] transition-colors"
               >
                 <Globe size={16} />
-                <span className="text-sm uppercase">{language}</span>
+                <span className="text-sm uppercase">{i18n.language}</span>
               </button>
               {showLangDropdown && (
                 <div className="absolute right-0 top-full mt-2 bg-[#1a1a1a] border border-white/10 rounded-lg overflow-hidden shadow-xl">
@@ -97,7 +100,7 @@ export function Navigation() {
                       key={lang.code}
                       onClick={() => handleLanguageChange(lang.code)}
                       className={`block w-full px-4 py-2 text-left text-sm transition-colors ${
-                        language === lang.code
+                        i18n.language === lang.code
                           ? "bg-[#d4a843] text-[#0a0a0a]"
                           : "text-white/80 hover:bg-white/10"
                       }`}
@@ -114,7 +117,7 @@ export function Navigation() {
               href="/login"
               className="px-5 py-2 bg-[#d4a843] text-[#0a0a0a] font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-lg hover:shadow-[#d4a843]/20"
             >
-              Login
+              {t("nav.login")}
             </Link>
           </div>
 
@@ -142,7 +145,7 @@ export function Navigation() {
                       : "text-white/80 hover:text-[#d4a843]"
                   }`}
                 >
-                  {link.label}
+                  {t(`nav.${link.key}`)}
                 </Link>
               ))}
               
@@ -153,7 +156,7 @@ export function Navigation() {
                     key={lang.code}
                     onClick={() => handleLanguageChange(lang.code)}
                     className={`text-sm uppercase ${
-                      language === lang.code ? "text-[#d4a843]" : "text-white/60"
+                      i18n.language === lang.code ? "text-[#d4a843]" : "text-white/60"
                     }`}
                   >
                     {lang.label}
@@ -166,7 +169,7 @@ export function Navigation() {
                 onClick={() => setIsOpen(false)}
                 className="mt-4 px-5 py-3 bg-[#d4a843] text-[#0a0a0a] font-medium text-center text-sm uppercase tracking-wider rounded"
               >
-                Login
+                {t("nav.login")}
               </Link>
             </div>
           </div>

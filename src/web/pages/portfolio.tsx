@@ -1,15 +1,8 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
-import { ArrowRight, Play, Film, Mic, Subtitles, Languages, ExternalLink } from "lucide-react";
+import { ArrowRight, Play, Film, Mic, Subtitles, Languages } from "lucide-react";
 import { useState } from "react";
-
-const categories = [
-  { id: "all", label: "All Work" },
-  { id: "dubbing", label: "Dubbing" },
-  { id: "voiceover", label: "Voice-Over" },
-  { id: "subtitling", label: "Subtitling" },
-  { id: "translation", label: "Translation" },
-];
+import { useTranslation } from "react-i18next";
 
 const portfolioItems = [
   {
@@ -96,6 +89,8 @@ const portfolioItems = [
 ];
 
 function HeroSection() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative py-24 overflow-hidden">
       {/* Background */}
@@ -106,15 +101,14 @@ function HeroSection() {
       <div className="relative max-w-7xl mx-auto px-6">
         <div className="max-w-4xl">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block animate-fade-in">
-            Portfolio
+            {t("portfolio.overline")}
           </span>
           <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white mb-8 leading-[1.1] animate-fade-in-delay-1">
-            Our <span className="text-[#d4a843]">Work</span> Speaks{" "}
-            <span className="text-[#0047ab]">Volumes</span>
+            {t("portfolio.hero.title1")} <span className="text-[#d4a843]">{t("portfolio.hero.titleHighlight")}</span> {t("portfolio.hero.title2")}{" "}
+            <span className="text-[#0047ab]">{t("portfolio.hero.volumes")}</span>
           </h1>
           <p className="font-body text-lg md:text-xl text-white/70 leading-relaxed animate-fade-in-delay-2 max-w-3xl">
-            Explore our portfolio of dubbing, voice-over, subtitling, and translation 
-            projects—each crafted with precision and passion.
+            {t("portfolio.subtitle")}
           </p>
         </div>
       </div>
@@ -123,7 +117,16 @@ function HeroSection() {
 }
 
 function PortfolioGrid() {
+  const { t } = useTranslation();
   const [activeCategory, setActiveCategory] = useState("all");
+
+  const categories = [
+    { id: "all", labelKey: "portfolio.categories.all" },
+    { id: "dubbing", labelKey: "portfolio.categories.dubbing" },
+    { id: "voiceover", labelKey: "portfolio.categories.voiceover" },
+    { id: "subtitling", labelKey: "portfolio.categories.subtitling" },
+    { id: "translation", labelKey: "portfolio.categories.translation" },
+  ];
 
   const filteredItems = activeCategory === "all" 
     ? portfolioItems 
@@ -144,7 +147,7 @@ function PortfolioGrid() {
                   : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
               }`}
             >
-              {cat.label}
+              {t(cat.labelKey)}
             </button>
           ))}
         </div>
@@ -172,7 +175,7 @@ function PortfolioGrid() {
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="px-2 py-1 bg-[#d4a843]/10 text-[#d4a843] text-xs uppercase tracking-wider rounded">
-                    {item.category}
+                    {t(`portfolio.categories.${item.category}`)}
                   </span>
                 </div>
                 
@@ -209,16 +212,18 @@ function PortfolioGrid() {
 }
 
 function ClientsSection() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-24 relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       
       <div className="max-w-7xl mx-auto px-6 text-center">
         <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-          Trusted By
+          {t("portfolio.clients.overline")}
         </span>
         <h2 className="font-heading text-3xl md:text-4xl text-white mb-12">
-          Industry <span className="text-[#d4a843]">Leaders</span>
+          {t("portfolio.clients.title")} <span className="text-[#d4a843]">{t("portfolio.clients.titleHighlight")}</span>
         </h2>
 
         {/* Client Logos Placeholder */}
@@ -238,31 +243,32 @@ function ClientsSection() {
 }
 
 function CTASection() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0d1628] to-[#0a0a0a]" />
       
       <div className="relative max-w-4xl mx-auto px-6 text-center">
         <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
-          Let's Create <span className="text-[#d4a843]">Together</span>
+          {t("portfolio.cta.title")} <span className="text-[#d4a843]">{t("portfolio.cta.titleHighlight")}</span>
         </h2>
         <p className="font-body text-lg text-white/70 mb-10 max-w-2xl mx-auto">
-          Your project could be next. Let's discuss how we can bring your content 
-          to global audiences with the same level of excellence.
+          {t("portfolio.cta.subtitle")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/contact"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-xl hover:shadow-[#d4a843]/25"
           >
-            Start Your Project
+            {t("portfolio.cta.start")}
             <ArrowRight size={18} />
           </Link>
           <Link
             href="/services"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
           >
-            View Services
+            {t("portfolio.cta.services")}
           </Link>
         </div>
       </div>

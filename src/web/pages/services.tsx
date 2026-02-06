@@ -1,75 +1,65 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Mic, Film, Languages, Subtitles, CheckCircle, Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-const services = [
+interface ServiceData {
+  id: string;
+  icon: typeof Mic;
+  titleKey: string;
+  subtitleKey: string;
+  descriptionKey: string;
+  featuresPrefix: string;
+  featureKeys: string[];
+  highlightKey: string;
+}
+
+const services: ServiceData[] = [
   {
     id: "voiceover",
     icon: Mic,
-    title: "Voice-Over",
-    subtitle: "SAG-AFTRA Standard Productions",
-    description: "Compelling vocal performances for any medium—from commercials to documentaries, e-learning to corporate narration.",
-    features: [
-      "Commercial & advertising voice work",
-      "Documentary narration",
-      "E-learning and training modules",
-      "Corporate communications",
-      "IVR and phone systems",
-      "Audiobook narration",
-    ],
-    highlight: "All productions meet SAG-AFTRA professional standards.",
+    titleKey: "services.voiceover.title",
+    subtitleKey: "services.voiceover.subtitle",
+    descriptionKey: "services.voiceover.description",
+    featuresPrefix: "services.voiceover.features",
+    featureKeys: ["commercial", "documentary", "elearning", "corporate", "ivr", "audiobook"],
+    highlightKey: "services.voiceover.highlight",
   },
   {
     id: "dubbing",
     icon: Film,
-    title: "Dubbing",
-    subtitle: "Multilingual Audio Replacement",
-    description: "Professional dubbing services that preserve the emotional essence of the original performance while adapting to new languages.",
-    features: [
-      "Feature film dubbing",
-      "Television series adaptation",
-      "Animation voice replacement",
-      "Video game localization",
-      "Streaming content dubbing",
-      "Character voice matching",
-    ],
-    highlight: "Led by Luiz Laffey, Head of Languages at Angel Studios.",
+    titleKey: "services.dubbing.title",
+    subtitleKey: "services.dubbing.subtitle",
+    descriptionKey: "services.dubbing.description",
+    featuresPrefix: "services.dubbing.features",
+    featureKeys: ["film", "tv", "animation", "games", "streaming", "character"],
+    highlightKey: "services.dubbing.highlight",
   },
   {
     id: "translation",
     icon: Languages,
-    title: "Localization & Translation",
-    subtitle: "Cultural Adaptation Services",
-    description: "Expert translation that goes beyond words—capturing idioms, cultural references, and emotional nuance.",
-    features: [
-      "Script translation",
-      "Cultural adaptation",
-      "Dialogue rewriting",
-      "Marketing localization",
-      "Technical documentation",
-      "Quality assurance review",
-    ],
-    highlight: "Native speakers in 50+ languages ensuring authentic results.",
+    titleKey: "services.translation.title",
+    subtitleKey: "services.translation.subtitle",
+    descriptionKey: "services.translation.description",
+    featuresPrefix: "services.translation.features",
+    featureKeys: ["script", "cultural", "dialogue", "marketing", "technical", "qa"],
+    highlightKey: "services.translation.highlight",
   },
   {
     id: "subtitling",
     icon: Subtitles,
-    title: "Subtitling",
-    subtitle: "Accessibility & Global Reach",
-    description: "Precise subtitling and closed captioning that enhances accessibility while maintaining timing and readability.",
-    features: [
-      "SDH (Subtitles for Deaf/Hard of Hearing)",
-      "Multilingual subtitling",
-      "Timed text creation",
-      "Subtitle translation",
-      "Caption timing and sync",
-      "Subtitle file formatting",
-    ],
-    highlight: "Compliant with accessibility standards worldwide.",
+    titleKey: "services.subtitling.title",
+    subtitleKey: "services.subtitling.subtitle",
+    descriptionKey: "services.subtitling.description",
+    featuresPrefix: "services.subtitling.features",
+    featureKeys: ["sdh", "multilingual", "timed", "translation", "timing", "formatting"],
+    highlightKey: "services.subtitling.highlight",
   },
 ];
 
 function HeroSection() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative py-24 overflow-hidden">
       {/* Background */}
@@ -80,16 +70,14 @@ function HeroSection() {
       <div className="relative max-w-7xl mx-auto px-6">
         <div className="max-w-4xl">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block animate-fade-in">
-            Our Services
+            {t("services.overline")}
           </span>
           <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white mb-8 leading-[1.1] animate-fade-in-delay-1">
-            Professional <span className="text-[#d4a843]">Audio</span>{" "}
-            Production <span className="text-[#0047ab]">Services</span>
+            {t("services.hero.title1")} <span className="text-[#d4a843]">{t("services.hero.audio")}</span>{" "}
+            {t("services.hero.title2")} <span className="text-[#0047ab]">{t("services.hero.services")}</span>
           </h1>
           <p className="font-body text-lg md:text-xl text-white/70 leading-relaxed animate-fade-in-delay-2 max-w-3xl">
-            From voice-over to dubbing, translation to subtitling—we provide 
-            comprehensive audio production services that bring your content to 
-            global audiences.
+            {t("services.subtitle")}
           </p>
         </div>
       </div>
@@ -97,8 +85,10 @@ function HeroSection() {
   );
 }
 
-function ServiceDetail({ service, index }: { service: typeof services[0]; index: number }) {
+function ServiceDetail({ service, index }: { service: ServiceData; index: number }) {
+  const { t } = useTranslation();
   const isEven = index % 2 === 0;
+  const Icon = service.icon;
   
   return (
     <section id={service.id} className="py-20 relative">
@@ -112,26 +102,28 @@ function ServiceDetail({ service, index }: { service: typeof services[0]; index:
           <div className={isEven ? '' : 'lg:order-2'}>
             <div className="flex items-center gap-4 mb-6">
               <div className="w-14 h-14 rounded-lg bg-[#d4a843]/10 flex items-center justify-center">
-                <service.icon className="text-[#d4a843]" size={28} />
+                <Icon className="text-[#d4a843]" size={28} />
               </div>
               <div>
                 <h2 className="font-heading text-3xl md:text-4xl text-white">
-                  {service.title}
+                  {t(service.titleKey)}
                 </h2>
-                <p className="font-body text-[#d4a843] text-sm">{service.subtitle}</p>
+                <p className="font-body text-[#d4a843] text-sm">{t(service.subtitleKey)}</p>
               </div>
             </div>
 
             <p className="font-body text-white/70 leading-relaxed mb-8 text-lg">
-              {service.description}
+              {t(service.descriptionKey)}
             </p>
 
             {/* Features */}
             <div className="grid sm:grid-cols-2 gap-3 mb-8">
-              {service.features.map((feature) => (
-                <div key={feature} className="flex items-start gap-3">
+              {service.featureKeys.map((featureKey) => (
+                <div key={featureKey} className="flex items-start gap-3">
                   <CheckCircle className="text-[#d4a843] shrink-0 mt-0.5" size={18} />
-                  <span className="font-body text-white/80 text-sm">{feature}</span>
+                  <span className="font-body text-white/80 text-sm">
+                    {t(`${service.featuresPrefix}.${featureKey}`)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -139,7 +131,7 @@ function ServiceDetail({ service, index }: { service: typeof services[0]; index:
             {/* Highlight */}
             <div className="bg-[#d4a843]/10 border border-[#d4a843]/20 rounded-lg p-4 mb-8">
               <p className="font-body text-[#d4a843] text-sm font-medium">
-                {service.highlight}
+                {t(service.highlightKey)}
               </p>
             </div>
 
@@ -150,13 +142,13 @@ function ServiceDetail({ service, index }: { service: typeof services[0]; index:
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574]"
               >
                 <Play size={16} />
-                View Portfolio
+                {t("services.cta.portfolio")}
               </Link>
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-2 px-6 py-3 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
               >
-                Get a Quote
+                {t("services.cta.quote")}
               </Link>
             </div>
           </div>
@@ -166,7 +158,7 @@ function ServiceDetail({ service, index }: { service: typeof services[0]; index:
             <div className="relative aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#1a1a1a] via-[#111111] to-[#0a0a0a] border border-white/5 overflow-hidden">
               {/* Decorative content */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <service.icon className="text-[#d4a843]/10" size={160} />
+                <Icon className="text-[#d4a843]/10" size={160} />
               </div>
               
               {/* Grid overlay */}
@@ -188,6 +180,8 @@ function ServiceDetail({ service, index }: { service: typeof services[0]; index:
 }
 
 function AIVideoAdsTeaser() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-20 relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
@@ -197,21 +191,20 @@ function AIVideoAdsTeaser() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="max-w-xl">
               <span className="inline-block px-3 py-1 bg-[#0047ab]/30 text-[#0047ab] text-xs font-medium uppercase tracking-wider rounded mb-4">
-                Coming Soon
+                {t("services.aiVideoAds.badge")}
               </span>
               <h3 className="font-heading text-3xl md:text-4xl text-white mb-4">
-                AI Video <span className="text-[#d4a843]">Advertising</span>
+                {t("services.aiVideoAds.title")} <span className="text-[#d4a843]">{t("services.aiVideoAds.titleHighlight")}</span>
               </h3>
               <p className="font-body text-white/70">
-                Cinematic advertising video production powered by AI. High-impact 
-                videos at accessible costs—coming soon to Luiz Laffey Productions.
+                {t("services.aiVideoAds.description")}
               </p>
             </div>
             <Link
               href="/services/ai-video-ads"
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] shrink-0"
             >
-              Learn More
+              {t("services.aiVideoAds.cta")}
               <ArrowRight size={16} />
             </Link>
           </div>
@@ -222,6 +215,8 @@ function AIVideoAdsTeaser() {
 }
 
 function CTASection() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0d1628] to-[#0a0a0a]" />
@@ -232,25 +227,24 @@ function CTASection() {
       
       <div className="relative max-w-4xl mx-auto px-6 text-center">
         <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
-          Ready to <span className="text-[#d4a843]">Start</span> Your Project?
+          {t("services.ctaSection.title")} <span className="text-[#d4a843]">{t("services.ctaSection.titleHighlight")}</span> {t("services.ctaSection.titleEnd")}
         </h2>
         <p className="font-body text-lg text-white/70 mb-10 max-w-2xl mx-auto">
-          Let's discuss your audio production needs. Whether it's a single voice-over 
-          or a complete localization project, we're here to help.
+          {t("services.ctaSection.subtitle")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/contact"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-xl hover:shadow-[#d4a843]/25"
           >
-            Get a Quote
+            {t("services.ctaSection.quote")}
             <ArrowRight size={18} />
           </Link>
           <Link
             href="/portfolio"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
           >
-            View Portfolio
+            {t("services.ctaSection.portfolio")}
           </Link>
         </div>
       </div>

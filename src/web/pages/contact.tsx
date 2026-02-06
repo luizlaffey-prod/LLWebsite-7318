@@ -1,8 +1,11 @@
 import { Layout } from "../components/shared";
 import { Mail, Send, MessageSquare } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function HeroSection() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative py-24 overflow-hidden">
       {/* Background */}
@@ -13,15 +16,14 @@ function HeroSection() {
       <div className="relative max-w-7xl mx-auto px-6">
         <div className="max-w-4xl">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block animate-fade-in">
-            Get In Touch
+            {t("contact.overline")}
           </span>
           <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white mb-8 leading-[1.1] animate-fade-in-delay-1">
-            Let's <span className="text-[#d4a843]">Start</span> a{" "}
-            <span className="text-[#0047ab]">Conversation</span>
+            {t("contact.hero.title1")} <span className="text-[#d4a843]">{t("contact.hero.titleHighlight")}</span> {t("contact.hero.title2")}{" "}
+            <span className="text-[#0047ab]">{t("contact.hero.conversation")}</span>
           </h1>
           <p className="font-body text-lg md:text-xl text-white/70 leading-relaxed animate-fade-in-delay-2 max-w-3xl">
-            Have a project in mind? Questions about our services? We'd love to 
-            hear from you. Reach out and let's discuss how we can work together.
+            {t("contact.subtitle")}
           </p>
         </div>
       </div>
@@ -30,6 +32,7 @@ function HeroSection() {
 }
 
 function ContactForm() {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -57,15 +60,15 @@ function ContactForm() {
           {/* Form */}
           <div>
             <h2 className="font-heading text-3xl md:text-4xl text-white mb-8">
-              Send Us a <span className="text-[#d4a843]">Message</span>
+              {t("contact.form.title")} <span className="text-[#d4a843]">{t("contact.form.titleHighlight")}</span>
             </h2>
 
             {submitted ? (
               <div className="bg-[#d4a843]/10 border border-[#d4a843]/30 rounded-xl p-8 text-center">
                 <MessageSquare className="w-12 h-12 text-[#d4a843] mx-auto mb-4" />
-                <h3 className="font-heading text-2xl text-white mb-2">Thank You!</h3>
+                <h3 className="font-heading text-2xl text-white mb-2">{t("contact.form.success.title")}</h3>
                 <p className="font-body text-white/70">
-                  We've received your message and will get back to you soon.
+                  {t("contact.form.success.message")}
                 </p>
               </div>
             ) : (
@@ -73,7 +76,7 @@ function ContactForm() {
                 {/* Name */}
                 <div>
                   <label htmlFor="name" className="block font-body text-white/80 text-sm mb-2">
-                    Your Name
+                    {t("contact.form.name")}
                   </label>
                   <input
                     type="text"
@@ -82,14 +85,14 @@ function ContactForm() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-3 bg-[#111111] border border-white/10 rounded-lg font-body text-white placeholder:text-white/40 focus:border-[#d4a843] focus:outline-none transition-colors"
-                    placeholder="John Doe"
+                    placeholder={t("contact.form.namePlaceholder")}
                   />
                 </div>
 
                 {/* Email */}
                 <div>
                   <label htmlFor="email" className="block font-body text-white/80 text-sm mb-2">
-                    Email Address
+                    {t("contact.form.email")}
                   </label>
                   <input
                     type="email"
@@ -98,14 +101,14 @@ function ContactForm() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-3 bg-[#111111] border border-white/10 rounded-lg font-body text-white placeholder:text-white/40 focus:border-[#d4a843] focus:outline-none transition-colors"
-                    placeholder="john@example.com"
+                    placeholder={t("contact.form.emailPlaceholder")}
                   />
                 </div>
 
                 {/* Message */}
                 <div>
                   <label htmlFor="message" className="block font-body text-white/80 text-sm mb-2">
-                    Your Message
+                    {t("contact.form.message")}
                   </label>
                   <textarea
                     id="message"
@@ -114,7 +117,7 @@ function ContactForm() {
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full px-4 py-3 bg-[#111111] border border-white/10 rounded-lg font-body text-white placeholder:text-white/40 focus:border-[#d4a843] focus:outline-none transition-colors resize-none"
-                    placeholder="Tell us about your project..."
+                    placeholder={t("contact.form.messagePlaceholder")}
                   />
                 </div>
 
@@ -127,11 +130,11 @@ function ContactForm() {
                   {isSubmitting ? (
                     <>
                       <div className="w-5 h-5 border-2 border-[#0a0a0a]/30 border-t-[#0a0a0a] rounded-full animate-spin" />
-                      Sending...
+                      {t("contact.form.sending")}
                     </>
                   ) : (
                     <>
-                      Send Message
+                      {t("contact.form.submit")}
                       <Send size={18} />
                     </>
                   )}
@@ -143,7 +146,7 @@ function ContactForm() {
           {/* Contact Info */}
           <div>
             <h2 className="font-heading text-3xl md:text-4xl text-white mb-8">
-              Contact <span className="text-[#d4a843]">Information</span>
+              {t("contact.info.title")} <span className="text-[#d4a843]">{t("contact.info.titleHighlight")}</span>
             </h2>
 
             <div className="space-y-8">
@@ -153,48 +156,48 @@ function ContactForm() {
                   <Mail className="text-[#d4a843]" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-heading text-xl text-white mb-2">Email Us</h3>
+                  <h3 className="font-heading text-xl text-white mb-2">{t("contact.info.emailTitle")}</h3>
                   <a
                     href="mailto:contact@luizlaffeyproductions.com"
                     className="font-body text-[#d4a843] hover:text-[#e8c574] transition-colors"
                   >
-                    contact@luizlaffeyproductions.com
+                    {t("contact.info.emailAddress")}
                   </a>
                   <p className="font-body text-white/50 text-sm mt-1">
-                    We typically respond within 24 hours
+                    {t("contact.info.response")}
                   </p>
                 </div>
               </div>
 
               {/* Response Time Note */}
               <div className="bg-[#111111] border border-white/5 rounded-xl p-6">
-                <h4 className="font-heading text-lg text-white mb-3">What to Include</h4>
+                <h4 className="font-heading text-lg text-white mb-3">{t("contact.info.include.title")}</h4>
                 <ul className="font-body text-white/60 text-sm space-y-2">
-                  <li>• Brief description of your project</li>
-                  <li>• Timeline and deadlines if applicable</li>
-                  <li>• Languages or services needed</li>
-                  <li>• Any specific requirements or questions</li>
+                  <li>• {t("contact.info.include.item1")}</li>
+                  <li>• {t("contact.info.include.item2")}</li>
+                  <li>• {t("contact.info.include.item3")}</li>
+                  <li>• {t("contact.info.include.item4")}</li>
                 </ul>
               </div>
 
               {/* Services Quick Links */}
               <div className="bg-[#111111] border border-white/5 rounded-xl p-6">
-                <h4 className="font-heading text-lg text-white mb-3">Looking For...</h4>
+                <h4 className="font-heading text-lg text-white mb-3">{t("contact.info.lookingFor.title")}</h4>
                 <div className="flex flex-wrap gap-2">
                   <span className="px-3 py-1.5 bg-white/5 text-white/70 text-sm rounded-full">
-                    Dubbing Services
+                    {t("contact.info.lookingFor.dubbing")}
                   </span>
                   <span className="px-3 py-1.5 bg-white/5 text-white/70 text-sm rounded-full">
-                    Voice-Over
+                    {t("contact.info.lookingFor.voiceover")}
                   </span>
                   <span className="px-3 py-1.5 bg-white/5 text-white/70 text-sm rounded-full">
-                    Translation
+                    {t("contact.info.lookingFor.translation")}
                   </span>
                   <span className="px-3 py-1.5 bg-white/5 text-white/70 text-sm rounded-full">
-                    Radio Licensing
+                    {t("contact.info.lookingFor.licensing")}
                   </span>
                   <span className="px-3 py-1.5 bg-white/5 text-white/70 text-sm rounded-full">
-                    Subtitling
+                    {t("contact.info.lookingFor.subtitling")}
                   </span>
                 </div>
               </div>
