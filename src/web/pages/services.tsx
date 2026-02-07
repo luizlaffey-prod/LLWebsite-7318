@@ -165,27 +165,23 @@ function ServiceDetail({ service, index }: { service: ServiceData; index: number
 
           {/* Visual */}
           <div className={isEven ? 'lg:order-2' : ''}>
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden group">
-              {/* Image background */}
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden group bg-black">
+              {/* Image background - z-0 */}
               <img 
                 src={service.image} 
                 alt={t(service.titleKey)}
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover z-0"
+                loading="lazy"
               />
               
-              {/* Gradient overlay */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${service.accentColor} opacity-20 group-hover:opacity-10 transition-opacity duration-300`} />
+              {/* Gradient overlay - z-10 */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${service.accentColor} opacity-20 group-hover:opacity-10 transition-opacity duration-300 z-10`} />
               
-              {/* Icon overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a]/40 via-transparent to-[#0a0a0a]/40" />
-                <Icon className="text-white/30 group-hover:text-white/40 transition-colors duration-300" size={120} />
+              {/* Icon overlay - z-20 */}
+              <div className="absolute inset-0 flex items-center justify-center z-20">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a]/40 via-transparent to-[#0a0a0a]/40 z-20" />
+                <Icon className="text-white/30 group-hover:text-white/40 transition-colors duration-300 z-30 relative" size={120} />
               </div>
-              
-              {/* Accent border */}
-              <div className={`absolute inset-0 border-2 border-gradient-to-br ${service.accentColor} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300`} style={{
-                borderImage: `linear-gradient(135deg, rgb(212, 168, 67), rgb(0, 71, 171)) 1`,
-              }} />
             </div>
           </div>
         </div>
