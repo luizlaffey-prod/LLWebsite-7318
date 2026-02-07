@@ -512,7 +512,7 @@ const en = {
       title: "Free",
       titleHighlight: "Samples",
       subtitle: "Preview what awaits in our full library. These samples showcase the style and quality of Luiz Laffey's Collection.",
-      soulfulVibes: "Episode Sample 1: Soulful Vibes",
+      soulfulVibes: "Soulful Vibes",
       discoMix: "Disco Mix Preview",
       funkHeritage: "Funk Heritage Selection",
       nuDiscoExperience: "Nu-Disco Experience",

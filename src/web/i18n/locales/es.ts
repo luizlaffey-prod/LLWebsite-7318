@@ -512,7 +512,7 @@ const es = {
       title: "Muestras",
       titleHighlight: "Gratuitas",
       subtitle: "Obtén una vista previa de lo que te espera en nuestra biblioteca completa. Estas muestras muestran el estilo y la calidad de la Colección de Luiz Laffey.",
-      soulfulVibes: "Muestra del Episodio 1: Vibes Soulful",
+      soulfulVibes: "Vibes Soulful",
       discoMix: "Avance de Mix Disco",
       funkHeritage: "Selección Funk Heritage",
       nuDiscoExperience: "Experiencia Nu-Disco",
