@@ -3,6 +3,8 @@ import { Link } from "wouter";
 import { ArrowRight, Play, Pause, Lock, Clock } from "lucide-react";
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../../hooks/useAuth";
+import { useSubscriptions } from "../../hooks/useSubscriptions";
 
 const hosts = [
   {
@@ -375,6 +377,50 @@ function CTASection() {
 }
 
 export default function LuizLaffeysCollection() {
+  const { user } = useAuth();
+  const { hasProgram, loading } = useSubscriptions(user?.user_id);
+
+  // If user is not logged in or doesn't have subscription, show lock screen
+  if (!loading && (!user || !hasProgram('LUIZ_LAFFEY_COLLECTION'))) {
+    return (
+      <Layout>
+        <section className="relative py-24 overflow-hidden min-h-screen flex items-center justify-center">
+          {/* Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0d1117] to-[#0a0a0a]" />
+          <div className="absolute top-1/3 -left-48 w-96 h-96 bg-[#d4a843]/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-[#0047ab]/5 rounded-full blur-3xl" />
+
+          {/* Content */}
+          <div className="relative max-w-2xl mx-auto px-6 text-center">
+            <Lock className="w-24 h-24 text-[#d4a843] mx-auto mb-8 opacity-50" />
+            <h1 className="font-heading text-4xl md:text-5xl text-white mb-4">
+              Exclusive Access Required
+            </h1>
+            <p className="font-body text-lg text-white/70 mb-8">
+              This program requires an active subscription. Subscribe now to access Luiz Laffey's Collection and enjoy our full library of episodes.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/plans?program=LUIZ_LAFFEY_COLLECTION"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-xl hover:shadow-[#d4a843]/25"
+              >
+                Subscribe Now
+                <ArrowRight size={18} />
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
+              >
+                Back to Home
+              </Link>
+            </div>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
+
+  // User has access - show full content
   return (
     <Layout>
       <HeroSection />

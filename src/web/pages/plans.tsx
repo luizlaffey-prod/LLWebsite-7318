@@ -1,11 +1,45 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Check, Radio, Download, Sparkles, Clock, Shield, HelpCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { PayPalButton } from "../components/PayPalButton";
+import { useAuth } from "../hooks/useAuth";
 
-function HeroSection() {
+type ProgramType = 'ZERO_POINT_ZERO' | 'LUIZ_LAFFEY_COLLECTION';
+
+function ProgramSelector({ selectedProgram, onSelect }: { selectedProgram: ProgramType; onSelect: (program: ProgramType) => void }) {
+  const programs: { id: ProgramType; name: string }[] = [
+    { id: 'ZERO_POINT_ZERO', name: 'Zero Point Zero' },
+    { id: 'LUIZ_LAFFEY_COLLECTION', name: "Luiz Laffey's Collection" },
+  ];
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+      {programs.map((program) => (
+        <button
+          key={program.id}
+          onClick={() => onSelect(program.id)}
+          className={`px-8 py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
+            selectedProgram === program.id
+              ? 'bg-[#d4a843] text-[#0a0a0a] shadow-lg shadow-[#d4a843]/25'
+              : 'border border-[#d4a843]/50 text-[#d4a843] hover:bg-[#d4a843]/10'
+          }`}
+        >
+          {program.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function HeroSection({ selectedProgram }: { selectedProgram: ProgramType }) {
   const { t } = useTranslation();
+
+  const programNames: Record<ProgramType, string> = {
+    'ZERO_POINT_ZERO': 'Zero Point Zero',
+    'LUIZ_LAFFEY_COLLECTION': "Luiz Laffey's Collection",
+  };
 
   return (
     <section className="relative py-24 overflow-hidden">
@@ -30,12 +64,14 @@ function HeroSection() {
   );
 }
 
-function PricingSection() {
+function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram: ProgramType; onProgramSelect: (program: ProgramType) => void }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   const plans = [
     {
       id: "monthly",
+      planId: "MONTHLY_BROADCAST",
       nameKey: "plans.pricing.monthly.name",
       priceKey: "plans.pricing.monthly.price",
       periodKey: "plans.pricing.monthly.period",
@@ -47,6 +83,7 @@ function PricingSection() {
     },
     {
       id: "annual",
+      planId: "ANNUAL_BROADCAST",
       nameKey: "plans.pricing.annual.name",
       priceKey: "plans.pricing.annual.price",
       periodKey: "plans.pricing.annual.period",
@@ -59,6 +96,7 @@ function PricingSection() {
     },
     {
       id: "dual",
+      planId: "STRATEGIC_ANNUAL",
       nameKey: "plans.pricing.dual.name",
       priceKey: "plans.pricing.dual.price",
       periodKey: "plans.pricing.dual.period",
@@ -72,9 +110,18 @@ function PricingSection() {
     },
   ];
 
+  const programNames: Record<ProgramType, string> = {
+    'ZERO_POINT_ZERO': 'Zero Point Zero',
+    'LUIZ_LAFFEY_COLLECTION': "Luiz Laffey's Collection",
+  };
+
   return (
     <section className="py-16 relative">
       <div className="max-w-7xl mx-auto px-6">
+        {/* Program Selector */}
+        <ProgramSelector selectedProgram={selectedProgram} onSelect={onProgramSelect} />
+
+        {/* Plans Grid */}
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {plans.map((plan) => (
             <div
@@ -104,6 +151,13 @@ function PricingSection() {
                   <span className="font-body text-white/50">{t(plan.periodKey)}</span>
                 </div>
                 <p className="font-body text-white/60 text-sm mt-4">{t(plan.descriptionKey)}</p>
+                
+                {/* Show what user is subscribing to */}
+                <div className="mt-4 p-3 bg-white/5 rounded-lg">
+                  <p className="font-body text-white/70 text-xs">
+                    You are subscribing to: <span className="text-[#d4a843] font-semibold">{programNames[selectedProgram]} — {t(plan.nameKey)}</span>
+                  </p>
+                </div>
               </div>
 
               {/* Features */}
@@ -118,19 +172,27 @@ function PricingSection() {
                 ))}
               </ul>
 
-              {/* CTA */}
-              <Link
-                href="/login"
-                className={`block w-full text-center py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
-                  plan.popular
-                    ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
-                    : plan.isDual
-                    ? "bg-[#0047ab] text-white hover:bg-[#005ce6]"
-                    : "border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843]/10"
-                }`}
-              >
-                {t(plan.ctaKey)}
-              </Link>
+              {/* CTA - PayPal or Login */}
+              {user ? (
+                <PayPalButton
+                  planId={plan.planId}
+                  programId={selectedProgram}
+                  onSuccess={() => window.location.href = '/dashboard'}
+                />
+              ) : (
+                <Link
+                  href="/login"
+                  className={`block w-full text-center py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
+                    plan.popular
+                      ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
+                      : plan.isDual
+                      ? "bg-[#0047ab] text-white hover:bg-[#005ce6]"
+                      : "border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843]/10"
+                  }`}
+                >
+                  {t(plan.ctaKey)}
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -294,10 +356,12 @@ function CTASection() {
 }
 
 export default function Plans() {
+  const [selectedProgram, setSelectedProgram] = useState<ProgramType>('ZERO_POINT_ZERO');
+
   return (
     <Layout>
-      <HeroSection />
-      <PricingSection />
+      <HeroSection selectedProgram={selectedProgram} />
+      <PricingSection selectedProgram={selectedProgram} onProgramSelect={setSelectedProgram} />
       <BenefitsSection />
       <FAQSection />
       <CTASection />
