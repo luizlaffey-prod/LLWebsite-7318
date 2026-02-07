@@ -558,6 +558,11 @@ const pt = {
         role: "DJ e Produtor",
         description: "Tony Caldeira é um empresário da indústria de fitness, amante de música e entusiasta de rádio. Em 1990, convidado por seu amigo Nilton Rabello, co-produziu Hot Dance para Manchete FM — um programa adaptado para a cena underground de dança. Seu crescente reconhecimento na cena de rádio abriu portas para produzir shows para várias estações. Por mais de três décadas, seu trabalho tem sido celebrado por ouvintes e pela indústria de rádio.",
       },
+      caio: {
+        name: "Caio Eduardo",
+        role: "Suporte Técnico",
+        description: "O backbone técnico do Zero Point Zero, garantindo que cada episódio soe pristino e profissional.",
+      },
     },
     samples: {
       title: "Amostras",

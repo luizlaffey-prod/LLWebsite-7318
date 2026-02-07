@@ -175,6 +175,10 @@ function HostsSection() {
       id: "tony",
       image: "/96212d13-3911-42df-8679-1edc3485bdbe.jpeg",
     },
+    {
+      id: "caio",
+      image: "/f70963f4-6c01-4eff-949d-92a18c14881c.jpeg",
+    },
   ];
 
   return (
