@@ -124,7 +124,7 @@ export function Navigation() {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden mt-6 pb-6 border-t border-white/10 pt-6 animate-fade-in">
+          <div className="lg:hidden mt-6 pb-6 border-t border-white/10 pt-6 animate-fade-in relative z-50">
             <div className="flex flex-col gap-4">
               {navLinks.map((link) => (
                 <Link
