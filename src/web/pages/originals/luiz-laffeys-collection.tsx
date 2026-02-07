@@ -120,19 +120,6 @@ function AudioPlayer({ title, duration, type, url, size }: AudioPlayerProps) {
       </button>
       <div className="flex-1 min-w-0">
         <h4 className="font-body text-white font-medium truncate group-hover:text-[#d4a843] transition-colors">{title}</h4>
-        <div className="flex items-center gap-3 text-white/50 text-sm mt-1">
-          <div className="flex items-center gap-1.5">
-            <Clock size={14} className="text-[#d4a843]/60" />
-            <span>{duration}</span>
-          </div>
-          <span className="text-white/20">•</span>
-          <span className="text-white/40">{size}</span>
-          {type === "full" && (
-            <span className="px-2 py-0.5 bg-[#d4a843]/20 text-[#d4a843] text-[10px] uppercase tracking-wider rounded font-bold">
-              Full Episode
-            </span>
-          )}
-        </div>
       </div>
     </div>
   );

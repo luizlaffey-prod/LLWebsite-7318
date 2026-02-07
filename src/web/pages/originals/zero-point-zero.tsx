@@ -70,15 +70,6 @@ function AudioPlayer({ title, duration, type }: AudioPlayerProps) {
       </button>
       <div className="flex-1 min-w-0">
         <h4 className="font-body text-white font-medium truncate">{title}</h4>
-        <div className="flex items-center gap-2 text-white/50 text-sm">
-          <Clock size={14} />
-          <span>{duration}</span>
-          {type === "full" && (
-            <span className="px-2 py-0.5 bg-[#e67e22]/20 text-[#e67e22] text-xs rounded">
-              Full Episode
-            </span>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -179,6 +170,10 @@ function HostsSection() {
     {
       id: "nilton",
       image: "/8b032f74-e303-40c4-bf52-121fc4a63606.jpg",
+    },
+    {
+      id: "tony",
+      image: "/96212d13-3911-42df-8679-1edc3485bdbe.jpeg",
     },
   ];
 
