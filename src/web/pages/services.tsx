@@ -12,6 +12,8 @@ interface ServiceData {
   featuresPrefix: string;
   featureKeys: string[];
   highlightKey: string;
+  image: string;
+  accentColor: string;
 }
 
 const services: ServiceData[] = [
@@ -24,6 +26,8 @@ const services: ServiceData[] = [
     featuresPrefix: "services.voiceover.features",
     featureKeys: ["commercial", "documentary", "elearning", "corporate", "ivr", "audiobook"],
     highlightKey: "services.voiceover.highlight",
+    image: "/service-voiceover.png",
+    accentColor: "from-amber-500 to-orange-600",
   },
   {
     id: "dubbing",
@@ -34,6 +38,8 @@ const services: ServiceData[] = [
     featuresPrefix: "services.dubbing.features",
     featureKeys: ["film", "tv", "animation", "games", "streaming", "character"],
     highlightKey: "services.dubbing.highlight",
+    image: "/service-voiceover.png",
+    accentColor: "from-rose-500 to-red-600",
   },
   {
     id: "translation",
@@ -44,6 +50,8 @@ const services: ServiceData[] = [
     featuresPrefix: "services.translation.features",
     featureKeys: ["script", "cultural", "dialogue", "marketing", "technical", "qa"],
     highlightKey: "services.translation.highlight",
+    image: "/service-translation.png",
+    accentColor: "from-cyan-500 to-blue-600",
   },
   {
     id: "subtitling",
@@ -54,6 +62,8 @@ const services: ServiceData[] = [
     featuresPrefix: "services.subtitling.features",
     featureKeys: ["sdh", "multilingual", "timed", "translation", "timing", "formatting"],
     highlightKey: "services.subtitling.highlight",
+    image: "/service-subtitling.png",
+    accentColor: "from-emerald-500 to-green-600",
   },
 ];
 
@@ -155,22 +165,27 @@ function ServiceDetail({ service, index }: { service: ServiceData; index: number
 
           {/* Visual */}
           <div className={isEven ? 'lg:order-2' : ''}>
-            <div className="relative aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#1a1a1a] via-[#111111] to-[#0a0a0a] border border-white/5 overflow-hidden">
-              {/* Decorative content */}
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden group">
+              {/* Image background */}
+              <img 
+                src={service.image} 
+                alt={t(service.titleKey)}
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${service.accentColor} opacity-20 group-hover:opacity-10 transition-opacity duration-300`} />
+              
+              {/* Icon overlay */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <Icon className="text-[#d4a843]/10" size={160} />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a]/40 via-transparent to-[#0a0a0a]/40" />
+                <Icon className="text-white/30 group-hover:text-white/40 transition-colors duration-300" size={120} />
               </div>
               
-              {/* Grid overlay */}
-              <div className="absolute inset-0 opacity-20" style={{
-                backgroundImage: `linear-gradient(rgba(212, 168, 67, 0.1) 1px, transparent 1px),
-                                  linear-gradient(90deg, rgba(212, 168, 67, 0.1) 1px, transparent 1px)`,
-                backgroundSize: '40px 40px'
+              {/* Accent border */}
+              <div className={`absolute inset-0 border-2 border-gradient-to-br ${service.accentColor} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300`} style={{
+                borderImage: `linear-gradient(135deg, rgb(212, 168, 67), rgb(0, 71, 171)) 1`,
               }} />
-
-              {/* Accent elements */}
-              <div className="absolute top-4 right-4 w-20 h-20 border border-[#d4a843]/30 rounded-full" />
-              <div className="absolute bottom-4 left-4 w-16 h-16 bg-[#d4a843]/10 rounded-lg" />
             </div>
           </div>
         </div>
