@@ -203,7 +203,7 @@ function HostsSection() {
               className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#e67e22]/30 transition-all duration-500 group"
             >
               {/* Host Image */}
-              <div className="w-56 h-56 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[#e67e22]/30 group-hover:border-[#e67e22]/60 transition-all duration-500">
+              <div className="w-80 h-80 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[#e67e22]/30 group-hover:border-[#e67e22]/60 transition-all duration-500">
                 <img 
                   src={host.image} 
                   alt={t(`zero.hosts.${host.id}.name`)}
