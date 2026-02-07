@@ -16,6 +16,56 @@ const productions = [
   },
   {
     id: 2,
+    title: "Tuttle Twins",
+    type: "Television Series",
+    subtitle: "Multi-Season",
+    description: "Educational animated series following adventurous twins on quests through time. Oversaw multilingual localization for educational streaming platform reaching worldwide audiences.",
+    image: "/tuttle-twins.jpg",
+    role: "Head of Languages - Localization Oversight",
+    year: "2021-Present"
+  },
+  {
+    id: 3,
+    title: "The Wingfeather Saga",
+    type: "Television Series",
+    subtitle: "Seasons 1-3",
+    description: "Animated fantasy series chronicling the adventures and transformations of the Igiby family. Managed comprehensive multilingual localization for international streaming distribution.",
+    image: "/wingfeather-saga.jpg",
+    role: "Head of Languages - Localization Oversight",
+    year: "2022-2025"
+  },
+  {
+    id: 4,
+    title: "The Wayfinders",
+    type: "Television Series",
+    subtitle: "Streaming",
+    description: "Adventure-driven series on Angel Studios. Oversaw multilingual dubbing and localization for global streaming audience.",
+    image: "/the-wayfinders.jpg",
+    role: "Head of Languages - Localization Oversight",
+    year: "2024-2025"
+  },
+  {
+    id: 5,
+    title: "Jungle Beat",
+    type: "Television Series",
+    subtitle: "Animated Series",
+    description: "Animated children's series featuring vibrant adventures. Managed localization across multiple languages for family audiences worldwide.",
+    image: "/jungle-beat.jpg",
+    role: "Head of Languages - Localization Oversight",
+    year: "2024-2025"
+  },
+  {
+    id: 6,
+    title: "Homestead: The Series",
+    type: "Television Series",
+    subtitle: "Streaming",
+    description: "Post-apocalyptic survival series. Oversaw comprehensive multilingual localization for global streaming distribution.",
+    image: "/homestead-series.jpg",
+    role: "Head of Languages - Localization Oversight",
+    year: "2024-2025"
+  },
+  {
+    id: 7,
     title: "Sound of Freedom",
     type: "Theatrical Film",
     subtitle: "2023",
@@ -25,7 +75,7 @@ const productions = [
     year: "2023"
   },
   {
-    id: 3,
+    id: 8,
     title: "The Shift",
     type: "Theatrical Film",
     subtitle: "2023",
@@ -35,7 +85,7 @@ const productions = [
     year: "2023"
   },
   {
-    id: 4,
+    id: 9,
     title: "After Death",
     type: "Documentary",
     subtitle: "2023",
@@ -45,7 +95,7 @@ const productions = [
     year: "2023"
   },
   {
-    id: 5,
+    id: 10,
     title: "His Only Son",
     type: "Theatrical Film",
     subtitle: "2023",
@@ -55,7 +105,7 @@ const productions = [
     year: "2023"
   },
   {
-    id: 6,
+    id: 11,
     title: "Cabrini",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -65,7 +115,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 7,
+    id: 12,
     title: "SIGHT",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -75,7 +125,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 8,
+    id: 13,
     title: "Sound of Hope: The Story of Possum Trot",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -85,7 +135,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 9,
+    id: 14,
     title: "Homestead",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -95,7 +145,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 10,
+    id: 15,
     title: "Brave the Dark",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -105,7 +155,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 11,
+    id: 16,
     title: "The King of Kings",
     type: "Theatrical Film",
     subtitle: "2025",
@@ -115,7 +165,7 @@ const productions = [
     year: "2025"
   },
   {
-    id: 12,
+    id: 17,
     title: "DAVID",
     type: "Theatrical Film",
     subtitle: "2025",
@@ -125,17 +175,17 @@ const productions = [
     year: "2025"
   },
   {
-    id: 13,
+    id: 18,
     title: "The Last Rodeo",
-    type: "Streaming Film",
+    type: "Theatrical Film",
     subtitle: "2025",
-    description: "Contemporary western drama. Managed multilingual localization to deliver authentic cultural experience across international audiences.",
-    image: "/the-last-rodeo-2025.jpg",
+    description: "Contemporary western drama starring Neal McDonough. Managed multilingual localization to deliver authentic cultural experience across international audiences.",
+    image: "/the-last-rodeo-2025-new.jpg",
     role: "Head of Languages - Localization Oversight",
     year: "2025"
   },
   {
-    id: 14,
+    id: 19,
     title: "Rule Breakers",
     type: "Theatrical Film",
     subtitle: "2025",
@@ -145,7 +195,7 @@ const productions = [
     year: "2025"
   },
   {
-    id: 15,
+    id: 20,
     title: "Truth & Treason",
     type: "Theatrical Film",
     subtitle: "2025",
@@ -175,7 +225,7 @@ function HeroSection() {
             Featured <span className="text-[#d4a843]">Work</span>
           </h1>
           <p className="font-body text-lg md:text-xl text-white/70 leading-relaxed animate-fade-in-delay-2 max-w-3xl">
-            Global Head of Languages at Angel Studios. Overseeing comprehensive localization, dubbing, and multilingual production across our complete theatrical and streaming catalog—reaching audiences in 100+ languages worldwide.
+            Global Head of Languages at Angel Studios. Overseeing comprehensive localization, dubbing, and multilingual production across 20+ theatrical, streaming, and television productions—reaching audiences in 100+ languages worldwide.
           </p>
         </div>
       </div>
@@ -187,15 +237,15 @@ function ProductionGallery() {
   return (
     <section className="py-24 relative">
       <div className="max-w-7xl mx-auto px-6">
-        {/* Clean poster grid - responsive 3-4 columns */}
-        <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {/* Clean poster grid - responsive 3-5 columns */}
+        <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
           {productions.map((prod, idx) => (
             <div
               key={prod.id}
               className="group relative"
               style={{
                 animation: `fade-in-up 0.6s ease-out forwards`,
-                animationDelay: `${idx * 0.08}s`,
+                animationDelay: `${idx * 0.05}s`,
                 opacity: 0
               }}
             >
@@ -212,12 +262,12 @@ function ProductionGallery() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 {/* Info on Hover */}
-                <div className="absolute inset-0 flex flex-col justify-end p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="space-y-2">
+                <div className="absolute inset-0 flex flex-col justify-end p-3 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="space-y-1.5">
                     <p className="text-[#d4a843] text-xs uppercase tracking-widest font-bold">
                       {prod.role}
                     </p>
-                    <p className="text-white/80 text-sm line-clamp-3">
+                    <p className="text-white/80 text-xs line-clamp-2">
                       {prod.description}
                     </p>
                   </div>
@@ -225,15 +275,15 @@ function ProductionGallery() {
               </div>
 
               {/* Info Below Poster */}
-              <div className="mt-3">
-                <h3 className="font-heading text-lg text-white group-hover:text-[#d4a843] transition-colors line-clamp-2">
+              <div className="mt-2">
+                <h3 className="font-heading text-sm text-white group-hover:text-[#d4a843] transition-colors line-clamp-2">
                   {prod.title}
                 </h3>
                 <p className="text-[#d4a843] text-xs uppercase tracking-wider font-medium mt-0.5">
                   {prod.type}
                 </p>
                 {prod.subtitle && (
-                  <p className="text-white/50 text-xs mt-1">
+                  <p className="text-white/50 text-xs mt-0.5">
                     {prod.subtitle}
                   </p>
                 )}
@@ -266,11 +316,17 @@ function StatsSection() {
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-8 text-center">
+        <div className="grid md:grid-cols-4 gap-8 text-center">
           <div className="group">
-            <h3 className="font-heading text-4xl md:text-5xl text-[#d4a843] mb-2">15+</h3>
+            <h3 className="font-heading text-4xl md:text-5xl text-[#d4a843] mb-2">20+</h3>
             <p className="font-body text-white/70">Productions Overseen</p>
-            <p className="text-white/50 text-sm mt-2">Theatrical & Streaming</p>
+            <p className="text-white/50 text-sm mt-2">Films & Series</p>
+          </div>
+          
+          <div className="group">
+            <h3 className="font-heading text-4xl md:text-5xl text-[#d4a843] mb-2">6+</h3>
+            <p className="font-body text-white/70">Television Series</p>
+            <p className="text-white/50 text-sm mt-2">Multi-Season</p>
           </div>
           
           <div className="group">
