@@ -2,6 +2,7 @@ import { Layout } from "../../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Play, Pause, Lock, Clock } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const hosts = [
   {
@@ -84,6 +85,8 @@ function AudioPlayer({ title, duration, type }: AudioPlayerProps) {
 }
 
 function HeroSection() {
+  const { t } = useTranslation();
+  
   return (
     <section className="relative py-24 overflow-hidden">
       {/* Background with orange/cosmic theme */}
@@ -115,18 +118,16 @@ function HeroSection() {
             </Link>
             
             <span className="text-[#e67e22] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-              Electronic • Cosmic • Journey
+              {t("zero.overline")}
             </span>
             
             <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white mb-6 leading-[1.05]">
-              Zero Point{" "}
-              <span className="text-[#e67e22]">Zero</span>
+              {t("zero.hero.title")}{" "}
+              <span className="text-[#e67e22]">{t("zero.hero.titleHighlight")}</span>
             </h1>
             
             <p className="font-body text-lg md:text-xl text-white/70 leading-relaxed mb-8">
-              A 60-minute cosmic journey through electronic music since the 1990s. 
-              Deep grooves, ethereal soundscapes, and timeless beats that transcend 
-              the ordinary and transport you to another dimension.
+              {t("zero.hero.subtitle")}
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -134,14 +135,14 @@ function HeroSection() {
                 href="/plans"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-[#e67e22] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#f39c12] hover:shadow-xl hover:shadow-[#e67e22]/25"
               >
-                Subscribe Now
+                {t("zero.hero.ctaSubscribe")}
                 <ArrowRight size={18} />
               </Link>
               <a
                 href="#samples"
                 className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#e67e22] hover:text-[#e67e22]"
               >
-                Free Samples
+                {t("zero.hero.ctaSamples")}
               </a>
             </div>
           </div>
@@ -151,7 +152,7 @@ function HeroSection() {
             <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-[#e67e22]/30 relative">
               <img 
                 src="/bc51e756-947c-401e-974a-ad2113b8aa8b.jpg" 
-                alt="Zero Point Zero - Cosmic Journey"
+                alt={t("zero.hero.titleHighlight")}
                 className="w-full h-full object-cover image-enhance"
               />
               {/* Overlay for depth */}
@@ -168,6 +169,19 @@ function HeroSection() {
 }
 
 function HostsSection() {
+  const { t } = useTranslation();
+  
+  const hostsData = [
+    {
+      id: "paulinho",
+      image: "/6ea770b1-15be-4c48-8ef5-52b329805968.jpg",
+    },
+    {
+      id: "nilton",
+      image: "/8b032f74-e303-40c4-bf52-121fc4a63606.jpg",
+    },
+  ];
+
   return (
     <section className="py-24 relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#e67e22]/20 to-transparent" />
@@ -175,34 +189,34 @@ function HostsSection() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <span className="text-[#e67e22] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-            The Crew
+            {t("zero.hosts.title")}
           </span>
           <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
-            Meet the <span className="text-[#e67e22]">Team</span>
+            {t("zero.hosts.title")} <span className="text-[#e67e22]">{t("zero.hosts.titleHighlight")}</span>
           </h2>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {hosts.map((host) => (
+          {hostsData.map((host) => (
             <div
-              key={host.name}
+              key={host.id}
               className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#e67e22]/30 transition-all duration-500 group"
             >
               {/* Host Image */}
               <div className="w-56 h-56 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[#e67e22]/30 group-hover:border-[#e67e22]/60 transition-all duration-500">
                 <img 
                   src={host.image} 
-                  alt={host.name}
+                  alt={t(`zero.hosts.${host.id}.name`)}
                   className="w-full h-full object-cover image-enhance"
                 />
               </div>
               
               <h3 className="font-heading text-2xl text-white text-center mb-2">
-                {host.name}
+                {t(`zero.hosts.${host.id}.name`)}
               </h3>
-              <p className="text-[#e67e22] text-xs text-center mb-4 uppercase tracking-wider">{host.role}</p>
+              <p className="text-[#e67e22] text-xs text-center mb-4 uppercase tracking-wider">{t(`zero.hosts.${host.id}.role`)}</p>
               <p className="font-body text-white/60 text-sm text-center leading-relaxed">
-                {host.description}
+                {t(`zero.hosts.${host.id}.description`)}
               </p>
             </div>
           ))}

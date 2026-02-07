@@ -484,6 +484,104 @@ const pt = {
     },
   },
 
+  // Luiz Laffey's Collection Radio Show
+  collection: {
+    overline: "Música • Narrativa • Alma",
+    hero: {
+      title: "A Coleção de",
+      titleHighlight: "Luiz Laffey",
+      subtitle: "Mais do que um programa de rádio — é uma jornada musical. Disco, funk, house soulful, nu-disco com narrativa que conecta a música ao momento. Cada episódio é uma experiência cuidadosamente curada.",
+      ctaSubscribe: "Assine Agora",
+      ctaSamples: "Amostras Gratuitas",
+    },
+    hosts: {
+      title: "Conheça os",
+      titleHighlight: "Curadores",
+      luiz: {
+        name: "Luiz Laffey",
+        role: "Apresentador, Curador e Narrador",
+        description: "Luiz é o coração e arquiteto da Coleção de Luiz Laffey. Como criador e apresentador principal, ele traz mais de quatro décadas de experiência como DJ, ator e dublador ao microfone. Seu papel é curar a jornada — tecendo disco, funk, house soulful e nu-disco em uma narrativa que conecta eras, culturas e memórias pessoais. No ar, Luiz é o guia e narrador: confiante, brincalhão e profundamente conhecedor. Ele define o tom, compartilha histórias nos bastidores e emoldura cada faixa com contexto que transforma canções em histórias.",
+      },
+      alexis: {
+        name: "Alexis Hart",
+        role: "Co-Apresentadora, Narradora e Conectora",
+        description: "Alexis é a centelha e equilíbrio da Coleção de Luiz Laffey. Enquanto Luiz impulsiona as imersões profundas na história da música e cura o fluxo do programa, Alexis traz a voz da espontaneidade, curiosidade e conexão. Ela reage autenticamente às histórias, faz as perguntas que os ouvintes estão pensando e oferece observações espirituosas que mantêm o clima leve e conversacional.",
+      },
+    },
+    samples: {
+      title: "Amostras",
+      titleHighlight: "Gratuitas",
+      subtitle: "Visualize o que o aguarda em nossa biblioteca completa. Essas amostras mostram o estilo e qualidade da Coleção de Luiz Laffey.",
+      soulfulVibes: "Amostra do Episódio 1: Vibes Soulful",
+      discoMix: "Prévia Mix Disco",
+      funkHeritage: "Seleção Funk Heritage",
+      nuDiscoExperience: "Experiência Nu-Disco",
+      soulfulHouseJourney: "Jornada Soulful House",
+    },
+    library: {
+      title: "Biblioteca",
+      titleHighlight: "Completa",
+      subtitle: "Acesse nosso arquivo completo de episódios com uma assinatura. Novos episódios adicionados semanalmente.",
+      membersOnly: "Apenas Membros",
+      midnight: "Episódio 45: Disco da Meia-Noite",
+      funky: "Episódio 44: Amanhecer Funky",
+      soulful: "Episódio 43: Tardes Soulful",
+      houseParty: "Episódio 42: Festa House",
+    },
+  },
+
+  // Zero Point Zero Radio Show
+  zero: {
+    overline: "Eletrônico • Cósmico",
+    hero: {
+      title: "Zero Point",
+      titleHighlight: "Zero",
+      subtitle: "Uma jornada cósmica de 60 minutos através da música eletrônica desde os anos 1990. De deep house a techno, Zero Point Zero explora a evolução da música de dança mundial.",
+      ctaSubscribe: "Assine Agora",
+      ctaSamples: "Amostras Gratuitas",
+    },
+    hosts: {
+      title: "Conheça os",
+      titleHighlight: "DJs",
+      paulinho: {
+        name: "Paulinho Ribeiro",
+        role: "Apresentador e Criador",
+        description: "Paulinho começou sua carreira como locutor comercial em 1987 e se tornou apresentador de rádio FM no ano seguinte, papel que continua exercendo até hoje. Um entusiasta de música, trabalhou como DJ profissional entre 1987 e 1988 e, após anos de pesquisa e estudo, se tornou compositor e produtor musical. Hoje, Paulinho apresenta Zero Point Zero, uma jornada semanal pelo mundo da música eletrônica e seus muitos ramos.",
+      },
+      nilton: {
+        name: "Nilton Rabello",
+        role: "DJ e Curador de Vinil",
+        description: "Nilton Rabello é um cara bem reservado — não é muito de falar, mas é tudo sobre a música. Sua coleção, composta inteiramente de vinil, já ultrapassou 1.500 discos. Um verdadeiro amante de música de qualidade, começou a vender vinil raro em meados dos anos 80. No início dos anos 90, lançou seu próprio negócio de importação de discos, DISCOBOX, fornecendo casas noturnas e estações de rádio FM.",
+      },
+      tony: {
+        name: "Tony Caldeira",
+        role: "DJ e Produtor",
+        description: "Tony Caldeira é um empresário da indústria de fitness, amante de música e entusiasta de rádio. Em 1990, convidado por seu amigo Nilton Rabello, co-produziu Hot Dance para Manchete FM — um programa adaptado para a cena underground de dança. Seu crescente reconhecimento na cena de rádio abriu portas para produzir shows para várias estações. Por mais de três décadas, seu trabalho tem sido celebrado por ouvintes e pela indústria de rádio.",
+      },
+    },
+    samples: {
+      title: "Amostras",
+      titleHighlight: "Gratuitas",
+      subtitle: "Experimente a jornada cósmica. Essas amostras mostram a exploração de música eletrônica que define Zero Point Zero.",
+      ninetyElectronic: "Reavivamento Eletrônico dos Anos 90",
+      ambientTechno: "Sessão Techno Ambiente",
+      deepSpace: "Grooves do Espaço Profundo",
+      cosmicJourney: "Introdução Jornada Cósmica",
+      progressiveHouse: "Mix Progressive House",
+    },
+    library: {
+      title: "Biblioteca",
+      titleHighlight: "Completa",
+      subtitle: "Acesse nosso arquivo completo de episódios com uma assinatura. Novos episódios lançados semanalmente.",
+      membersOnly: "Apenas Membros",
+      gravity: "Episódio 75: Poço de Gravidade",
+      nebula: "Episódio 76: Dança Nebulosa",
+      solar: "Episódio 77: Ventos Solares",
+      horizon: "Episódio 78: Horizonte de Eventos",
+      orbitalDrift: "Episódio Completo: Deriva Orbital",
+    },
+  },
+
   // Footer
   footer: {
     description: "Uma empresa de produção criativa na interseção de narrativa, som, idioma e cultura. Dando vida às vozes além das fronteiras.",

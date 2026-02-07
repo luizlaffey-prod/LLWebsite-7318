@@ -484,6 +484,104 @@ const en = {
     },
   },
 
+  // Luiz Laffey's Collection Radio Show
+  collection: {
+    overline: "Music • Storytelling • Soul",
+    hero: {
+      title: "Luiz Laffey's",
+      titleHighlight: "Collection",
+      subtitle: "More than a radio show — it's a musical journey. Disco, funk, soulful house, nu-disco with storytelling that connects the music to the moment. Each episode is a carefully curated experience.",
+      ctaSubscribe: "Subscribe Now",
+      ctaSamples: "Free Samples",
+    },
+    hosts: {
+      title: "Meet the",
+      titleHighlight: "Curators",
+      luiz: {
+        name: "Luiz Laffey",
+        role: "Host, Curator & Storyteller",
+        description: "Luiz is the heartbeat and architect of Luiz Laffey's Collection. As the creator and lead host, he brings over four decades of experience as a DJ, actor, and voice actor to the microphone. His role is to curate the journey — weaving disco, funk, soulful house, and nu-disco into a narrative that connects eras, cultures, and personal memories. On-air, Luiz is the guide and storyteller: confident, playful, and deeply knowledgeable. He sets the tone, shares behind-the-scenes history, and frames each track with context that transforms songs into stories. His warmth and charisma make every transition feel like a conversation with an old friend.",
+      },
+      alexis: {
+        name: "Alexis Hart",
+        role: "Co-Host, Storyteller & Connector",
+        description: "Alexis is the spark and balance of Luiz Laffey's Collection. While Luiz drives the deep dives into music history and curates the flow of the show, Alexis brings the voice of spontaneity, curiosity, and connection. She reacts authentically to stories, asks the questions listeners are thinking, and delivers witty asides that keep the mood light and conversational. Her energy creates a natural back-and-forth rhythm with Luiz — setup and punchline, depth and levity, groove and laughter.",
+      },
+    },
+    samples: {
+      title: "Free",
+      titleHighlight: "Samples",
+      subtitle: "Preview what awaits in our full library. These samples showcase the style and quality of Luiz Laffey's Collection.",
+      soulfulVibes: "Episode Sample 1: Soulful Vibes",
+      discoMix: "Disco Mix Preview",
+      funkHeritage: "Funk Heritage Selection",
+      nuDiscoExperience: "Nu-Disco Experience",
+      soulfulHouseJourney: "Soulful House Journey",
+    },
+    library: {
+      title: "Full",
+      titleHighlight: "Library",
+      subtitle: "Access our complete archive of episodes with a subscription. New episodes added weekly.",
+      membersOnly: "Members Only",
+      midnight: "Episode 45: Midnight Disco",
+      funky: "Episode 44: Funky Sunrise",
+      soulful: "Episode 43: Soulful Afternoons",
+      houseParty: "Episode 42: House Party",
+    },
+  },
+
+  // Zero Point Zero Radio Show
+  zero: {
+    overline: "Electronic • Cosmic",
+    hero: {
+      title: "Zero Point",
+      titleHighlight: "Zero",
+      subtitle: "A 60-minute cosmic journey through electronic music since the 1990s. From deep house to techno, Zero Point Zero explores the evolution of dance music worldwide.",
+      ctaSubscribe: "Subscribe Now",
+      ctaSamples: "Free Samples",
+    },
+    hosts: {
+      title: "Meet the",
+      titleHighlight: "DJs",
+      paulinho: {
+        name: "Paulinho Ribeiro",
+        role: "Host & Creator",
+        description: "Paulinho began his career as a commercial announcer in 1987 and became an FM radio host the following year, a role he continues to this day. A music enthusiast, he worked as a professional DJ between 1987 and 1988 and, after years of research and study, became a composer and music producer. Today, Paulinho hosts Zero Point Zero, a weekly journey through the world of electronic music and its many branches. On air since the 1990s, the show blends fresh tracks, exclusive interviews, and international contributions, establishing itself as a unique space connecting audiences with the global underground dance scene.",
+      },
+      nilton: {
+        name: "Nilton Rabello",
+        role: "DJ & Vinyl Curator",
+        description: "Nilton Rabello is a very private guy—not much of a talker, but all about the music. His collection, made up entirely of vinyl, has already surpassed 1,500 records. A true lover of quality music, he began selling rare vinyl in the mid-80s. By the early 90s, he launched his own record import business, DISCOBOX, supplying nightclubs and FM radio stations. With his exceptional musical knowledge, Nilton was invited to produce specialized radio shows like Hot Dance on Manchete FM (1991).",
+      },
+      tony: {
+        name: "Tony Caldeira",
+        role: "DJ & Producer",
+        description: "Tony Caldeira is a fitness industry entrepreneur, a music lover, and a radio enthusiast. In 1990, invited by his friend Nilton Rabello, he co-produced Hot Dance for Manchete FM—a show tailored for the underground dance scene. His growing recognition in the radio scene opened doors to produce shows for several stations. For over three decades, his work has been celebrated by both listeners and the radio industry.",
+      },
+    },
+    samples: {
+      title: "Free",
+      titleHighlight: "Samples",
+      subtitle: "Experience the cosmic journey. These samples showcase the electronic music exploration that defines Zero Point Zero.",
+      ninetyElectronic: "90s Electronic Revival",
+      ambientTechno: "Ambient Techno Session",
+      deepSpace: "Deep Space Grooves",
+      cosmicJourney: "Cosmic Journey Intro",
+      progressiveHouse: "Progressive House Mix",
+    },
+    library: {
+      title: "Full",
+      titleHighlight: "Library",
+      subtitle: "Access our complete archive of episodes with a subscription. New episodes released weekly.",
+      membersOnly: "Members Only",
+      gravity: "Episode 75: Gravity Well",
+      nebula: "Episode 76: Nebula Dance",
+      solar: "Episode 77: Solar Winds",
+      horizon: "Episode 78: Event Horizon",
+      orbitalDrift: "Full Episode: Orbital Drift",
+    },
+  },
+
   // Footer
   footer: {
     description: "A creative production company at the intersection of storytelling, sound, language, and culture. Bringing voices to life across borders.",

@@ -2,6 +2,7 @@ import { Layout } from "../../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Play, Pause, Lock, Clock } from "lucide-react";
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 const hosts = [
   {
@@ -138,6 +139,8 @@ function AudioPlayer({ title, duration, type, url, size }: AudioPlayerProps) {
 }
 
 function HeroSection() {
+  const { t } = useTranslation();
+  
   return (
     <section className="relative py-24 overflow-hidden">
       {/* Background with gold theme */}
@@ -154,18 +157,16 @@ function HeroSection() {
             </Link>
             
             <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-              Music • Storytelling • Soul
+              {t("collection.overline")}
             </span>
             
             <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white mb-6 leading-[1.05]">
-              Luiz Laffey's{" "}
-              <span className="text-[#d4a843]">Collection</span>
+              {t("collection.hero.title")}{" "}
+              <span className="text-[#d4a843]">{t("collection.hero.titleHighlight")}</span>
             </h1>
             
             <p className="font-body text-lg md:text-xl text-white/70 leading-relaxed mb-8">
-              More than a radio show — it's a musical journey. Disco, funk, soulful house, 
-              nu-disco with storytelling that connects the music to the moment. Each episode 
-              is a carefully curated experience.
+              {t("collection.hero.subtitle")}
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -173,14 +174,14 @@ function HeroSection() {
                 href="/plans"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-xl hover:shadow-[#d4a843]/25"
               >
-                Subscribe Now
+                {t("collection.hero.ctaSubscribe")}
                 <ArrowRight size={18} />
               </Link>
               <a
                 href="#samples"
                 className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
               >
-                Free Samples
+                {t("collection.hero.ctaSamples")}
               </a>
             </div>
           </div>
@@ -190,7 +191,7 @@ function HeroSection() {
             <div className="aspect-[3/4] rounded-2xl overflow-hidden">
               <img 
                 src="/2f7da195-88b8-4d89-83c8-d010b07ac8e4.png"
-                alt="Luiz Laffey's Collection - Neon Card"
+                alt={t("collection.hero.titleHighlight")}
                 className="w-full h-full object-cover object-center"
                 style={{ filter: 'brightness(1.12) contrast(1.15) saturate(1.2)' }}
               />
@@ -206,6 +207,19 @@ function HeroSection() {
 }
 
 function HostsSection() {
+  const { t } = useTranslation();
+  
+  const hostsData = [
+    {
+      id: "luiz",
+      image: "/b4f4b29f-52b6-4321-8139-6e847492f0da.png",
+    },
+    {
+      id: "alexis",
+      image: "/9b9dbfab-e36f-4db6-952c-888bcd40048b.png",
+    },
+  ];
+
   return (
     <section className="py-24 relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4a843]/20 to-transparent" />
@@ -213,35 +227,35 @@ function HostsSection() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
-            Your Hosts
+            {t("collection.hosts.title")}
           </span>
           <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
-            Meet the <span className="text-[#d4a843]">Curators</span>
+            {t("collection.hosts.title")} <span className="text-[#d4a843]">{t("collection.hosts.titleHighlight")}</span>
           </h2>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {hosts.map((host) => (
+          {hostsData.map((host) => (
             <div
-              key={host.name}
+              key={host.id}
               className="bg-[#111111] border border-white/5 rounded-xl p-8 hover:border-[#d4a843]/30 transition-all duration-500"
             >
               {/* Host Image */}
               <div className="w-56 h-56 rounded-full mx-auto mb-6 overflow-hidden border-2 border-[#d4a843]/30">
                 <img 
                   src={host.image}
-                  alt={host.name}
+                  alt={t(`collection.hosts.${host.id}.name`)}
                   className="w-full h-full object-cover object-top"
                   style={{ filter: 'brightness(1.12) contrast(1.15) saturate(1.2)' }}
                 />
               </div>
               
               <h3 className="font-heading text-2xl text-white text-center mb-2">
-                {host.name}
+                {t(`collection.hosts.${host.id}.name`)}
               </h3>
-              <p className="text-[#d4a843] text-sm text-center mb-4 uppercase tracking-wider">{host.role}</p>
+              <p className="text-[#d4a843] text-sm text-center mb-4 uppercase tracking-wider">{t(`collection.hosts.${host.id}.role`)}</p>
               <p className="font-body text-white/60 text-sm text-center leading-relaxed">
-                {host.description}
+                {t(`collection.hosts.${host.id}.description`)}
               </p>
             </div>
           ))}

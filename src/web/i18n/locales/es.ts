@@ -484,6 +484,104 @@ const es = {
     },
   },
 
+  // Luiz Laffey's Collection Radio Show
+  collection: {
+    overline: "Música • Narrativa • Alma",
+    hero: {
+      title: "La Colección de",
+      titleHighlight: "Luiz Laffey",
+      subtitle: "Más que un programa de radio — es un viaje musical. Disco, funk, soulful house, nu-disco con narrativa que conecta la música al momento. Cada episodio es una experiencia cuidadosamente curada.",
+      ctaSubscribe: "Suscribirse Ahora",
+      ctaSamples: "Muestras Gratuitas",
+    },
+    hosts: {
+      title: "Conoce a los",
+      titleHighlight: "Curadores",
+      luiz: {
+        name: "Luiz Laffey",
+        role: "Presentador, Curador y Narrador",
+        description: "Luiz es el corazón y arquitecto de la Colección de Luiz Laffey. Como creador y presentador principal, aporta más de cuatro décadas de experiencia como DJ, actor y locutor de doblaje al micrófono. Su papel es curar el viaje — tejiendo disco, funk, soulful house y nu-disco en una narrativa que conecta eras, culturas y memorias personales. Al aire, Luiz es la guía y narrador: confiado, juguetón y profundamente conocedor. Establece el tono, comparte historias detrás de cámaras y enmarca cada pista con contexto que transforma canciones en historias.",
+      },
+      alexis: {
+        name: "Alexis Hart",
+        role: "Co-Presentadora, Narradora y Conectora",
+        description: "Alexis es la chispa y equilibrio de la Colección de Luiz Laffey. Mientras Luiz impulsa las inmersiones profundas en la historia de la música y cura el flujo del programa, Alexis trae la voz de la espontaneidad, curiosidad y conexión. Reacciona auténticamente a las historias, hace las preguntas que los oyentes están pensando y ofrece comentarios ingeniosamente que mantienen el ambiente ligero y conversacional.",
+      },
+    },
+    samples: {
+      title: "Muestras",
+      titleHighlight: "Gratuitas",
+      subtitle: "Obtén una vista previa de lo que te espera en nuestra biblioteca completa. Estas muestras muestran el estilo y la calidad de la Colección de Luiz Laffey.",
+      soulfulVibes: "Muestra del Episodio 1: Vibes Soulful",
+      discoMix: "Avance de Mix Disco",
+      funkHeritage: "Selección Funk Heritage",
+      nuDiscoExperience: "Experiencia Nu-Disco",
+      soulfulHouseJourney: "Viaje Soulful House",
+    },
+    library: {
+      title: "Biblioteca",
+      titleHighlight: "Completa",
+      subtitle: "Accede a nuestro archivo completo de episodios con una suscripción. Nuevos episodios añadidos semanalmente.",
+      membersOnly: "Solo Miembros",
+      midnight: "Episodio 45: Disco de Medianoche",
+      funky: "Episodio 44: Amanecer Funky",
+      soulful: "Episodio 43: Tardes Soulful",
+      houseParty: "Episodio 42: Fiesta House",
+    },
+  },
+
+  // Zero Point Zero Radio Show
+  zero: {
+    overline: "Electrónico • Cósmico",
+    hero: {
+      title: "Zero Point",
+      titleHighlight: "Zero",
+      subtitle: "Un viaje cósmico de 60 minutos a través de la música electrónica desde los años 90. De deep house a techno, Zero Point Zero explora la evolución de la música dance mundial.",
+      ctaSubscribe: "Suscribirse Ahora",
+      ctaSamples: "Muestras Gratuitas",
+    },
+    hosts: {
+      title: "Conoce a los",
+      titleHighlight: "DJs",
+      paulinho: {
+        name: "Paulinho Ribeiro",
+        role: "Presentador y Creador",
+        description: "Paulinho comenzó su carrera como locutor comercial en 1987 y se convirtió en presentador de radio FM al año siguiente, papel que continúa desempeñando hasta hoy. Un entusiasta de la música, trabajó como DJ profesional entre 1987 y 1988 y, después de años de investigación y estudio, se convirtió en compositor y productor musical. Hoy, Paulinho presenta Zero Point Zero, un viaje semanal a través del mundo de la música electrónica y sus muchas ramas.",
+      },
+      nilton: {
+        name: "Nilton Rabello",
+        role: "DJ y Curador de Vinil",
+        description: "Nilton Rabello es un tipo muy reservado — no es mucho de hablar, pero todo sobre la música. Su colección, compuesta enteramente de vinilo, ya ha superado los 1.500 discos. Un verdadero amante de la música de calidad, comenzó a vender vinilo raro a mediados de los 80. A principios de los 90, lanzó su propio negocio de importación de discos, DISCOBOX, suministrando discotecas y estaciones de radio FM.",
+      },
+      tony: {
+        name: "Tony Caldeira",
+        role: "DJ y Productor",
+        description: "Tony Caldeira es un empresario de la industria del fitness, amante de la música y entusiasta de la radio. En 1990, invitado por su amigo Nilton Rabello, co-produjo Hot Dance para Manchete FM — un programa adaptado para la escena underground de la danza. Su creciente reconocimiento en la escena de la radio abrió puertas para producir programas en varias estaciones. Durante más de tres décadas, su trabajo ha sido celebrado por oyentes y por la industria de la radio.",
+      },
+    },
+    samples: {
+      title: "Muestras",
+      titleHighlight: "Gratuitas",
+      subtitle: "Experimenta el viaje cósmico. Estas muestras muestran la exploración de música electrónica que define Zero Point Zero.",
+      ninetyElectronic: "Renacimiento Electrónico de los 90",
+      ambientTechno: "Sesión Ambient Techno",
+      deepSpace: "Grooves del Espacio Profundo",
+      cosmicJourney: "Introducción Viaje Cósmico",
+      progressiveHouse: "Mix Progressive House",
+    },
+    library: {
+      title: "Biblioteca",
+      titleHighlight: "Completa",
+      subtitle: "Accede a nuestro archivo completo de episodios con una suscripción. Nuevos episodios lanzados semanalmente.",
+      membersOnly: "Solo Miembros",
+      gravity: "Episodio 75: Pozo de Gravedad",
+      nebula: "Episodio 76: Danza Nebulosa",
+      solar: "Episodio 77: Vientos Solares",
+      horizon: "Episodio 78: Horizonte de Eventos",
+      orbitalDrift: "Episodio Completo: Deriva Orbital",
+    },
+  },
+
   // Footer
   footer: {
     description: "Una empresa de producción creativa en la intersección de narrativa, sonido, idioma y cultura. Dando vida a las voces más allá de las fronteras.",
