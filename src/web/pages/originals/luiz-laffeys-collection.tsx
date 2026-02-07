@@ -22,7 +22,7 @@ const hosts = [
 const freeSamples = [
   { 
     id: 1, 
-    title: "Episode Sample 1: Soulful Vibes", 
+    title: "Soulful Vibes", 
     duration: "3:15", 
     size: "1.3MB",
     url: "/c9dd9cef-0a41-4279-a114-b14a016183e2.mp3",
