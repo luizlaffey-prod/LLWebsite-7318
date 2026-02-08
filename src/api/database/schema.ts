@@ -1,7 +1,9 @@
-import { sqliteTable, text, real, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, real, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
-// Users table - identity and account info only
+// ========================
+// USERS TABLE
+// ========================
 export const users = sqliteTable('users', {
   user_id: text('user_id').primaryKey(),
   email: text('email').unique().notNull(),
@@ -10,62 +12,100 @@ export const users = sqliteTable('users', {
   status: text('status').default('active'),
 });
 
-// Programs table - what can be subscribed to
-export const programs = sqliteTable('programs', {
-  program_id: text('program_id').primaryKey(),
-  program_name: text('program_name').notNull(),
-  description: text('description'),
+// ========================
+// ORIGINALS TABLE (Programas Licenciáveis)
+// ========================
+export const originals = sqliteTable('originals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  slug: text('slug').unique().notNull(), // 'luiz-laffey-collection', 'zero-point-zero'
+  name: text('name').notNull(), // Display name
   is_active: integer('is_active', { mode: 'boolean' }).default(true),
+  created_at: text('created_at').default(new Date().toISOString()),
 });
 
-// Plans table - billing options (Monthly, Annual, Strategic Partnership)
+// ========================
+// PLANS TABLE
+// ========================
 export const plans = sqliteTable('plans', {
-  plan_id: text('plan_id').primaryKey(),
-  plan_name: text('plan_name').notNull(),
-  billing_cycle: text('billing_cycle'), // 'monthly', 'annual'
-  price: real('price'),
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  slug: text('slug').unique().notNull(), // 'monthly', 'annual', 'dual-annual'
+  name: text('name').notNull(), // Display name
+  allows_multiple: integer('allows_multiple', { mode: 'boolean' }).notNull(), // 0 = single original, 1 = all originals
+  price_cents: integer('price_cents').notNull(), // Price in cents
+  billing_cycle: text('billing_cycle'), // 'monthly', 'annual', etc
   description: text('description'),
   is_active: integer('is_active', { mode: 'boolean' }).default(true),
+  created_at: text('created_at').default(new Date().toISOString()),
 });
 
-// Subscriptions table - CORE ACCESS CONTROL
-// One subscription = one program access
-// Multiple programs require multiple subscriptions
+// ========================
+// SUBSCRIPTIONS TABLE
+// ========================
+// One subscription row per user + plan combo
+// Access to specific original(s) is defined in subscription_originals table
 export const subscriptions = sqliteTable('subscriptions', {
-  subscription_id: text('subscription_id').primaryKey(),
+  id: integer('id').primaryKey({ autoIncrement: true }),
   user_id: text('user_id').notNull().references(() => users.user_id),
-  program_id: text('program_id').notNull().references(() => programs.program_id),
-  plan_id: text('plan_id').notNull().references(() => plans.plan_id),
-  status: text('status').default('active'), // 'active', 'canceled', 'expired', 'pending'
+  plan_id: integer('plan_id').notNull().references(() => plans.id),
+  status: text('status').notNull().default('active'), // 'active', 'canceled', 'expired'
   start_date: text('start_date').default(new Date().toISOString()),
-  end_date: text('end_date'), // NULL means no expiration
-  auto_renew: integer('auto_renew', { mode: 'boolean' }).default(true),
+  end_date: text('end_date'), // NULL = no expiration
   payment_id: text('payment_id'), // PayPal transaction ID
   created_at: text('created_at').default(new Date().toISOString()),
 });
 
-// Relations
+// ========================
+// SUBSCRIPTION_ORIGINALS TABLE (PIVOT - CRITICAL)
+// ========================
+// Links subscriptions to originals
+// This is the source of truth for access control
+export const subscriptionOriginals = sqliteTable(
+  'subscription_originals',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    subscription_id: integer('subscription_id').notNull().references(() => subscriptions.id),
+    original_id: integer('original_id').notNull().references(() => originals.id),
+    created_at: text('created_at').default(new Date().toISOString()),
+  },
+  (table) => ({
+    // Prevent duplicate subscription-original links
+    uniqueSubscriptionOriginal: uniqueIndex('unique_subscription_original')
+      .on(table.subscription_id, table.original_id),
+  })
+);
+
+// ========================
+// RELATIONS
+// ========================
 export const usersRelations = relations(users, ({ many }) => ({
   subscriptions: many(subscriptions),
 }));
 
-export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
   user: one(users, {
     fields: [subscriptions.user_id],
     references: [users.user_id],
   }),
-  program: one(programs, {
-    fields: [subscriptions.program_id],
-    references: [programs.program_id],
-  }),
   plan: one(plans, {
     fields: [subscriptions.plan_id],
-    references: [plans.plan_id],
+    references: [plans.id],
+  }),
+  originals: many(subscriptionOriginals),
+}));
+
+export const subscriptionOriginalsRelations = relations(subscriptionOriginals, ({ one }) => ({
+  subscription: one(subscriptions, {
+    fields: [subscriptionOriginals.subscription_id],
+    references: [subscriptions.id],
+  }),
+  original: one(originals, {
+    fields: [subscriptionOriginals.original_id],
+    references: [originals.id],
   }),
 }));
 
-export const programsRelations = relations(programs, ({ many }) => ({
-  subscriptions: many(subscriptions),
+export const originalsRelations = relations(originals, ({ many }) => ({
+  subscriptionOriginals: many(subscriptionOriginals),
 }));
 
 export const plansRelations = relations(plans, ({ many }) => ({
