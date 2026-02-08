@@ -1,12 +1,13 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   Radio, Download, Play, Pause, Clock, Calendar, 
   User, Settings, ChevronRight,
   Music, Zap, Shield, FileText, Star, Lock
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useSubscription } from "../hooks/useSubscription";
 
 const licensedPrograms = [
   {
@@ -42,8 +43,22 @@ const archiveEpisodes = [
 
 export default function Broadcasts() {
   const { t } = useTranslation();
+  const { originals, loading } = useSubscription();
   const [isPlaying, setIsPlaying] = useState<number | null>(null);
   const [expandedArchive, setExpandedArchive] = useState(false);
+
+  // Filter programs based on user's subscriptions
+  const userPrograms = useMemo(() => {
+    if (loading) return [];
+    if (originals.length === 0) return [];
+    
+    return licensedPrograms.filter(program => 
+      originals.some(o => 
+        (o.slug === 'zero-point-zero' && program.id === 'zero-point-zero') ||
+        (o.slug === 'luiz-laffey-collection' && program.id === 'luiz-laffeys-collection')
+      )
+    );
+  }, [originals, loading]);
 
   return (
     <Layout>
@@ -78,7 +93,17 @@ export default function Broadcasts() {
             <div className="lg:col-span-2 space-y-10">
               {/* Program Cards */}
               <div className="grid md:grid-cols-2 gap-6">
-                {licensedPrograms.map((program) => (
+                {loading ? (
+                  <div className="text-white/60">Loading your subscriptions...</div>
+                ) : userPrograms.length === 0 ? (
+                  <div className="text-white/60 text-center py-8">
+                    <p className="mb-4">You don't have any active subscriptions yet.</p>
+                    <Link href="/plans" className="text-[#d4a843] hover:text-[#e8c574]">
+                      Browse Plans
+                    </Link>
+                  </div>
+                ) : (
+                  userPrograms.map((program) => (
                   <div 
                     key={program.id}
                     className="bg-[#111111] border border-white/5 rounded-2xl p-6 hover:border-[#d4a843]/20 transition-all duration-300"
@@ -115,7 +140,8 @@ export default function Broadcasts() {
                       Download Broadcast File
                     </button>
                   </div>
-                ))}
+                ))
+                )}
               </div>
 
               {/* Episode Archive */}

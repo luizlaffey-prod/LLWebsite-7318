@@ -1,10 +1,10 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
 import { ArrowRight, Check, Radio, Download, Sparkles, Clock, Shield, HelpCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { PayPalButton } from "../components/PayPalButton";
 import { useAuth } from "../hooks/useAuth";
+import { useSubscription } from "../hooks/useSubscription";
 
 type ProgramType = 'ZERO_POINT_ZERO' | 'LUIZ_LAFFEY_COLLECTION';
 
@@ -67,6 +67,7 @@ function HeroSection({ selectedProgram }: { selectedProgram: ProgramType }) {
 function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram: ProgramType; onProgramSelect: (program: ProgramType) => void }) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { subscribe } = useSubscription();
 
   const plans = [
     {
@@ -172,13 +173,30 @@ function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram:
                 ))}
               </ul>
 
-              {/* CTA - PayPal or Login */}
+              {/* CTA - Subscribe or Login */}
               {user ? (
-                <PayPalButton
-                  planId={plan.planId}
-                  programId={selectedProgram}
-                  onSuccess={() => window.location.href = '/dashboard'}
-                />
+                <button
+                  onClick={() => {
+                    const planIdMap: Record<string, number> = {
+                      'MONTHLY_BROADCAST': 1,
+                      'ANNUAL_BROADCAST': 2,
+                      'STRATEGIC_ANNUAL': 3,
+                    };
+                    const planId = planIdMap[plan.planId];
+                    const originalId = plan.isDual ? undefined : (selectedProgram === 'ZERO_POINT_ZERO' ? 1 : 2);
+                    subscribe(planId, originalId);
+                    window.location.href = '/broadcasts';
+                  }}
+                  className={`w-full py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
+                    plan.popular
+                      ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
+                      : plan.isDual
+                      ? "bg-[#0047ab] text-white hover:bg-[#005ce6]"
+                      : "border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843]/10"
+                  }`}
+                >
+                  {t(plan.ctaKey)}
+                </button>
               ) : (
                 <Link
                   href={`/login?program=${selectedProgram}&plan=${plan.planId}`}
