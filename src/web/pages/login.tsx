@@ -1,6 +1,6 @@
 import { Layout } from "../components/shared";
-import { Link } from "wouter";
-import { useState } from "react";
+import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { Mail, Lock, User, ArrowRight, Check, Radio, Download, Sparkles } from "lucide-react";
 import { FaGoogle, FaApple } from "react-icons/fa";
 
@@ -13,9 +13,28 @@ const benefits = [
 ];
 
 function LoginPage() {
+  const [, params] = useLocation();
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "dual">("annual");
   const [selectedProgram, setSelectedProgram] = useState<Program>('ZERO_POINT_ZERO');
+
+  // Read program and plan from URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const program = urlParams.get('program') as Program;
+    const plan = urlParams.get('plan');
+    
+    if (program) {
+      setSelectedProgram(program);
+    }
+    if (plan === 'MONTHLY_BROADCAST') {
+      setSelectedPlan('monthly');
+    } else if (plan === 'ANNUAL_BROADCAST') {
+      setSelectedPlan('annual');
+    } else if (plan === 'STRATEGIC_ANNUAL') {
+      setSelectedPlan('dual');
+    }
+  }, []);
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,40 +213,7 @@ function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Program Selection - Only show if not Dual plan */}
-                  {selectedPlan !== "dual" && (
-                    <div className="space-y-3 mb-6 pb-6 border-b border-white/10">
-                      <label className="block font-body text-white/80 text-sm">
-                        Select License Program
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedProgram('ZERO_POINT_ZERO')}
-                          className={`p-4 rounded-lg border text-center transition-all ${
-                            selectedProgram === 'ZERO_POINT_ZERO'
-                              ? "border-[#e67e22] bg-[#e67e22]/10"
-                              : "border-white/10 hover:border-white/20"
-                          }`}
-                        >
-                          <div className="font-body text-white font-medium text-sm">Zero Point Zero</div>
-                          <div className="font-body text-[#e67e22] text-xs mt-1">Electronic Music</div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedProgram('LUIZ_LAFFEY_COLLECTION')}
-                          className={`p-4 rounded-lg border text-center transition-all ${
-                            selectedProgram === 'LUIZ_LAFFEY_COLLECTION'
-                              ? "border-[#d4a843] bg-[#d4a843]/10"
-                              : "border-white/10 hover:border-white/20"
-                          }`}
-                        >
-                          <div className="font-body text-white font-medium text-sm">Luiz Collection</div>
-                          <div className="font-body text-[#d4a843] text-xs mt-1">Music Discovery</div>
-                        </button>
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* Display selected program info */}
                   <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">

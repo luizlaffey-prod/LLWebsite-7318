@@ -181,7 +181,7 @@ function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram:
                 />
               ) : (
                 <Link
-                  href="/login"
+                  href={`/login?program=${selectedProgram}&plan=${plan.planId}`}
                   className={`block w-full text-center py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
                     plan.popular
                       ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
