@@ -1,5 +1,8 @@
 import { Hono } from 'hono';
 import { createSubscription, getPlan } from '../subscriptions/utils';
+import { database } from '../database';
+import { subscriptions, subscriptionOriginals, originals } from '../database/schema';
+import { eq } from 'drizzle-orm';
 
 /**
  * PayPal Integration for Luiz Laffey Productions
@@ -11,6 +14,8 @@ import { createSubscription, getPlan } from '../subscriptions/utils';
  * 4. User approves payment
  * 5. Frontend calls /api/paypal/capture-order with orderID, user_id
  * 6. Backend verifies payment and creates subscription record
+ * 7. PayPal sends webhook notification to /api/paypal/webhook
+ * 8. Backend creates subscription via webhook
  */
 
 const app = new Hono().basePath('/api/paypal');
@@ -177,6 +182,145 @@ app.post('/capture-order', async (c) => {
       details: error instanceof Error ? error.message : 'Unknown error',
     }, 500);
   }
+});
+
+/**
+ * POST /api/paypal/webhook
+ * Handle PayPal webhook notifications
+ * 
+ * PayPal sends event notifications here automatically when:
+ * - Payment is captured
+ * - Payment is denied
+ * - Subscription is cancelled
+ */
+app.post('/webhook', async (c) => {
+  try {
+    const event = await c.req.json();
+    
+    console.log('🔔 PayPal Webhook Event:', event.event_type);
+    console.log('📦 Event ID:', event.id);
+
+    // Handle different event types
+    switch (event.event_type) {
+      case 'CHECKOUT.ORDER.COMPLETED':
+      case 'PAYMENT.CAPTURE.COMPLETED': {
+        const resource = event.resource;
+        console.log('💰 Payment captured:', resource.id);
+
+        try {
+          // Extract custom data from the purchase unit
+          const customData = JSON.parse(resource.purchase_units?.[0]?.custom_id || '{}');
+          const { user_id, program_id, plan_id, user_email } = customData;
+
+          if (!user_id || !plan_id) {
+            console.warn('⚠️ Missing required data in webhook');
+            return c.json({ success: true }); // Still return 200 to PayPal
+          }
+
+          console.log('👤 Creating subscription for:', { user_id, program_id, plan_id });
+
+          // Create subscription record
+          const [subscription] = await database
+            .insert(subscriptions)
+            .values({
+              user_id,
+              plan_id: Number(plan_id),
+              status: 'active',
+              payment_id: resource.id,
+              start_date: new Date().toISOString(),
+            })
+            .returning();
+
+          console.log('✅ Subscription created:', subscription.id);
+
+          // If program_id specified, link it
+          if (program_id) {
+            await database
+              .insert(subscriptionOriginals)
+              .values({
+                subscription_id: subscription.id,
+                original_id: Number(program_id),
+              });
+
+            console.log('🔗 Linked subscription to program:', program_id);
+          } else {
+            // If no program_id, link ALL originals (for dual plans)
+            const allOriginals = await database
+              .select({ id: originals.id })
+              .from(originals)
+              .where(eq(originals.is_active, true));
+
+            for (const original of allOriginals) {
+              await database
+                .insert(subscriptionOriginals)
+                .values({
+                  subscription_id: subscription.id,
+                  original_id: original.id,
+                });
+            }
+
+            console.log('🔗 Linked subscription to all originals');
+          }
+
+          // TODO: Send confirmation email here
+          console.log('📧 TODO: Send confirmation email to', user_email);
+
+        } catch (error) {
+          console.error('❌ Error processing payment:', error);
+          // Still return 200 to avoid PayPal retrying
+        }
+        break;
+      }
+
+      case 'PAYMENT.CAPTURE.DENIED': {
+        console.log('❌ Payment denied:', event.resource.id);
+        console.log('❌ Reason:', event.resource.status_details?.reason);
+        
+        // TODO: Send failure email
+        console.log('📧 TODO: Send payment denied email');
+        break;
+      }
+
+      case 'BILLING.SUBSCRIPTION.CANCELLED': {
+        console.log('🚫 Subscription cancelled:', event.resource.id);
+        
+        // TODO: Update subscription status to 'cancelled'
+        // TODO: Send cancellation email
+        console.log('📧 TODO: Send cancellation email');
+        break;
+      }
+
+      default:
+        console.log('ℹ️ Unhandled event type:', event.event_type);
+    }
+
+    // Always respond 200 to PayPal (webhook received and processed)
+    return c.json({ 
+      success: true,
+      event_id: event.id,
+      event_type: event.event_type
+    });
+
+  } catch (error) {
+    console.error('❌ Webhook error:', error);
+    // Still return 200 to avoid PayPal retrying
+    return c.json({ 
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 200);
+  }
+});
+
+/**
+ * GET /api/paypal/webhook-test
+ * Test if webhook is accessible
+ */
+app.get('/webhook-test', async (c) => {
+  return c.json({ 
+    success: true,
+    message: 'Webhook endpoint is accessible',
+    webhook_url: 'POST /api/paypal/webhook'
+  });
 });
 
 export default app;
