@@ -1,4 +1,4 @@
-import { sqliteTable, text, real, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, real, integer, uniqueIndex, boolean } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // ========================
@@ -79,6 +79,7 @@ export const subscriptionOriginals = sqliteTable(
 // ========================
 export const usersRelations = relations(users, ({ many }) => ({
   subscriptions: many(subscriptions),
+  stationSettings: many(stationSettings),
 }));
 
 export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
@@ -111,3 +112,72 @@ export const originalsRelations = relations(originals, ({ many }) => ({
 export const plansRelations = relations(plans, ({ many }) => ({
   subscriptions: many(subscriptions),
 }));
+
+// ========================
+// STATION SETTINGS TABLE
+// ========================
+// Stores broadcaster operational configuration
+export const stationSettings = sqliteTable('station_settings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  user_id: text('user_id').notNull().references(() => users.user_id),
+
+  // Station Identity
+  station_name: text('station_name').notNull(),
+  station_call_sign: text('station_call_sign'),
+  country: text('country').notNull(),
+  city_region: text('city_region').notNull(),
+  broadcast_type: text('broadcast_type'), // FM, AM, Online Radio, Community, Commercial
+  primary_language: text('primary_language').notNull(),
+
+  // Broadcast Preferences
+  audio_format: text('audio_format'), // WAV, MP3
+  bitrate: text('bitrate'), // 128, 192, 256, 320
+  loudness_standard: text('loudness_standard').default('-16 LUFS'), // -16 LUFS, -14 LUFS
+  is_stereo: integer('is_stereo', { mode: 'boolean' }).default(true),
+  file_naming_preference: text('file_naming_preference'),
+  time_zone: text('time_zone'),
+  air_days: text('air_days'), // JSON array of days
+  air_time_start: text('air_time_start'), // HH:MM format
+  air_time_end: text('air_time_end'), // HH:MM format
+  is_live: integer('is_live', { mode: 'boolean' }).default(false),
+  usage_type: text('usage_type'), // full_episode_only, clips_allowed
+
+  // Branding & Assets
+  logo_dark_url: text('logo_dark_url'),
+  logo_light_url: text('logo_light_url'),
+  station_tagline: text('station_tagline'),
+  voice_style: text('voice_style'), // Neutral, Energetic, Smooth
+  pronunciation_notes: text('pronunciation_notes'),
+
+  // Contacts
+  primary_contact_name: text('primary_contact_name').notNull(),
+  primary_contact_email: text('primary_contact_email').notNull(),
+  primary_contact_role: text('primary_contact_role'), // Program Director, Station Manager, Producer
+  billing_contact_name: text('billing_contact_name'),
+  billing_contact_email: text('billing_contact_email'),
+
+  // Licensing & Compliance
+  license_confirmed: integer('license_confirmed', { mode: 'boolean' }).default(false),
+  station_website: text('station_website'),
+
+  // Tracking
+  created_at: text('created_at').default(new Date().toISOString()),
+  updated_at: text('updated_at').default(new Date().toISOString()),
+
+  // Section-specific update tracking
+  identity_updated_at: text('identity_updated_at'),
+  preferences_updated_at: text('preferences_updated_at'),
+  branding_updated_at: text('branding_updated_at'),
+  contacts_updated_at: text('contacts_updated_at'),
+  licensing_updated_at: text('licensing_updated_at'),
+});
+
+// Relations
+export const stationSettingsRelations = relations(stationSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [stationSettings.user_id],
+    references: [users.user_id],
+  }),
+}));
+
+
