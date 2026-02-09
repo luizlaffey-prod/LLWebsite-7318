@@ -3,6 +3,8 @@ import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { Mail, Lock, User, ArrowRight, Check, Radio, Download, Sparkles } from "lucide-react";
 import { FaGoogle, FaApple } from "react-icons/fa";
+import { useAuth } from "../hooks/useAuth";
+import { useSubscription } from "../hooks/useSubscription";
 
 type Program = 'ZERO_POINT_ZERO' | 'LUIZ_LAFFEY_COLLECTION';
 
@@ -17,6 +19,8 @@ function LoginPage() {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "annual" | "dual">("annual");
   const [selectedProgram, setSelectedProgram] = useState<Program>('ZERO_POINT_ZERO');
+  const { signup } = useAuth();
+  const { subscribe } = useSubscription();
 
   // Read program and plan from URL params
   useEffect(() => {
@@ -39,6 +43,37 @@ function LoginPage() {
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
     window.location.href = "/broadcasts";
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      // Sign up user
+      await signup(email, name, password);
+
+      // Map selected plan to planId and originalId
+      const planIdMap: Record<string, number> = {
+        'monthly': 1,
+        'annual': 2,
+        'dual': 3,
+      };
+      const planId = planIdMap[selectedPlan];
+      const originalId = selectedPlan === 'dual' ? undefined : (selectedProgram === 'ZERO_POINT_ZERO' ? 1 : 2);
+
+      // Subscribe to selected plan
+      subscribe(planId, originalId);
+
+      // Redirect to broadcasts
+      window.location.href = '/broadcasts';
+    } catch (error) {
+      console.error('Signup failed:', error);
+    }
   };
 
   return (
@@ -121,7 +156,7 @@ function LoginPage() {
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                       <input
-                        type="email"
+                        type="email" name="email" required
                         className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg font-body text-white placeholder:text-white/40 focus:border-[#d4a843] focus:outline-none transition-colors"
                         placeholder="your@email.com"
                       />
@@ -161,7 +196,7 @@ function LoginPage() {
                 </form>
               ) : (
                 /* Sign Up Form */
-                <form className="space-y-5">
+                <form className="space-y-5" onSubmit={handleSignUp}>
                   {/* Plan Selection */}
                   <div className="space-y-3 mb-6">
                     <label className="block font-body text-white/80 text-sm">
@@ -237,6 +272,8 @@ function LoginPage() {
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                       <input
                         type="text"
+                        name="name"
+                        required
                         className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg font-body text-white placeholder:text-white/40 focus:border-[#d4a843] focus:outline-none transition-colors"
                         placeholder="John Doe"
                       />
@@ -250,7 +287,7 @@ function LoginPage() {
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                       <input
-                        type="email"
+                        type="email" name="email" required
                         className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg font-body text-white placeholder:text-white/40 focus:border-[#d4a843] focus:outline-none transition-colors"
                         placeholder="your@email.com"
                       />
@@ -265,6 +302,8 @@ function LoginPage() {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                       <input
                         type="password"
+                        name="password"
+                        required
                         className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg font-body text-white placeholder:text-white/40 focus:border-[#d4a843] focus:outline-none transition-colors"
                         placeholder="••••••••"
                       />
