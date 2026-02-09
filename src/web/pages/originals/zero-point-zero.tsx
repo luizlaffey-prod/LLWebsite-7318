@@ -364,8 +364,23 @@ export default function ZeroPointZero() {
   const { user } = useAuth();
   const { hasAccess, loading } = useSubscription();
 
+  // Show loading state while checking access
+  if (loading) {
+    return (
+      <Layout>
+        <section className="relative py-24 overflow-hidden min-h-screen flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0f0906] to-[#0a0a0a]" />
+          <div className="relative text-center">
+            <div className="w-12 h-12 border-4 border-[#e67e22]/20 border-t-[#e67e22] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-white/70">Loading...</p>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
+
   // If user is not logged in or doesn't have subscription, show lock screen
-  if (!loading && (!user || !hasAccess(1))) {
+  if (!user || !hasAccess(1)) {
     return (
       <Layout>
         <section className="relative py-24 overflow-hidden min-h-screen flex items-center justify-center">
