@@ -195,6 +195,50 @@ function HeroSection() {
   );
 }
 
+function VideoInvitationSection() {
+  const { t } = useTranslation();
+  
+  return (
+    <section className="py-24 relative">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4a843]/20 to-transparent" />
+      
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="text-center mb-12">
+          <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
+            Join Our Network
+          </span>
+          <h2 className="font-heading text-4xl md:text-5xl text-white mb-6">
+            Invitation to <span className="text-[#d4a843]">Broadcasters</span>
+          </h2>
+          <p className="font-body text-white/60 max-w-2xl mx-auto">
+            Discover how Luiz Laffey's Collection can elevate your station's programming
+          </p>
+        </div>
+
+        <div className="flex justify-center">
+          <div className="relative w-full max-w-md">
+            {/* 9:16 aspect ratio container */}
+            <div className="aspect-[9/16] rounded-2xl overflow-hidden border border-[#d4a843]/30 bg-black shadow-2xl shadow-[#d4a843]/10">
+              <video
+                controls
+                playsInline
+                className="w-full h-full object-cover"
+                poster="/luiz-laffey-invitation-poster.jpg"
+              >
+                <source src="/luiz-laffey-invitation.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            
+            {/* Decorative glow */}
+            <div className="absolute -inset-4 bg-[#d4a843]/10 rounded-3xl blur-2xl -z-10" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function HostsSection() {
   const { t } = useTranslation();
   
@@ -384,6 +428,7 @@ export default function LuizLaffeysCollection() {
   return (
     <Layout>
       <HeroSection />
+      <VideoInvitationSection />
       <HostsSection />
       <SamplesSection />
       <MemberLibraryPreview />
