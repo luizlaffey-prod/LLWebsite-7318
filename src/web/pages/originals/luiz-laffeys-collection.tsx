@@ -4,7 +4,7 @@ import { ArrowRight, Play, Pause, Lock, Clock } from "lucide-react";
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
-import { useSubscriptions } from "../../hooks/useSubscriptions";
+import { useSubscription } from "../../hooks/useSubscription";
 
 const hosts = [
   {
@@ -378,10 +378,10 @@ function CTASection() {
 
 export default function LuizLaffeysCollection() {
   const { user } = useAuth();
-  const { hasProgram, loading } = useSubscriptions(user?.user_id);
+  const { hasAccess, loading } = useSubscription();
 
   // If user is not logged in or doesn't have subscription, show lock screen
-  if (!loading && (!user || !hasProgram('LUIZ_LAFFEY_COLLECTION'))) {
+  if (!loading && (!user || !hasAccess(2))) {
     return (
       <Layout>
         <section className="relative py-24 overflow-hidden min-h-screen flex items-center justify-center">
