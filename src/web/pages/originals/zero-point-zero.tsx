@@ -364,62 +364,7 @@ export default function ZeroPointZero() {
   const { user } = useAuth();
   const { hasAccess, loading } = useSubscription();
 
-  // Show loading state while checking access
-  if (loading) {
-    return (
-      <Layout>
-        <section className="relative py-24 overflow-hidden min-h-screen flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0f0906] to-[#0a0a0a]" />
-          <div className="relative text-center">
-            <div className="w-12 h-12 border-4 border-[#e67e22]/20 border-t-[#e67e22] rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-white/70">Loading...</p>
-          </div>
-        </section>
-      </Layout>
-    );
-  }
-
-  // If user is not logged in or doesn't have subscription, show lock screen
-  if (!user || !hasAccess(1)) {
-    return (
-      <Layout>
-        <section className="relative py-24 overflow-hidden min-h-screen flex items-center justify-center">
-          {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0f0906] to-[#0a0a0a]" />
-          <div className="absolute top-1/3 -left-48 w-96 h-96 bg-[#e67e22]/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-[#e67e22]/5 rounded-full blur-3xl" />
-
-          {/* Content */}
-          <div className="relative max-w-2xl mx-auto px-6 text-center">
-            <Lock className="w-24 h-24 text-[#e67e22] mx-auto mb-8 opacity-50" />
-            <h1 className="font-heading text-4xl md:text-5xl text-white mb-4">
-              Exclusive Access Required
-            </h1>
-            <p className="font-body text-lg text-white/70 mb-8">
-              This program requires an active subscription. Subscribe now to access Zero Point Zero and enjoy our full library of episodes.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/plans?program=ZERO_POINT_ZERO"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#e67e22] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#f39c12] hover:shadow-xl hover:shadow-[#e67e22]/25"
-              >
-                Subscribe Now
-                <ArrowRight size={18} />
-              </Link>
-              <Link
-                href="/"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#e67e22] hover:text-[#e67e22]"
-              >
-                Back to Home
-              </Link>
-            </div>
-          </div>
-        </section>
-      </Layout>
-    );
-  }
-
-  // User has access - show full content
+  // Always show the full page - no lock screen
   return (
     <Layout>
       <HeroSection />
