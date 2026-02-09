@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useSubscription } from "../hooks/useSubscription";
+import { StationSettingsModal } from "../components/StationSettingsModal";
 
 const licensedPrograms = [
   {
@@ -46,6 +47,7 @@ export default function Broadcasts() {
   const { originals, loading } = useSubscription();
   const [isPlaying, setIsPlaying] = useState<number | null>(null);
   const [expandedArchive, setExpandedArchive] = useState(false);
+  const [isStationSettingsOpen, setIsStationSettingsOpen] = useState(false);
 
   // Filter programs based on user's subscriptions
   const userPrograms = useMemo(() => {
@@ -78,7 +80,10 @@ export default function Broadcasts() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all text-sm">
+              <button
+                onClick={() => setIsStationSettingsOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all text-sm"
+              >
                 <Settings size={18} />
                 Station Settings
               </button>
@@ -336,6 +341,12 @@ export default function Broadcasts() {
             </div>
           </div>
         </div>
+
+        {/* Station Settings Modal */}
+        <StationSettingsModal
+          isOpen={isStationSettingsOpen}
+          onClose={() => setIsStationSettingsOpen(false)}
+        />
       </section>
     </Layout>
   );
