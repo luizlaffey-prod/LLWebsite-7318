@@ -14,6 +14,7 @@ import Plans from "./pages/plans";
 import Contact from "./pages/contact";
 import Login from "./pages/login";
 import Broadcasts from "./pages/broadcasts";
+import SubscriptionSuccess from "./pages/subscription-success";
 import AIVideoAds from "./pages/services/ai-video-ads";
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
           <Route path="/contact" component={Contact} />
           <Route path="/login" component={Login} />
           <Route path="/broadcasts" component={Broadcasts} />
+          <Route path="/subscription-success" component={SubscriptionSuccess} />
           {/* Fallback to Home for unknown routes */}
           <Route component={Home} />
         </Switch>

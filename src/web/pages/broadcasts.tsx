@@ -44,6 +44,7 @@ const archiveEpisodes = [
 
 export default function Broadcasts() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { originals, loading } = useSubscription();
   const [isPlaying, setIsPlaying] = useState<number | null>(null);
   const [expandedArchive, setExpandedArchive] = useState(false);
@@ -73,10 +74,10 @@ export default function Broadcasts() {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
             <div>
               <h1 className="font-heading text-3xl md:text-4xl text-white mb-2">
-                Your <span className="text-[#d4a843]">Licensed Programs</span>
+                Welcome, <span className="text-[#d4a843]">{user?.name || "Guest"}</span>
               </h1>
               <p className="font-body text-white/60">
-                Professional radio content management and distribution.
+                Your <span className="text-[#d4a843]">Licensed Programs</span> and broadcast management.
               </p>
             </div>
             <div className="flex items-center gap-3">

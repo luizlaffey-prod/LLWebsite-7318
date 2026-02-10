@@ -185,7 +185,12 @@ function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram:
                     const planId = planIdMap[plan.planId];
                     const originalId = plan.isDual ? undefined : (selectedProgram === 'ZERO_POINT_ZERO' ? 1 : 2);
                     subscribe(planId, originalId);
-                    window.location.href = '/broadcasts';
+                    // Redirect to success page with params
+                    const params = new URLSearchParams({
+                      plan: plan.planId,
+                      program: selectedProgram,
+                    });
+                    window.location.href = `/subscription-success?${params.toString()}`;
                   }}
                   className={`w-full py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
                     plan.popular
