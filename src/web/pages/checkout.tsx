@@ -23,10 +23,10 @@ export default function Checkout() {
     'STRATEGIC_ANNUAL': 'Dual Program Plan',
   };
 
-  const planPrices: Record<string, string> = {
-    'MONTHLY_BROADCAST': '$99',
-    'ANNUAL_BROADCAST': '$999',
-    'STRATEGIC_ANNUAL': '$1,799',
+  const planPrices: Record<string, { display: string; cents: number }> = {
+    'MONTHLY_BROADCAST': { display: '$99', cents: 9900 },
+    'ANNUAL_BROADCAST': { display: '$999', cents: 99900 },
+    'STRATEGIC_ANNUAL': { display: '$1,799', cents: 179900 },
   };
 
   const programNames: Record<string, string> = {
@@ -211,7 +211,7 @@ export default function Checkout() {
               <div className="border-t border-white/10 pt-6 space-y-4">
                 <div className="flex justify-between font-body text-white/70">
                   <span>Subtotal</span>
-                  <span>{planPrices[planId]}</span>
+                  <span>{planPrices[planId]?.display}</span>
                 </div>
                 <div className="flex justify-between font-body text-white/70">
                   <span>Tax</span>
@@ -219,7 +219,7 @@ export default function Checkout() {
                 </div>
                 <div className="flex justify-between font-heading text-xl text-white pt-4 border-t border-white/10">
                   <span>Total</span>
-                  <span className="text-[#d4a843]">{planPrices[planId]}</span>
+                  <span className="text-[#d4a843]">{planPrices[planId]?.display}</span>
                 </div>
               </div>
 
