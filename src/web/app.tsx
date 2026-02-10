@@ -11,6 +11,7 @@ import Originals from "./pages/originals";
 import LuizLaffeysCollection from "./pages/originals/luiz-laffeys-collection";
 import ZeroPointZero from "./pages/originals/zero-point-zero";
 import Plans from "./pages/plans";
+import Checkout from "./pages/checkout";
 import Contact from "./pages/contact";
 import Login from "./pages/login";
 import Broadcasts from "./pages/broadcasts";
@@ -31,6 +32,7 @@ function App() {
           <Route path="/originals/luiz-laffeys-collection" component={LuizLaffeysCollection} />
           <Route path="/originals/zero-point-zero" component={ZeroPointZero} />
           <Route path="/plans" component={Plans} />
+          <Route path="/checkout" component={Checkout} />
           <Route path="/contact" component={Contact} />
           <Route path="/login" component={Login} />
           <Route path="/broadcasts" component={Broadcasts} />

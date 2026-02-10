@@ -175,24 +175,9 @@ function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram:
 
               {/* CTA - Subscribe or Login */}
               {user ? (
-                <button
-                  onClick={() => {
-                    const planIdMap: Record<string, number> = {
-                      'MONTHLY_BROADCAST': 1,
-                      'ANNUAL_BROADCAST': 2,
-                      'STRATEGIC_ANNUAL': 3,
-                    };
-                    const planId = planIdMap[plan.planId];
-                    const originalId = plan.isDual ? undefined : (selectedProgram === 'ZERO_POINT_ZERO' ? 1 : 2);
-                    subscribe(planId, originalId);
-                    // Redirect to success page with params
-                    const params = new URLSearchParams({
-                      plan: plan.planId,
-                      program: selectedProgram,
-                    });
-                    window.location.href = `/subscription-success?${params.toString()}`;
-                  }}
-                  className={`w-full py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
+                <Link
+                  href={`/checkout?plan=${plan.planId}&program=${selectedProgram}`}
+                  className={`block w-full text-center py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
                     plan.popular
                       ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
                       : plan.isDual
@@ -201,7 +186,7 @@ function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram:
                   }`}
                 >
                   {t(plan.ctaKey)}
-                </button>
+                </Link>
               ) : (
                 <Link
                   href={`/login?program=${selectedProgram}&plan=${plan.planId}`}
