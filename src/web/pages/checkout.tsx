@@ -24,9 +24,9 @@ export default function Checkout() {
   };
 
   const planPrices: Record<string, { display: string; cents: number }> = {
-    'MONTHLY_BROADCAST': { display: '$99', cents: 9900 },
-    'ANNUAL_BROADCAST': { display: '$999', cents: 99900 },
-    'STRATEGIC_ANNUAL': { display: '$1,799', cents: 179900 },
+    'MONTHLY_BROADCAST': { display: '$29', cents: 2900 },
+    'ANNUAL_BROADCAST': { display: '$299', cents: 29900 },
+    'STRATEGIC_ANNUAL': { display: '$418', cents: 41800 },
   };
 
   const programNames: Record<string, string> = {
