@@ -197,8 +197,17 @@ export default function Checkout() {
               
               {/* Program */}
               <div className="mb-6 p-4 bg-white/5 rounded-xl">
-                <p className="text-white/60 text-sm mb-2">Program</p>
-                <p className="text-white font-semibold text-lg">{programNames[program]}</p>
+                <p className="text-white/60 text-sm mb-2">
+                  {planId === 'STRATEGIC_ANNUAL' ? 'Programs' : 'Program'}
+                </p>
+                {planId === 'STRATEGIC_ANNUAL' ? (
+                  <div className="space-y-2">
+                    <p className="text-white font-semibold text-lg">Zero Point Zero</p>
+                    <p className="text-white font-semibold text-lg">Luiz Laffey's Collection</p>
+                  </div>
+                ) : (
+                  <p className="text-white font-semibold text-lg">{programNames[program]}</p>
+                )}
               </div>
 
               {/* Plan */}
