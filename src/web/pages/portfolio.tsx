@@ -151,7 +151,7 @@ const productions = [
     type: "Theatrical Film",
     subtitle: "2025",
     description: "Epic biblical drama bringing the life and ministry of Jesus to audiences worldwide. Directed comprehensive multilingual localization oversight for global theatrical release.",
-    image: "/king-of-kings-en.jpg",
+    image: "/king-of-kings-correct.jpg",
     role: "Head of Languages - Localization Oversight",
     year: "2025"
   },
