@@ -428,7 +428,7 @@ export default function LuizLaffeysCollection() {
   return (
     <Layout>
       <HeroSection />
-      <VideoInvitationSection />
+      {/* VideoInvitationSection temporarily removed - will add YouTube embed when video is uploaded */}
       <HostsSection />
       <SamplesSection />
       <MemberLibraryPreview />
