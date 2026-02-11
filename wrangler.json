@@ -17,7 +17,7 @@
     {
       "binding": "DB",
       "database_name": "llwebsite-production",
-      "database_id": "CREATE_NEW",
+      "database_id": "fd1ffb36-804e-4273-83bf-e7d8d2c94491",
       "migrations_dir": "src/api/migrations"
     }
   ]
