@@ -40,7 +40,7 @@ const productions = [
     type: "Television Series",
     subtitle: "Streaming",
     description: "Adventure-driven series on Angel Studios. Oversaw multilingual dubbing and localization for global streaming audience.",
-    image: "/homestead-series.jpg",  // Fixed: was showing wrong artwork
+    image: "/the-wayfinders.jpg",
     role: "Head of Languages - Localization Oversight",
     year: "2024-2025"
   },
@@ -51,7 +51,7 @@ const productions = [
     type: "Television Series",
     subtitle: "Streaming",
     description: "Post-apocalyptic survival series. Oversaw comprehensive multilingual localization for global streaming distribution.",
-    image: "/the-wayfinders.jpg",  // Fixed: was showing wrong artwork
+    image: "/homestead-series.jpg",
     role: "Head of Languages - Localization Oversight",
     year: "2024-2025"
   },
