@@ -40,32 +40,23 @@ const productions = [
     type: "Television Series",
     subtitle: "Streaming",
     description: "Adventure-driven series on Angel Studios. Oversaw multilingual dubbing and localization for global streaming audience.",
-    image: "/the-wayfinders.jpg",
+    image: "/homestead-series.jpg",  // Fixed: was showing wrong artwork
     role: "Head of Languages - Localization Oversight",
     year: "2024-2025"
   },
+  // Jungle Beat removed - no localization involvement
   {
     id: 5,
-    title: "Jungle Beat",
+    title: "Homestead: The Series",
     type: "Television Series",
-    subtitle: "Animated Series",
-    description: "Animated children's series featuring vibrant adventures. Managed localization across multiple languages for family audiences worldwide.",
-    image: "/jungle-beat.jpg",
+    subtitle: "Streaming",
+    description: "Post-apocalyptic survival series. Oversaw comprehensive multilingual localization for global streaming distribution.",
+    image: "/the-wayfinders.jpg",  // Fixed: was showing wrong artwork
     role: "Head of Languages - Localization Oversight",
     year: "2024-2025"
   },
   {
     id: 6,
-    title: "Homestead: The Series",
-    type: "Television Series",
-    subtitle: "Streaming",
-    description: "Post-apocalyptic survival series. Oversaw comprehensive multilingual localization for global streaming distribution.",
-    image: "/homestead-series.jpg",
-    role: "Head of Languages - Localization Oversight",
-    year: "2024-2025"
-  },
-  {
-    id: 7,
     title: "Sound of Freedom",
     type: "Theatrical Film",
     subtitle: "2023",
@@ -75,7 +66,7 @@ const productions = [
     year: "2023"
   },
   {
-    id: 8,
+    id: 7,
     title: "The Shift",
     type: "Theatrical Film",
     subtitle: "2023",
@@ -85,7 +76,7 @@ const productions = [
     year: "2023"
   },
   {
-    id: 9,
+    id: 8,
     title: "After Death",
     type: "Documentary",
     subtitle: "2023",
@@ -95,7 +86,7 @@ const productions = [
     year: "2023"
   },
   {
-    id: 10,
+    id: 9,
     title: "His Only Son",
     type: "Theatrical Film",
     subtitle: "2023",
@@ -105,7 +96,7 @@ const productions = [
     year: "2023"
   },
   {
-    id: 11,
+    id: 10,
     title: "Cabrini",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -115,7 +106,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 12,
+    id: 11,
     title: "SIGHT",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -125,7 +116,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 13,
+    id: 12,
     title: "Sound of Hope: The Story of Possum Trot",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -135,7 +126,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 14,
+    id: 13,
     title: "Homestead",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -145,7 +136,7 @@ const productions = [
     year: "2024"
   },
   {
-    id: 15,
+    id: 14,
     title: "Brave the Dark",
     type: "Theatrical Film",
     subtitle: "2024",
@@ -155,17 +146,17 @@ const productions = [
     year: "2024"
   },
   {
-    id: 16,
+    id: 15,
     title: "The King of Kings",
     type: "Theatrical Film",
     subtitle: "2025",
     description: "Epic biblical drama bringing the life and ministry of Jesus to audiences worldwide. Directed comprehensive multilingual localization oversight for global theatrical release.",
-    image: "/king-of-kings.jpg",
+    image: "/king-of-kings-english.jpg",  // Fixed: English poster
     role: "Head of Languages - Localization Oversight",
     year: "2025"
   },
   {
-    id: 17,
+    id: 16,
     title: "DAVID",
     type: "Theatrical Film",
     subtitle: "2025",
