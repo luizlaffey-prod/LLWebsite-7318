@@ -18,6 +18,7 @@
     "headline": "AI-voiced news bulletins, ready for broadcast.",
     "subheadline": "Search global news, generate emotional scripts, and ship broadcast-quality audio in minutes.",
     "cta": "Start 7-day free trial",
+    "ctaSub": "Card required, no charge during trial. Auto-converts to Starter.",
     "benefits": {
       "global": {
         "title": "Global Search",
@@ -32,30 +33,92 @@
         "body": "ElevenLabs voices in three languages, ready for the playout system."
       }
     },
-    "plans": {
-      "title": "Pricing",
-      "starter": "Starter",
-      "standard": "Standard",
-      "pro": "Pro"
+    "plansTitle": "Pricing",
+    "plansSubtitle": "Start with a 7-day Pro trial. Cancel anytime.",
+    "footer": {
+      "copyright": "AURA — Automated Urban Radio Audio",
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "contact": "Contact"
     }
+  },
+  "plans": {
+    "starter": {
+      "name": "Starter",
+      "tagline": "Get on air today",
+      "feature_bulletins": "{count} bulletins/day",
+      "feature_duration": "Up to {duration}-minute bulletins",
+      "feature_voices": "1 preset voice per language",
+      "feature_formats": "MP3",
+      "feature_support": "Email support"
+    },
+    "standard": {
+      "name": "Standard",
+      "tagline": "Scheduled and scaled",
+      "feature_bulletins": "{count} bulletins/day",
+      "feature_duration": "Up to {duration}-minute bulletins",
+      "feature_voices": "3 voices per language with regional accents",
+      "feature_formats": "MP3 + WAV",
+      "feature_scheduling": "Basic scheduling",
+      "feature_support": "Email + chat"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "Broadcast infrastructure",
+      "feature_bulletins": "{count} bulletins/day",
+      "feature_duration": "Up to {duration}-minute bulletins",
+      "feature_voices": "Unlimited voices + custom voice clone",
+      "feature_formats": "MP3 + WAV + broadcast specs",
+      "feature_scheduling": "Full automation + calendar",
+      "feature_delivery": "API + FTP + auto-push",
+      "feature_whiteLabel": "White label",
+      "feature_support": "Priority + onboarding call"
+    },
+    "perMonth": "/mo",
+    "selectCta": "Start 7-day trial",
+    "currentBadge": "Current plan",
+    "popularBadge": "Most popular"
   },
   "auth": {
     "loginTitle": "Welcome back",
+    "loginSubtitle": "Log in to your AURA station.",
     "signupTitle": "Create your station account",
+    "signupSubtitle": "Start your 7-day Pro trial in under a minute.",
     "email": "Email",
+    "emailPlaceholder": "you@station.fm",
     "password": "Password",
+    "passwordHint": "At least 8 characters.",
     "confirmPassword": "Confirm password",
     "radioName": "Radio name",
+    "radioNamePlaceholder": "Your station's name",
     "submitLogin": "Log in",
     "submitSignup": "Create account",
-    "noAccount": "No account yet? Sign up",
-    "hasAccount": "Already have an account? Log in",
+    "noAccount": "No account yet?",
+    "signupCta": "Sign up",
+    "hasAccount": "Already have an account?",
+    "loginCta": "Log in",
     "errors": {
       "invalidEmail": "Please enter a valid email.",
       "passwordTooShort": "Password must be at least 8 characters.",
       "passwordMismatch": "Passwords do not match.",
-      "radioNameRequired": "Radio name is required."
-    }
+      "radioNameRequired": "Radio name is required.",
+      "generic": "Something went wrong. Please try again.",
+      "invalidCredentials": "Invalid email or password.",
+      "emailInUse": "An account with this email already exists."
+    },
+    "submitting": "Working..."
+  },
+  "onboarding": {
+    "planTitle": "Choose your plan",
+    "planSubtitle": "All plans start with a 7-day Pro trial. You'll only be charged after the trial.",
+    "continue": "Start trial",
+    "skipForNow": "I'll decide later"
+  },
+  "dashboard": {
+    "welcomeTitle": "Welcome to AURA",
+    "welcomeBody": "Your trial is active. Generate your first bulletin from the News Search panel.",
+    "trialBadge": "Trial — {days} days left",
+    "comingSoon": "More tools land in upcoming releases."
   },
   "common": {
     "loading": "Loading...",
@@ -63,6 +126,8 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
-    "back": "Back"
+    "back": "Back",
+    "yes": "Yes",
+    "no": "No"
   }
 }

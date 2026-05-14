@@ -1,0 +1,72 @@
+export type PlanTier = 'starter' | 'standard' | 'pro';
+
+export interface PlanDefinition {
+  tier: PlanTier;
+  priceMonthly: number;
+  bulletinsPerDay: number;
+  maxDurationSeconds: number;
+  voicesPerLanguage: number | 'unlimited';
+  accentDepth: 'generic' | 'regional' | 'custom';
+  formats: ('mp3' | 'wav' | 'broadcast')[];
+  scheduling: 'none' | 'basic' | 'full';
+  templates: number | 'custom';
+  delivery: ('download' | 'email' | 'api' | 'ftp')[];
+  whiteLabel: boolean;
+  support: 'email' | 'email-chat' | 'priority';
+  stripePriceEnvVar: string;
+}
+
+export const PLANS: Record<PlanTier, PlanDefinition> = {
+  starter: {
+    tier: 'starter',
+    priceMonthly: 25,
+    bulletinsPerDay: 5,
+    maxDurationSeconds: 60,
+    voicesPerLanguage: 1,
+    accentDepth: 'generic',
+    formats: ['mp3'],
+    scheduling: 'none',
+    templates: 1,
+    delivery: ['download'],
+    whiteLabel: false,
+    support: 'email',
+    stripePriceEnvVar: 'STRIPE_PRICE_STARTER',
+  },
+  standard: {
+    tier: 'standard',
+    priceMonthly: 99,
+    bulletinsPerDay: 10,
+    maxDurationSeconds: 120,
+    voicesPerLanguage: 3,
+    accentDepth: 'regional',
+    formats: ['mp3', 'wav'],
+    scheduling: 'basic',
+    templates: 3,
+    delivery: ['download', 'email'],
+    whiteLabel: false,
+    support: 'email-chat',
+    stripePriceEnvVar: 'STRIPE_PRICE_STANDARD',
+  },
+  pro: {
+    tier: 'pro',
+    priceMonthly: 299,
+    bulletinsPerDay: 20,
+    maxDurationSeconds: 180,
+    voicesPerLanguage: 'unlimited',
+    accentDepth: 'custom',
+    formats: ['mp3', 'wav', 'broadcast'],
+    scheduling: 'full',
+    templates: 'custom',
+    delivery: ['download', 'email', 'api', 'ftp'],
+    whiteLabel: true,
+    support: 'priority',
+    stripePriceEnvVar: 'STRIPE_PRICE_PRO',
+  },
+};
+
+export const PLAN_ORDER: PlanTier[] = ['starter', 'standard', 'pro'];
+
+export const TRIAL_DAYS = 7;
+export const TRIAL_TIER: PlanTier = 'pro';
+export const TRIAL_DOWNGRADE_TO: PlanTier = 'starter';
+export const OVERAGE_PRICE_CENTS = 50;

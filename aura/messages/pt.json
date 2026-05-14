@@ -18,6 +18,7 @@
     "headline": "Boletins de notícias com voz IA, prontos para o ar.",
     "subheadline": "Busque notícias globais, gere roteiros com emoção e entregue áudio profissional em minutos.",
     "cta": "Começar trial grátis de 7 dias",
+    "ctaSub": "Cartão obrigatório, sem cobrança durante o trial. Converte para Starter automaticamente.",
     "benefits": {
       "global": {
         "title": "Busca Global",
@@ -32,30 +33,92 @@
         "body": "Vozes do ElevenLabs em três idiomas, prontas para o playout."
       }
     },
-    "plans": {
-      "title": "Planos",
-      "starter": "Starter",
-      "standard": "Standard",
-      "pro": "Pro"
+    "plansTitle": "Planos",
+    "plansSubtitle": "Comece com 7 dias de Pro grátis. Cancele quando quiser.",
+    "footer": {
+      "copyright": "AURA — Áudio de Rádio Urbano Automatizado",
+      "terms": "Termos",
+      "privacy": "Privacidade",
+      "contact": "Contato"
     }
+  },
+  "plans": {
+    "starter": {
+      "name": "Starter",
+      "tagline": "Coloque no ar hoje",
+      "feature_bulletins": "{count} boletins/dia",
+      "feature_duration": "Boletins de até {duration} minutos",
+      "feature_voices": "1 voz preset por idioma",
+      "feature_formats": "MP3",
+      "feature_support": "Suporte por email"
+    },
+    "standard": {
+      "name": "Standard",
+      "tagline": "Agendado e escalável",
+      "feature_bulletins": "{count} boletins/dia",
+      "feature_duration": "Boletins de até {duration} minutos",
+      "feature_voices": "3 vozes por idioma com sotaques regionais",
+      "feature_formats": "MP3 + WAV",
+      "feature_scheduling": "Agendamento básico",
+      "feature_support": "Email + chat"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "Infraestrutura de transmissão",
+      "feature_bulletins": "{count} boletins/dia",
+      "feature_duration": "Boletins de até {duration} minutos",
+      "feature_voices": "Vozes ilimitadas + clonagem de voz",
+      "feature_formats": "MP3 + WAV + specs de broadcast",
+      "feature_scheduling": "Automação completa + calendário",
+      "feature_delivery": "API + FTP + auto-push",
+      "feature_whiteLabel": "White label",
+      "feature_support": "Prioritário + onboarding"
+    },
+    "perMonth": "/mês",
+    "selectCta": "Começar trial de 7 dias",
+    "currentBadge": "Plano atual",
+    "popularBadge": "Mais popular"
   },
   "auth": {
     "loginTitle": "Bem-vindo de volta",
+    "loginSubtitle": "Entre na sua rádio AURA.",
     "signupTitle": "Crie a conta da sua rádio",
+    "signupSubtitle": "Comece seu trial Pro de 7 dias em menos de 1 minuto.",
     "email": "Email",
+    "emailPlaceholder": "voce@radio.fm",
     "password": "Senha",
+    "passwordHint": "Mínimo 8 caracteres.",
     "confirmPassword": "Confirmar senha",
     "radioName": "Nome da rádio",
+    "radioNamePlaceholder": "Nome da sua rádio",
     "submitLogin": "Entrar",
     "submitSignup": "Criar conta",
-    "noAccount": "Não tem conta? Cadastre-se",
-    "hasAccount": "Já tem conta? Faça login",
+    "noAccount": "Não tem conta?",
+    "signupCta": "Cadastre-se",
+    "hasAccount": "Já tem conta?",
+    "loginCta": "Entrar",
     "errors": {
       "invalidEmail": "Informe um email válido.",
       "passwordTooShort": "A senha deve ter no mínimo 8 caracteres.",
       "passwordMismatch": "As senhas não coincidem.",
-      "radioNameRequired": "O nome da rádio é obrigatório."
-    }
+      "radioNameRequired": "O nome da rádio é obrigatório.",
+      "generic": "Algo deu errado. Tente novamente.",
+      "invalidCredentials": "Email ou senha inválidos.",
+      "emailInUse": "Já existe uma conta com este email."
+    },
+    "submitting": "Processando..."
+  },
+  "onboarding": {
+    "planTitle": "Escolha seu plano",
+    "planSubtitle": "Todos os planos começam com 7 dias de trial Pro. Você só será cobrado depois.",
+    "continue": "Começar trial",
+    "skipForNow": "Decido depois"
+  },
+  "dashboard": {
+    "welcomeTitle": "Bem-vindo à AURA",
+    "welcomeBody": "Seu trial está ativo. Gere seu primeiro boletim no painel de Buscar Notícias.",
+    "trialBadge": "Trial — {days} dias restantes",
+    "comingSoon": "Mais ferramentas chegam nas próximas versões."
   },
   "common": {
     "loading": "Carregando...",
@@ -63,6 +126,8 @@
     "cancel": "Cancelar",
     "delete": "Excluir",
     "edit": "Editar",
-    "back": "Voltar"
+    "back": "Voltar",
+    "yes": "Sim",
+    "no": "Não"
   }
 }

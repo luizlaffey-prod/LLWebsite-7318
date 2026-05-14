@@ -18,6 +18,7 @@
     "headline": "Boletines de noticias con voz IA, listos para salir al aire.",
     "subheadline": "Busca noticias globales, genera guiones con emoción y entrega audio profesional en minutos.",
     "cta": "Comenzar prueba gratis de 7 días",
+    "ctaSub": "Tarjeta obligatoria, sin cobro durante la prueba. Se convierte a Starter automáticamente.",
     "benefits": {
       "global": {
         "title": "Búsqueda Global",
@@ -32,30 +33,92 @@
         "body": "Voces de ElevenLabs en tres idiomas, listas para el playout."
       }
     },
-    "plans": {
-      "title": "Planes",
-      "starter": "Starter",
-      "standard": "Standard",
-      "pro": "Pro"
+    "plansTitle": "Planes",
+    "plansSubtitle": "Empieza con 7 días de Pro gratis. Cancela cuando quieras.",
+    "footer": {
+      "copyright": "AURA — Audio de Radio Urbana Automatizado",
+      "terms": "Términos",
+      "privacy": "Privacidad",
+      "contact": "Contacto"
     }
+  },
+  "plans": {
+    "starter": {
+      "name": "Starter",
+      "tagline": "Sal al aire hoy",
+      "feature_bulletins": "{count} boletines/día",
+      "feature_duration": "Boletines de hasta {duration} minutos",
+      "feature_voices": "1 voz preset por idioma",
+      "feature_formats": "MP3",
+      "feature_support": "Soporte por email"
+    },
+    "standard": {
+      "name": "Standard",
+      "tagline": "Programado y escalado",
+      "feature_bulletins": "{count} boletines/día",
+      "feature_duration": "Boletines de hasta {duration} minutos",
+      "feature_voices": "3 voces por idioma con acentos regionales",
+      "feature_formats": "MP3 + WAV",
+      "feature_scheduling": "Programación básica",
+      "feature_support": "Email + chat"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "Infraestructura de transmisión",
+      "feature_bulletins": "{count} boletines/día",
+      "feature_duration": "Boletines de hasta {duration} minutos",
+      "feature_voices": "Voces ilimitadas + clonación de voz",
+      "feature_formats": "MP3 + WAV + specs de broadcast",
+      "feature_scheduling": "Automatización completa + calendario",
+      "feature_delivery": "API + FTP + auto-push",
+      "feature_whiteLabel": "White label",
+      "feature_support": "Prioritario + onboarding"
+    },
+    "perMonth": "/mes",
+    "selectCta": "Comenzar prueba de 7 días",
+    "currentBadge": "Plan actual",
+    "popularBadge": "Más popular"
   },
   "auth": {
     "loginTitle": "Bienvenido de vuelta",
+    "loginSubtitle": "Inicia sesión en tu emisora AURA.",
     "signupTitle": "Crea la cuenta de tu emisora",
+    "signupSubtitle": "Empieza tu prueba Pro de 7 días en menos de 1 minuto.",
     "email": "Correo electrónico",
+    "emailPlaceholder": "tu@emisora.fm",
     "password": "Contraseña",
+    "passwordHint": "Mínimo 8 caracteres.",
     "confirmPassword": "Confirmar contraseña",
     "radioName": "Nombre de la emisora",
+    "radioNamePlaceholder": "Nombre de tu emisora",
     "submitLogin": "Iniciar sesión",
     "submitSignup": "Crear cuenta",
-    "noAccount": "¿No tienes cuenta? Regístrate",
-    "hasAccount": "¿Ya tienes cuenta? Inicia sesión",
+    "noAccount": "¿No tienes cuenta?",
+    "signupCta": "Regístrate",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "loginCta": "Inicia sesión",
     "errors": {
       "invalidEmail": "Ingresa un correo válido.",
       "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
       "passwordMismatch": "Las contraseñas no coinciden.",
-      "radioNameRequired": "El nombre de la emisora es obligatorio."
-    }
+      "radioNameRequired": "El nombre de la emisora es obligatorio.",
+      "generic": "Algo salió mal. Inténtalo de nuevo.",
+      "invalidCredentials": "Correo o contraseña inválidos.",
+      "emailInUse": "Ya existe una cuenta con este correo."
+    },
+    "submitting": "Procesando..."
+  },
+  "onboarding": {
+    "planTitle": "Elige tu plan",
+    "planSubtitle": "Todos los planes empiezan con 7 días de prueba Pro. Solo se cobra al terminar la prueba.",
+    "continue": "Comenzar prueba",
+    "skipForNow": "Decido después"
+  },
+  "dashboard": {
+    "welcomeTitle": "Bienvenido a AURA",
+    "welcomeBody": "Tu prueba está activa. Genera tu primer boletín desde el panel de Buscar Noticias.",
+    "trialBadge": "Prueba — {days} días restantes",
+    "comingSoon": "Más herramientas llegan en próximas versiones."
   },
   "common": {
     "loading": "Cargando...",
@@ -63,6 +126,8 @@
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "edit": "Editar",
-    "back": "Volver"
+    "back": "Volver",
+    "yes": "Sí",
+    "no": "No"
   }
 }
