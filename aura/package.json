@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:seed": "bun run drizzle/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

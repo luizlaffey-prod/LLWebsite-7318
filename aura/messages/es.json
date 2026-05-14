@@ -184,6 +184,21 @@
     "overageTrial": "Llegaste al límite diario de tu prueba. Haz upgrade a Pro para seguir.",
     "overageConfirm": "Pagar y generar"
   },
+  "voicesPage": {
+    "title": "Mis voces",
+    "subtitle": "Escucha el catálogo y elige tu voz por defecto. Las voces bloqueadas se desbloquean con Standard o Pro.",
+    "defaultSpeed": "Velocidad por defecto",
+    "speedHint": "Se usa cuando no hay velocidad específica por boletín. Rango 0,80x–1,50x.",
+    "preview": "Escuchar",
+    "stop": "Parar",
+    "use": "Usar",
+    "inUse": "Por defecto",
+    "defaultBadge": "Por defecto",
+    "upgradeForMore": "Haz upgrade a Pro para desbloquear el catálogo completo + clonación de voz.",
+    "errorLoad": "No pudimos cargar el catálogo. Recarga la página.",
+    "errorPreview": "No se pudo reproducir la muestra ahora.",
+    "errorSave": "No se pudo guardar la preferencia. Inténtalo de nuevo."
+  },
   "billing": {
     "title": "Facturación",
     "subtitle": "Plan, facturas y portal Stripe.",

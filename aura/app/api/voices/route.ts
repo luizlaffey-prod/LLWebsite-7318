@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { eq, and, or, isNull } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { voice as voiceTable } from '@/lib/db/schema';
+import { voice as voiceTable, voicePreference } from '@/lib/db/schema';
 import { canUseVoice } from '@/lib/billing/feature-gates';
 import { getQuota } from '@/lib/billing/quota';
 
@@ -15,10 +15,11 @@ export async function GET(req: Request) {
   }
   const url = new URL(req.url);
   const lang = url.searchParams.get('lang');
+  const includeLocked = url.searchParams.get('includeLocked') === '1';
 
   const quota = await getQuota(session.user.id);
 
-  const voices = await db
+  const allVoices = await db
     .select({
       id: voiceTable.id,
       slug: voiceTable.slug,
@@ -39,8 +40,30 @@ export async function GET(req: Request) {
       )
     );
 
-  const filtered = (lang ? voices.filter((v) => v.languages.includes(lang)) : voices).filter(
-    (v) => canUseVoice(quota.tier, v)
-  );
-  return NextResponse.json({ voices: filtered, tier: quota.tier });
+  const prefs = await db
+    .select({ voiceId: voicePreference.voiceId, isDefault: voicePreference.isDefault, speed: voicePreference.speed })
+    .from(voicePreference)
+    .where(eq(voicePreference.userId, session.user.id));
+
+  const defaultPref = prefs.find((p) => p.isDefault);
+
+  const filteredByLang = lang
+    ? allVoices.filter((v) => v.languages.includes(lang))
+    : allVoices;
+
+  const enriched = filteredByLang
+    .map((v) => ({
+      ...v,
+      locked: !canUseVoice(quota.tier, v),
+      preferred: prefs.some((p) => p.voiceId === v.id),
+      isDefault: defaultPref?.voiceId === v.id,
+    }))
+    .filter((v) => includeLocked || !v.locked);
+
+  return NextResponse.json({
+    voices: enriched,
+    tier: quota.tier,
+    defaultVoiceId: defaultPref?.voiceId ?? null,
+    defaultSpeed: defaultPref?.speed ?? 1.0,
+  });
 }

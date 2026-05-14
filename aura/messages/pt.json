@@ -184,6 +184,21 @@
     "overageTrial": "Você atingiu o limite diário do seu trial. Faça upgrade para Pro para continuar.",
     "overageConfirm": "Pagar e gerar"
   },
+  "voicesPage": {
+    "title": "Minhas vozes",
+    "subtitle": "Pré-escute o catálogo e escolha sua voz padrão. Vozes bloqueadas liberam nos planos Standard e Pro.",
+    "defaultSpeed": "Velocidade padrão",
+    "speedHint": "Usada quando não há velocidade específica por boletim. Faixa 0,80x–1,50x.",
+    "preview": "Ouvir",
+    "stop": "Parar",
+    "use": "Usar",
+    "inUse": "Padrão",
+    "defaultBadge": "Padrão",
+    "upgradeForMore": "Faça upgrade para Pro e libere o catálogo completo + clonagem de voz.",
+    "errorLoad": "Não conseguimos carregar o catálogo. Recarregue a página.",
+    "errorPreview": "Não foi possível tocar a amostra agora.",
+    "errorSave": "Não foi possível salvar a preferência. Tente novamente."
+  },
   "billing": {
     "title": "Faturamento",
     "subtitle": "Plano, faturas e portal Stripe.",

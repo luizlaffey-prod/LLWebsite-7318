@@ -70,6 +70,7 @@
   <a href="#dashboard" data-target="dashboard">Dashboard</a>
   <a href="#news" data-target="news">News Search</a>
   <a href="#drawer" data-target="drawer">Bulletin Drawer</a>
+  <a href="#voices" data-target="voices">Voices</a>
   <a href="#billing" data-target="billing">Billing</a>
 </nav>
 
@@ -478,6 +479,103 @@
       </div>
     </div>
   </aside>
+</section>
+
+<!-- ============== VOICES ============== -->
+<section data-screen="voices" class="flex min-h-screen">
+  <aside class="hidden md:flex w-60 shrink-0 flex-col border-r border-[#1C2030] bg-[#0D1017]">
+    <div class="flex h-16 items-center px-4 border-b border-[#1C2030]"><span class="text-lg font-semibold aura-gradient-text">AURA</span></div>
+    <div class="px-4 py-4 border-b border-[#1C2030]">
+      <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Station</p>
+      <p class="mt-1 text-sm font-medium">Rádio Exemplo FM</p>
+      <span class="mt-2 inline-flex items-center rounded-full border border-[#00E5C8]/30 bg-[#00E5C8]/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#00E5C8]">STANDARD</span>
+    </div>
+    <nav class="flex-1 p-2 space-y-1 text-sm">
+      <a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF]">News Search</a>
+      <a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF]">My Audios</a>
+      <a class="flex items-center gap-3 rounded-md bg-[#141820] px-3 py-2 text-white">My Voices</a>
+      <a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF]">Automations</a>
+      <a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF]">Settings</a>
+    </nav>
+  </aside>
+  <main class="flex-1 px-8 py-10 overflow-x-hidden">
+    <div class="mx-auto max-w-6xl">
+      <h1 class="text-3xl font-semibold tracking-tight">My voices</h1>
+      <p class="mt-2 text-[#9CA3AF]">Preview the catalog, pick a default. Locked voices unlock with Standard or Pro.</p>
+
+      <div class="mt-6 flex flex-col gap-3 rounded-xl border border-[#1C2030] bg-[#0D1017] p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="text-xs uppercase tracking-wider text-[#4B5263]">Default speed</div>
+          <div class="mt-2 flex items-center gap-3">
+            <div class="relative h-1.5 w-48 rounded-full bg-[#1C2030]"><div class="h-full w-2/5 rounded-full" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);"></div><span class="absolute top-1/2 left-2/5 -translate-y-1/2 block h-4 w-4 rounded-full border border-[#00E5C8] bg-[#06080F]"></span></div>
+            <span class="text-sm text-[#9CA3AF]">1.00x</span>
+          </div>
+        </div>
+        <p class="text-xs text-[#4B5263] max-w-xs">Used when no per-bulletin speed is set.</p>
+      </div>
+
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="rounded-xl border border-[#00E5C8]/40 bg-[#0D1017] p-5" style="box-shadow:0 0 30px -15px rgba(0,229,200,0.5);">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#141820]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div>
+              <div><h3 class="text-base font-semibold">Adam</h3><p class="text-xs text-[#4B5263] capitalize">male · american</p></div>
+            </div>
+            <span class="inline-flex items-center rounded-full border border-[#00E5C8]/30 bg-[#00E5C8]/10 px-2 py-0.5 text-xs font-medium text-[#00E5C8]">Default</span>
+          </div>
+          <p class="mt-3 text-sm text-[#9CA3AF] line-clamp-2">Deep American male, default narrator.</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">en</span>
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">pt</span>
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">es</span>
+          </div>
+          <div class="mt-5 flex items-center justify-between gap-2">
+            <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-[#1C2030] bg-[#141820] text-xs">▶ Preview</button>
+            <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-[#1C2030] bg-transparent text-xs">✓ Default</button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-[#1C2030] bg-[#0D1017] p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#141820]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div>
+              <div><h3 class="text-base font-semibold">Rachel</h3><p class="text-xs text-[#4B5263] capitalize">female · american</p></div>
+            </div>
+          </div>
+          <p class="mt-3 text-sm text-[#9CA3AF] line-clamp-2">Warm, professional female anchor.</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">en</span>
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">pt</span>
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">es</span>
+          </div>
+          <div class="mt-5 flex items-center justify-between gap-2">
+            <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-[#1C2030] bg-[#141820] text-xs">▶ Preview</button>
+            <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-xs font-medium text-[#06080F]" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);">Use</button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-[#1C2030] bg-[#0D1017] p-5 opacity-60">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#141820]"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div>
+              <div><h3 class="text-base font-semibold">Arnold</h3><p class="text-xs text-[#4B5263] capitalize">male · american</p></div>
+            </div>
+            <span class="inline-flex items-center rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 px-2 py-0.5 text-xs font-medium text-[#8B5CF6]">🔒 PRO</span>
+          </div>
+          <p class="mt-3 text-sm text-[#9CA3AF] line-clamp-2">Authoritative male, prime-time newscast.</p>
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">en</span>
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">pt</span>
+            <span class="rounded-full border border-[#1C2030] bg-[#141820]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#4B5263]">es</span>
+          </div>
+          <div class="mt-5 flex items-center justify-between gap-2">
+            <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-[#1C2030] bg-[#141820] text-xs opacity-50" disabled>▶ Preview</button>
+            <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-[#1C2030] bg-transparent text-xs opacity-50" disabled>Use</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 </section>
 
 <!-- ============== BILLING ============== -->

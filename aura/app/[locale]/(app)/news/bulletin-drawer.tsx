@@ -118,10 +118,20 @@ function DrawerBody(props: Props) {
   useEffect(() => {
     fetch(`/api/voices?lang=${props.language}`)
       .then((r) => r.json())
-      .then((d: { voices: VoiceOpt[] }) => {
-        setVoices(d.voices ?? []);
-        setVoiceId(d.voices?.[0]?.id ?? '');
-      })
+      .then(
+        (d: {
+          voices: VoiceOpt[];
+          defaultVoiceId: string | null;
+          defaultSpeed: number;
+        }) => {
+          setVoices(d.voices ?? []);
+          const preferred = d.defaultVoiceId
+            ? d.voices.find((v) => v.id === d.defaultVoiceId)
+            : null;
+          setVoiceId((preferred ?? d.voices?.[0])?.id ?? '');
+          if (d.defaultSpeed) setSpeed(d.defaultSpeed);
+        }
+      )
       .catch(() => setVoices([]));
     hasFolderConfigured().then(setFolderReady);
   }, [props.language]);
