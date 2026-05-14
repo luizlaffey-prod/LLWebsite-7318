@@ -11,6 +11,7 @@
     "audios": "Mis Audios",
     "voices": "Mis Voces",
     "automations": "Automatizaciones",
+    "analytics": "Analytics",
     "settings": "Configuración",
     "logout": "Cerrar sesión"
   },
@@ -183,6 +184,40 @@
     "overagePrompt": "Llegaste al límite diario. ¿Generar este por US$ {price}?",
     "overageTrial": "Llegaste al límite diario de tu prueba. Haz upgrade a Pro para seguir.",
     "overageConfirm": "Pagar y generar"
+  },
+  "analyticsPage": {
+    "title": "Analytics",
+    "subtitle": "Cómo tu emisora usa AURA — elecciones por idioma, voz y tema.",
+    "period": "Periodo",
+    "period7d": "Últimos 7 días",
+    "period30d": "Últimos 30 días",
+    "period90d": "Últimos 90 días",
+    "periodCustom": "Personalizado",
+    "from": "Desde",
+    "to": "Hasta",
+    "exportCsv": "Exportar CSV",
+    "rangeFooter": "Datos de {start} a {end}.",
+    "emptyTitle": "Sin datos en el periodo",
+    "emptyBody": "Genera algunos boletines y vuelve — las métricas aparecen cuando haya datos.",
+    "cards": {
+      "audiosTitle": "Audios generados",
+      "audiosSub": "Últimos {days} día(s)",
+      "minutesTitle": "Minutos sintetizados",
+      "minutesSub": "Tiempo total",
+      "languageTitle": "Idioma más usado",
+      "voiceTitle": "Voz más usada",
+      "articleTitle": "Noticia más usada",
+      "articleSub": "{count} vez(es)",
+      "averageTitle": "Promedio diario",
+      "averageSub": "audios / día",
+      "percentSub": "{percent}% del total"
+    },
+    "charts": {
+      "dailyTitle": "Audios por día",
+      "languageTitle": "Distribución de idiomas",
+      "articlesTitle": "Top 5 noticias"
+    },
+    "errorLoad": "No pudimos cargar. Recarga la página."
   },
   "automationsPage": {
     "title": "Automatizaciones",

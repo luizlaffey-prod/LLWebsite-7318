@@ -8,6 +8,7 @@ import {
   Headphones,
   Mic,
   CalendarClock,
+  BarChart3,
   Settings,
   LogOut,
   ChevronLeft,
@@ -30,6 +31,7 @@ const ITEMS = [
   { key: 'audios', icon: Headphones, href: '/audios' },
   { key: 'voices', icon: Mic, href: '/voices' },
   { key: 'automations', icon: CalendarClock, href: '/automations' },
+  { key: 'analytics', icon: BarChart3, href: '/analytics' },
   { key: 'settings', icon: Settings, href: '/settings' },
 ] as const;
 
