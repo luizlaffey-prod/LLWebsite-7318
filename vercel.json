@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/trial-warning",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/trial-downgrade",
+      "schedule": "0 * * * *"
+    }
+  ],
+  "functions": {
+    "app/api/bulletin/generate/route.ts": { "maxDuration": 120 },
+    "app/api/bulletin/regenerate/route.ts": { "maxDuration": 120 },
+    "app/api/cron/trial-warning/route.ts": { "maxDuration": 60 },
+    "app/api/cron/trial-downgrade/route.ts": { "maxDuration": 60 }
+  }
+}

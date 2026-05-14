@@ -1,9 +1,11 @@
 import { setRequestLocale } from 'next-intl/server';
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { Settings } from 'lucide-react';
+import Link from 'next/link';
+import { Settings, CreditCard, ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
@@ -52,8 +54,25 @@ export default async function SettingsPage({
           </div>
         </Card>
 
+        <Card className="mt-6 p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-text-muted">Billing</div>
+              <p className="mt-1 text-sm text-text-secondary">
+                Change plan, view invoices, manage payment method.
+              </p>
+            </div>
+            <Button asChild>
+              <Link href={`/${locale}/settings/billing`}>
+                <CreditCard className="h-4 w-4" /> Open billing
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </Card>
+
         <Card className="mt-6 flex items-center justify-center p-12 text-text-muted">
-          <Settings className="mr-3 h-5 w-5" /> Full settings (billing, locale, timezone, delivery, white-label) ship in Phase 3+.
+          <Settings className="mr-3 h-5 w-5" /> Locale, timezone, delivery and white-label settings ship in upcoming phases.
         </Card>
       </div>
     </div>

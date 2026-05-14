@@ -3,6 +3,8 @@ import { eq, and, or, isNull } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { voice as voiceTable } from '@/lib/db/schema';
+import { canUseVoice } from '@/lib/billing/feature-gates';
+import { getQuota } from '@/lib/billing/quota';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +15,8 @@ export async function GET(req: Request) {
   }
   const url = new URL(req.url);
   const lang = url.searchParams.get('lang');
+
+  const quota = await getQuota(session.user.id);
 
   const voices = await db
     .select({
@@ -35,8 +39,8 @@ export async function GET(req: Request) {
       )
     );
 
-  const filtered = lang
-    ? voices.filter((v) => v.languages.includes(lang))
-    : voices;
-  return NextResponse.json({ voices: filtered });
+  const filtered = (lang ? voices.filter((v) => v.languages.includes(lang)) : voices).filter(
+    (v) => canUseVoice(quota.tier, v)
+  );
+  return NextResponse.json({ voices: filtered, tier: quota.tier });
 }

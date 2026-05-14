@@ -1,7 +1,8 @@
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import { WelcomeEmail } from './templates/welcome';
-import { welcomeStrings } from './strings';
+import { TrialEndingEmail } from './templates/trial-ending';
+import { welcomeStrings, trialEndingStrings } from './strings';
 import type { Locale } from '@/i18n';
 
 function getResend(): Resend {
@@ -31,6 +32,32 @@ export async function sendWelcomeEmail(input: {
       trialDays: input.trialDays,
       locale: input.locale,
       dashboardUrl,
+    })
+  );
+
+  return resend.emails.send({
+    from: fromAddress(),
+    to: input.to,
+    subject: s.subject,
+    html,
+  });
+}
+
+export async function sendTrialEndingEmail(input: {
+  to: string;
+  radioName: string;
+  locale: Locale;
+}) {
+  const resend = getResend();
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const s = trialEndingStrings(input.locale);
+
+  const html = await render(
+    TrialEndingEmail({
+      radioName: input.radioName,
+      locale: input.locale,
+      upgradeUrl: `${baseUrl}/${input.locale}/settings/billing`,
+      manageUrl: `${baseUrl}/${input.locale}/settings/billing`,
     })
   );
 

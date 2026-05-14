@@ -179,7 +179,26 @@
     "choosingFolder": "Escolher pasta de download",
     "downloadedTo": "Salvo na pasta local",
     "approve": "Aprovar e publicar",
-    "errorGenerate": "Falha na geração. Tente novamente."
+    "errorGenerate": "Falha na geração. Tente novamente.",
+    "overagePrompt": "Você atingiu o limite diário. Quer gerar este mesmo assim por US$ {price}?",
+    "overageTrial": "Você atingiu o limite diário do seu trial. Faça upgrade para Pro para continuar.",
+    "overageConfirm": "Pagar e gerar"
+  },
+  "billing": {
+    "title": "Faturamento",
+    "subtitle": "Plano, faturas e portal Stripe.",
+    "currentPlan": "Plano atual",
+    "managePortal": "Gerenciar no Stripe",
+    "trialEndsAt": "Trial termina em {date}",
+    "changePlan": "Mudar plano",
+    "changePlanSub": "Upgrades entram em vigor imediatamente com cobrança proporcional. Downgrades valem ao fim do período.",
+    "currentBadge": "Atual",
+    "switchTo": "Mudar para {tier}",
+    "invoices": "Faturas recentes",
+    "noInvoices": "Sem faturas ainda. As cobranças aparecem aqui após o fim do trial.",
+    "viewInvoice": "Ver fatura",
+    "errorPortalUnavailable": "Não foi possível abrir o portal. Tente novamente em instantes.",
+    "errorChangeFailed": "Não foi possível mudar de plano. Tente novamente."
   },
   "dashboard": {
     "welcomeTitle": "Bem-vindo à AURA",

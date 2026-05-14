@@ -3,12 +3,14 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { generatedAudio, voice as voiceTable } from '@/lib/db/schema';
+import { generatedAudio, voice as voiceTable, user } from '@/lib/db/schema';
 import { generateScript } from '@/lib/llm/script-generator';
 import { synthesizeBulletin, ElevenLabsError } from '@/lib/tts/elevenlabs';
 import { fetchWeather } from '@/lib/news/weather';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { getQuota, incrementUsage } from '@/lib/billing/quota';
+import { canRequestDuration, canUseVoice } from '@/lib/billing/feature-gates';
+import { recordOverage } from '@/lib/billing/overage';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -29,6 +31,7 @@ const Input = z.object({
   includeWeather: z.boolean().default(false),
   weatherFormat: z.enum(['separate', 'integrated']).default('separate'),
   weatherLocation: z.string().optional(),
+  acceptOverage: z.boolean().default(false),
 });
 
 export async function POST(req: Request) {
@@ -45,10 +48,37 @@ export async function POST(req: Request) {
 
   // Quota gate
   const quota = await getQuota(session.user.id);
+  const [u] = await db
+    .select({ plan: user.plan })
+    .from(user)
+    .where(eq(user.id, session.user.id))
+    .limit(1);
+  const isTrial = u?.plan === 'trial';
+  let usingOverage = false;
+
   if (quota.remaining <= 0) {
+    // Trial users cannot buy overage — they must upgrade.
+    const overageAvailable = !isTrial;
+    if (!parsed.data.acceptOverage || !overageAvailable) {
+      return NextResponse.json(
+        {
+          error: 'quota_exceeded',
+          quota,
+          overageAvailable,
+          overagePriceCents: 50,
+          isTrial,
+        },
+        { status: 402 }
+      );
+    }
+    usingOverage = true;
+  }
+
+  // Duration gate (tier-specific max)
+  if (!canRequestDuration(quota.tier, parsed.data.durationSeconds)) {
     return NextResponse.json(
-      { error: 'quota_exceeded', quota },
-      { status: 402 }
+      { error: 'duration_not_allowed', tier: quota.tier, requested: parsed.data.durationSeconds },
+      { status: 403 }
     );
   }
 
@@ -60,6 +90,14 @@ export async function POST(req: Request) {
     .limit(1);
   if (!chosenVoice) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
+  }
+
+  // Voice tier gate
+  if (!canUseVoice(quota.tier, chosenVoice)) {
+    return NextResponse.json(
+      { error: 'voice_not_allowed', tier: quota.tier, requires: chosenVoice.tierRequired },
+      { status: 403 }
+    );
   }
 
   // Optional weather
@@ -133,8 +171,12 @@ export async function POST(req: Request) {
       })
       .where(eq(generatedAudio.id, audioId));
 
-    // 6. Increment usage.
-    await incrementUsage(session.user.id);
+    // 6. Increment usage (or record overage charge).
+    if (usingOverage) {
+      await recordOverage(session.user.id);
+    } else {
+      await incrementUsage(session.user.id);
+    }
 
     return NextResponse.json({
       audioId,

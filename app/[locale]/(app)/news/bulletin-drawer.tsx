@@ -110,6 +110,10 @@ function DrawerBody(props: Props) {
   const [regenerating, setRegenerating] = useState(false);
   const [folderReady, setFolderReady] = useState<boolean>(false);
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
+  const [overagePrompt, setOveragePrompt] = useState<
+    | { priceCents: number; isTrial: boolean }
+    | null
+  >(null);
 
   useEffect(() => {
     fetch(`/api/voices?lang=${props.language}`)
@@ -122,12 +126,15 @@ function DrawerBody(props: Props) {
     hasFolderConfigured().then(setFolderReady);
   }, [props.language]);
 
-  const onGenerate = async () => {
+  const callGenerate = async (acceptOverage: boolean) => {
     if (!article || !voiceId) return;
     setGenerating(true);
     setError(null);
-    setBlocks([]);
-    setAudioUrl(null);
+    setOveragePrompt(null);
+    if (!acceptOverage) {
+      setBlocks([]);
+      setAudioUrl(null);
+    }
     try {
       const res = await fetch('/api/bulletin/generate', {
         method: 'POST',
@@ -148,9 +155,17 @@ function DrawerBody(props: Props) {
           includeWeather: props.includeWeather,
           weatherFormat: props.weatherFormat,
           weatherLocation: props.weatherLocation,
+          acceptOverage,
         }),
       });
       const data = await res.json();
+      if (res.status === 402) {
+        setOveragePrompt({
+          priceCents: data.overagePriceCents ?? 50,
+          isTrial: !!data.isTrial,
+        });
+        return;
+      }
       if (!res.ok) {
         setError(data.message || t('errorGenerate'));
         return;
@@ -164,6 +179,9 @@ function DrawerBody(props: Props) {
       setGenerating(false);
     }
   };
+
+  const onGenerate = () => callGenerate(false);
+  const onAcceptOverage = () => callGenerate(true);
 
   const onRegenerate = async () => {
     if (!audioId || blocks.length === 0) return;
@@ -281,6 +299,30 @@ function DrawerBody(props: Props) {
         {error && (
           <div className="rounded-md border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">
             {error}
+          </div>
+        )}
+
+        {overagePrompt && (
+          <div className="rounded-md border border-warning/30 bg-warning/10 p-4 text-sm">
+            <p className="font-medium text-warning">
+              {overagePrompt.isTrial
+                ? t('overageTrial')
+                : t('overagePrompt', { price: (overagePrompt.priceCents / 100).toFixed(2) })}
+            </p>
+            {!overagePrompt.isTrial && (
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" onClick={onAcceptOverage} disabled={generating}>
+                  {t('overageConfirm')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setOveragePrompt(null)}
+                >
+                  {t('cancel')}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
