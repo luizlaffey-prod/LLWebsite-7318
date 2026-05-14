@@ -322,7 +322,28 @@
     "brandSection": "Branding",
     "brandHint": "Replace AURA's logo and accent color with your station's identity.",
     "openBrand": "Open branding",
+    "healthSection": "Integration health",
+    "healthHint": "Verify ElevenLabs, Anthropic, news, weather, and storage are reachable. Tests run live.",
+    "openHealth": "Run diagnostics",
     "errorSave": "Couldn't save your changes. Try again."
+  },
+  "healthPage": {
+    "title": "Integration health",
+    "subtitle": "Live probes for every external service AURA depends on. Use this when something looks off, or right after rotating an API key.",
+    "summaryOk": "OK",
+    "summaryFailed": "failing",
+    "summaryUnset": "unset",
+    "retestAll": "Re-test all",
+    "retest": "Re-test",
+    "statusOk": "OK",
+    "statusFailed": "FAILED",
+    "statusUnset": "NOT SET",
+    "ttsTestTitle": "ElevenLabs end-to-end",
+    "ttsTestHint": "Plays a one-second ElevenLabs preview using the first seeded voice. If you hear audio, the API key and the voice catalog are correctly wired.",
+    "ttsTestCta": "Play test sample",
+    "errorNoVoice": "No voices found. Run `bun run db:seed` to populate the catalog first.",
+    "errorPreview": "Couldn't play the preview. Check the ElevenLabs row below for the exact error.",
+    "explanation": "Probes are read-only and only run when you open this page or hit a retry button. Failure messages include the upstream HTTP status when available — 401 means the key is wrong, 429 means rate-limited, 5xx means upstream is degraded."
   },
   "deliveryPage": {
     "title": "Auto delivery",

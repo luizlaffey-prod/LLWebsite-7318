@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import Link from 'next/link';
-import { ArrowRight, CreditCard, Server, Palette } from 'lucide-react';
+import { ArrowRight, CreditCard, Server, Palette, Activity } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -99,6 +99,23 @@ export default async function SettingsPage({
             <Button asChild variant="secondary">
               <Link href={`/${locale}/settings/brand`}>
                 <Palette className="h-4 w-4" /> {t('openBrand')}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="mt-6 p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-text-muted">
+                {t('healthSection')}
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">{t('healthHint')}</p>
+            </div>
+            <Button asChild variant="secondary">
+              <Link href={`/${locale}/settings/health`}>
+                <Activity className="h-4 w-4" /> {t('openHealth')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
