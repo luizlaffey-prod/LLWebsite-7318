@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "appName": "AURA",
+    "tagline": "Automated Urban Radio Audio"
+  },
+  "nav": {
+    "login": "Log in",
+    "signup": "Start free",
+    "dashboard": "Dashboard",
+    "news": "News Search",
+    "audios": "My Audios",
+    "voices": "My Voices",
+    "automations": "Automations",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "landing": {
+    "headline": "AI-voiced news bulletins, ready for broadcast.",
+    "subheadline": "Search global news, generate emotional scripts, and ship broadcast-quality audio in minutes.",
+    "cta": "Start 7-day free trial",
+    "benefits": {
+      "global": {
+        "title": "Global Search",
+        "body": "Trusted sources worldwide, filtered by bias and geography."
+      },
+      "smart": {
+        "title": "Smart Summary",
+        "body": "Claude-powered scripts with emotion cues, tailored to your runtime."
+      },
+      "audio": {
+        "title": "Pro Audio",
+        "body": "ElevenLabs voices in three languages, ready for the playout system."
+      }
+    },
+    "plans": {
+      "title": "Pricing",
+      "starter": "Starter",
+      "standard": "Standard",
+      "pro": "Pro"
+    }
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "signupTitle": "Create your station account",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "radioName": "Radio name",
+    "submitLogin": "Log in",
+    "submitSignup": "Create account",
+    "noAccount": "No account yet? Sign up",
+    "hasAccount": "Already have an account? Log in",
+    "errors": {
+      "invalidEmail": "Please enter a valid email.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "radioNameRequired": "Radio name is required."
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back"
+  }
+}

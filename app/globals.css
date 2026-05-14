@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --base: #06080F;
+    --surface: #0D1017;
+    --elevated: #141820;
+    --border: #1C2030;
+
+    --teal: #00E5C8;
+    --teal-soft: #00BFA8;
+    --violet: #8B5CF6;
+
+    --text-primary: #E8EAF0;
+    --text-secondary: #9CA3AF;
+    --text-muted: #4B5263;
+
+    --success: #10B981;
+    --warning: #F59E0B;
+    --error: #EF4444;
+    --info: #3B82F6;
+
+    --radius: 0.75rem;
+  }
+
+  html,
+  body {
+    background-color: var(--base);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  ::selection {
+    background: var(--teal);
+    color: var(--base);
+  }
+}
+
+@layer components {
+  .aura-gradient-text {
+    background: linear-gradient(135deg, #00e5c8 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .aura-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .aura-elevated {
+    background-color: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+}

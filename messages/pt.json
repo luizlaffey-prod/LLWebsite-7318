@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "appName": "AURA",
+    "tagline": "Áudio de Rádio Urbano Automatizado"
+  },
+  "nav": {
+    "login": "Entrar",
+    "signup": "Começar grátis",
+    "dashboard": "Painel",
+    "news": "Buscar Notícias",
+    "audios": "Meus Áudios",
+    "voices": "Minhas Vozes",
+    "automations": "Automações",
+    "settings": "Configurações",
+    "logout": "Sair"
+  },
+  "landing": {
+    "headline": "Boletins de notícias com voz IA, prontos para o ar.",
+    "subheadline": "Busque notícias globais, gere roteiros com emoção e entregue áudio profissional em minutos.",
+    "cta": "Começar trial grátis de 7 dias",
+    "benefits": {
+      "global": {
+        "title": "Busca Global",
+        "body": "Fontes confiáveis do mundo todo, filtradas por viés e geografia."
+      },
+      "smart": {
+        "title": "Resumo Inteligente",
+        "body": "Roteiros gerados pelo Claude com marcações de emoção, no tempo que você definir."
+      },
+      "audio": {
+        "title": "Áudio Profissional",
+        "body": "Vozes do ElevenLabs em três idiomas, prontas para o playout."
+      }
+    },
+    "plans": {
+      "title": "Planos",
+      "starter": "Starter",
+      "standard": "Standard",
+      "pro": "Pro"
+    }
+  },
+  "auth": {
+    "loginTitle": "Bem-vindo de volta",
+    "signupTitle": "Crie a conta da sua rádio",
+    "email": "Email",
+    "password": "Senha",
+    "confirmPassword": "Confirmar senha",
+    "radioName": "Nome da rádio",
+    "submitLogin": "Entrar",
+    "submitSignup": "Criar conta",
+    "noAccount": "Não tem conta? Cadastre-se",
+    "hasAccount": "Já tem conta? Faça login",
+    "errors": {
+      "invalidEmail": "Informe um email válido.",
+      "passwordTooShort": "A senha deve ter no mínimo 8 caracteres.",
+      "passwordMismatch": "As senhas não coincidem.",
+      "radioNameRequired": "O nome da rádio é obrigatório."
+    }
+  },
+  "common": {
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "back": "Voltar"
+  }
+}
