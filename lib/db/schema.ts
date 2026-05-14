@@ -269,3 +269,71 @@ export type NewsSearch = typeof newsSearch.$inferSelect;
 export type GeneratedAudio = typeof generatedAudio.$inferSelect;
 export type Voice = typeof voice.$inferSelect;
 export type VoicePreference = typeof voicePreference.$inferSelect;
+
+// --- Automations ---
+export const automationStatusEnum = pgEnum('automation_status', [
+  'pending',
+  'running',
+  'succeeded',
+  'failed',
+]);
+
+export interface ScheduleSlot {
+  /** Local time HH:mm (timezone applied at run time). */
+  time: string;
+  categories: string[];
+}
+
+export const automationSchedule = pgTable(
+  'automation_schedule',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    slots: jsonb('slots').$type<ScheduleSlot[]>().notNull(),
+    durationSeconds: integer('duration_seconds').notNull(),
+    language: localeEnum('language').notNull(),
+    voiceId: uuid('voice_id').references(() => voice.id, { onDelete: 'set null' }),
+    speed: real('speed').notNull().default(1.0),
+    bgTrackUrl: text('bg_track_url'),
+    duckAudio: boolean('duck_audio').notNull().default(true),
+    includeWeather: boolean('include_weather').notNull().default(false),
+    weatherFormat: weatherFormatEnum('weather_format').default('separate'),
+    geographicScope: geoScopeEnum('geographic_scope').notNull().default('global'),
+    location: text('location'),
+    bias: biasEnum('bias').notNull().default('center'),
+    timezone: text('timezone').notNull().default('UTC'),
+    enabled: boolean('enabled').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index('automation_user_idx').on(t.userId, t.enabled),
+  })
+);
+
+export const automationExecution = pgTable(
+  'automation_execution',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    automationScheduleId: uuid('automation_schedule_id')
+      .notNull()
+      .references(() => automationSchedule.id, { onDelete: 'cascade' }),
+    audioId: uuid('audio_id').references(() => generatedAudio.id, { onDelete: 'set null' }),
+    scheduledFor: timestamp('scheduled_for', { withTimezone: true }).notNull(),
+    executedAt: timestamp('executed_at', { withTimezone: true }),
+    slotTime: text('slot_time').notNull(),
+    status: automationStatusEnum('status').notNull().default('pending'),
+    retryCount: integer('retry_count').notNull().default(0),
+    error: text('error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    schedIdx: index('automation_exec_sched_idx').on(t.automationScheduleId, t.scheduledFor),
+  })
+);
+
+export type AutomationSchedule = typeof automationSchedule.$inferSelect;
+export type AutomationExecution = typeof automationExecution.$inferSelect;

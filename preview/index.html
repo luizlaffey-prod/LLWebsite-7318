@@ -72,6 +72,7 @@
   <a href="#drawer" data-target="drawer">Bulletin Drawer</a>
   <a href="#voices" data-target="voices">Voices</a>
   <a href="#audios" data-target="audios">My Audios</a>
+  <a href="#automations" data-target="automations">Automations</a>
   <a href="#settings" data-target="settings">Settings</a>
   <a href="#billing" data-target="billing">Billing</a>
 </nav>
@@ -676,6 +677,65 @@
 
         <div class="flex items-center justify-end gap-3">
           <button class="h-10 px-4 rounded-md text-sm font-medium text-[#06080F]" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ============== AUTOMATIONS ============== -->
+<section data-screen="automations" class="flex min-h-screen">
+  <aside class="hidden md:flex w-60 shrink-0 flex-col border-r border-[#1C2030] bg-[#0D1017]">
+    <div class="flex h-16 items-center px-4 border-b border-[#1C2030]"><span class="text-lg font-semibold aura-gradient-text">AURA</span></div>
+    <div class="px-4 py-4 border-b border-[#1C2030]"><p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Station</p><p class="mt-1 text-sm font-medium">Rádio Exemplo FM</p><span class="mt-2 inline-flex items-center rounded-full border border-[#00E5C8]/30 bg-[#00E5C8]/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#00E5C8]">STANDARD</span></div>
+    <nav class="flex-1 p-2 space-y-1 text-sm">
+      <a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF]">News Search</a>
+      <a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF]">My Audios</a>
+      <a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF]">My Voices</a>
+      <a class="flex items-center gap-3 rounded-md bg-[#141820] px-3 py-2 text-white">Automations</a>
+      <a class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF]">Settings</a>
+    </nav>
+  </aside>
+  <main class="flex-1 px-8 py-10 overflow-x-hidden">
+    <div class="mx-auto max-w-6xl">
+      <h1 class="text-3xl font-semibold tracking-tight">Automations</h1>
+      <p class="mt-2 text-[#9CA3AF]">Schedule recurring bulletins. AURA pulls news, writes the script, and ships audio on its own.</p>
+
+      <div class="mt-8 flex items-center justify-between">
+        <p class="text-sm text-[#9CA3AF]">Each automation runs the picked categories at every configured time.</p>
+        <button class="inline-flex items-center gap-2 h-10 px-4 rounded-md text-sm font-medium text-[#06080F]" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);">+ New automation</button>
+      </div>
+
+      <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <div class="rounded-xl border border-[#1C2030] bg-[#0D1017] p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0"><h3 class="truncate text-base font-semibold">Morning news</h3><p class="mt-1 text-xs text-[#4B5263]">4 slots · America/Sao_Paulo · PT · center</p></div>
+            <span class="inline-flex h-6 w-11 items-center rounded-full p-0.5" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);"><span class="h-5 w-5 rounded-full bg-[#06080F] translate-x-5"></span></span>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center rounded-full border border-[#1C2030] bg-[#141820] px-2 py-0.5 text-xs text-[#9CA3AF]">06:00</span>
+            <span class="inline-flex items-center rounded-full border border-[#1C2030] bg-[#141820] px-2 py-0.5 text-xs text-[#9CA3AF]">09:00</span>
+            <span class="inline-flex items-center rounded-full border border-[#1C2030] bg-[#141820] px-2 py-0.5 text-xs text-[#9CA3AF]">12:00</span>
+            <span class="inline-flex items-center rounded-full border border-[#1C2030] bg-[#141820] px-2 py-0.5 text-xs text-[#9CA3AF]">18:00</span>
+          </div>
+          <div class="mt-4 flex items-center justify-between">
+            <span class="inline-flex items-center gap-1 text-xs text-[#10B981]"><span class="h-1.5 w-1.5 rounded-full bg-[#10B981]"></span>Active</span>
+            <div class="flex items-center gap-1 text-[#9CA3AF]"><button class="h-9 w-9 rounded-md hover:bg-[#141820]">▶</button><button class="h-9 w-9 rounded-md hover:bg-[#141820]">✎</button><button class="h-9 w-9 rounded-md hover:bg-[#141820] hover:text-[#EF4444]">🗑</button></div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-[#1C2030] bg-[#0D1017] p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0"><h3 class="truncate text-base font-semibold">Tech &amp; Economy lunch</h3><p class="mt-1 text-xs text-[#4B5263]">1 slot · America/Sao_Paulo · EN · center</p></div>
+            <span class="inline-flex h-6 w-11 items-center rounded-full bg-[#141820] border border-[#1C2030] p-0.5"><span class="h-5 w-5 rounded-full bg-white"></span></span>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center rounded-full border border-[#1C2030] bg-[#141820] px-2 py-0.5 text-xs text-[#9CA3AF]">12:30</span>
+          </div>
+          <div class="mt-4 flex items-center justify-between">
+            <span class="inline-flex items-center gap-1 text-xs text-[#4B5263]"><span class="h-1.5 w-1.5 rounded-full bg-[#4B5263]"></span>Paused</span>
+            <div class="flex items-center gap-1 text-[#9CA3AF]"><button class="h-9 w-9 rounded-md hover:bg-[#141820]">▶</button><button class="h-9 w-9 rounded-md hover:bg-[#141820]">✎</button><button class="h-9 w-9 rounded-md hover:bg-[#141820] hover:text-[#EF4444]">🗑</button></div>
+          </div>
         </div>
       </div>
     </div>

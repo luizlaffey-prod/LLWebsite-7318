@@ -8,12 +8,18 @@
     {
       "path": "/api/cron/trial-downgrade",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/automations",
+      "schedule": "*/10 * * * *"
     }
   ],
   "functions": {
     "app/api/bulletin/generate/route.ts": { "maxDuration": 120 },
     "app/api/bulletin/regenerate/route.ts": { "maxDuration": 120 },
     "app/api/cron/trial-warning/route.ts": { "maxDuration": 60 },
-    "app/api/cron/trial-downgrade/route.ts": { "maxDuration": 60 }
+    "app/api/cron/trial-downgrade/route.ts": { "maxDuration": 60 },
+    "app/api/cron/automations/route.ts": { "maxDuration": 300 },
+    "app/api/automations/[id]/run/route.ts": { "maxDuration": 180 }
   }
 }
