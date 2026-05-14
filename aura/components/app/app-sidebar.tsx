@@ -22,6 +22,7 @@ interface SidebarProps {
   locale: Locale;
   radioName?: string | null;
   planLabel?: string;
+  brandLogoUrl?: string | null;
 }
 
 const ITEMS = [
@@ -32,7 +33,7 @@ const ITEMS = [
   { key: 'settings', icon: Settings, href: '/settings' },
 ] as const;
 
-export function AppSidebar({ locale, radioName, planLabel }: SidebarProps) {
+export function AppSidebar({ locale, radioName, planLabel, brandLogoUrl }: SidebarProps) {
   const t = useTranslations('nav');
   const pathname = usePathname();
   const router = useRouter();
@@ -52,9 +53,20 @@ export function AppSidebar({ locale, radioName, planLabel }: SidebarProps) {
     >
       <div className="flex h-16 items-center justify-between border-b border-border px-4">
         <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
-          <span className="text-xl font-semibold aura-gradient-text">A</span>
-          {!collapsed && (
-            <span className="text-lg font-semibold aura-gradient-text">AURA</span>
+          {brandLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={brandLogoUrl}
+              alt="Logo"
+              className={cn('h-8 object-contain', collapsed ? 'w-8' : 'w-auto max-w-[140px]')}
+            />
+          ) : (
+            <>
+              <span className="text-xl font-semibold aura-gradient-text">A</span>
+              {!collapsed && (
+                <span className="text-lg font-semibold aura-gradient-text">AURA</span>
+              )}
+            </>
           )}
         </Link>
         <button

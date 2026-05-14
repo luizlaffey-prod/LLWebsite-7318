@@ -56,6 +56,8 @@ export const user = pgTable('user', {
   paypalSubscriptionId: text('paypal_subscription_id'),
   subscriptionStatus: subscriptionStatusEnum('subscription_status'),
   emailNotifications: boolean('email_notifications').notNull().default(true),
+  brandLogoUrl: text('brand_logo_url'),
+  brandAccentColor: text('brand_accent_color'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -337,3 +339,75 @@ export const automationExecution = pgTable(
 
 export type AutomationSchedule = typeof automationSchedule.$inferSelect;
 export type AutomationExecution = typeof automationExecution.$inferSelect;
+
+// --- Delivery endpoints (Pro) ---
+export const deliveryTypeEnum = pgEnum('delivery_type', ['ftp', 'http', 'email']);
+export const deliveryStatusEnum = pgEnum('delivery_status', [
+  'pending',
+  'success',
+  'failed',
+]);
+
+export interface FtpConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  remoteDir?: string;
+  secure?: boolean;
+}
+
+export interface HttpConfig {
+  url: string;
+  method: 'POST' | 'PUT';
+  bearerToken?: string;
+  customHeaders?: Record<string, string>;
+}
+
+export interface EmailConfig {
+  recipient: string;
+}
+
+export const deliveryEndpoint = pgTable(
+  'delivery_endpoint',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    type: deliveryTypeEnum('type').notNull(),
+    /** Encrypted JSON blob (use lib/crypto/secrets.ts before persisting). */
+    configEncrypted: text('config_encrypted').notNull(),
+    slotNamingPattern: text('slot_naming_pattern').notNull().default('{{name}}_{{date}}'),
+    enabled: boolean('enabled').notNull().default(true),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index('delivery_user_idx').on(t.userId),
+  })
+);
+
+export const deliveryLog = pgTable(
+  'delivery_log',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    deliveryEndpointId: uuid('delivery_endpoint_id')
+      .notNull()
+      .references(() => deliveryEndpoint.id, { onDelete: 'cascade' }),
+    audioId: uuid('audio_id').references(() => generatedAudio.id, {
+      onDelete: 'set null',
+    }),
+    status: deliveryStatusEnum('status').notNull(),
+    error: text('error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    endpointIdx: index('delivery_log_endpoint_idx').on(t.deliveryEndpointId),
+  })
+);
+
+export type DeliveryEndpoint = typeof deliveryEndpoint.$inferSelect;
+export type DeliveryLog = typeof deliveryLog.$inferSelect;
