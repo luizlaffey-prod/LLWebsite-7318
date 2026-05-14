@@ -13,6 +13,7 @@ export type HealthService =
   | 'auth'
   | 'elevenlabs'
   | 'anthropic'
+  | 'gemini'
   | 'newsapi'
   | 'gnews'
   | 'openweather'
@@ -131,6 +132,32 @@ export async function checkAnthropic(): Promise<HealthResult> {
   } catch (err) {
     return {
       service: 'anthropic',
+      configured: true,
+      ok: false,
+      error: errorMessage(err),
+    };
+  }
+}
+
+export async function checkGemini(): Promise<HealthResult> {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return notConfigured('gemini', 'GEMINI_API_KEY not set');
+  try {
+    const res = await fetchWithRetry(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`,
+      { headers: { Accept: 'application/json' } },
+      { timeoutMs: 10_000, retryOn: [503] }
+    );
+    const data = (await res.json()) as { models?: { name: string }[] };
+    return {
+      service: 'gemini',
+      configured: true,
+      ok: true,
+      detail: `${data.models?.length ?? 0} models available`,
+    };
+  } catch (err) {
+    return {
+      service: 'gemini',
       configured: true,
       ok: false,
       error: errorMessage(err),
@@ -306,6 +333,7 @@ const PROBES: Record<HealthService, () => Promise<HealthResult>> = {
   auth: checkAuth,
   elevenlabs: checkElevenLabs,
   anthropic: checkAnthropic,
+  gemini: checkGemini,
   newsapi: checkNewsApi,
   gnews: checkGNews,
   openweather: checkOpenWeather,
@@ -319,6 +347,7 @@ export const SERVICES: HealthService[] = [
   'auth',
   'elevenlabs',
   'anthropic',
+  'gemini',
   'newsapi',
   'gnews',
   'openweather',

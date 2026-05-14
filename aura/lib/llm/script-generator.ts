@@ -1,23 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import type { Emotion } from '@/lib/audio/emotions';
+import type { LlmProvider, ScriptBlock, ScriptGenerationInput } from './types';
+import { createClaudeProvider } from './providers/claude';
+import { createGeminiProvider } from './providers/gemini';
 
-export interface ScriptBlock {
-  text: string;
-  emotion: Emotion;
-  duracaoSegundos: number;
-}
-
-export interface ScriptGenerationInput {
-  newsContent: string;
-  targetDurationSeconds: number;
-  language: 'en' | 'pt' | 'es';
-  weather?: {
-    location: string;
-    summary: string;
-    format: 'separate' | 'integrated';
-  };
-}
+export type { ScriptBlock, ScriptGenerationInput } from './types';
 
 const ScriptResponse = z.object({
   blocos: z
@@ -31,14 +18,28 @@ const ScriptResponse = z.object({
     .min(1),
 });
 
-function getClient(): Anthropic {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error('ANTHROPIC_API_KEY is not set');
-  return new Anthropic({ apiKey: key });
+/**
+ * Resolves the active LLM provider. `LLM_PROVIDER=gemini|claude` overrides
+ * the auto-detect, which otherwise prefers Claude when ANTHROPIC_API_KEY is
+ * set and falls back to Gemini.
+ */
+function resolveProvider(): LlmProvider {
+  const explicit = (process.env.LLM_PROVIDER ?? '').toLowerCase();
+  if (explicit === 'gemini') return createGeminiProvider();
+  if (explicit === 'claude') return createClaudeProvider();
+  if (process.env.ANTHROPIC_API_KEY) return createClaudeProvider();
+  if (process.env.GEMINI_API_KEY) return createGeminiProvider();
+  throw new Error(
+    'No LLM provider configured. Set ANTHROPIC_API_KEY or GEMINI_API_KEY.'
+  );
 }
 
 function languageName(lang: 'en' | 'pt' | 'es'): string {
-  return lang === 'pt' ? 'Portuguese (Brazil)' : lang === 'es' ? 'Latin American Spanish' : 'English';
+  return lang === 'pt'
+    ? 'Portuguese (Brazil)'
+    : lang === 'es'
+      ? 'Latin American Spanish'
+      : 'English';
 }
 
 function buildSystemPrompt(): string {
@@ -85,18 +86,19 @@ function parseResponse(text: string): ScriptBlock[] {
   const parsed = ScriptResponse.parse(JSON.parse(cleaned));
   return parsed.blocos.map((b) => ({
     text: b.texto,
-    emotion: b.emocao,
+    emotion: b.emocao as Emotion,
     duracaoSegundos: b.duracao_segundos,
   }));
 }
 
 /**
- * Generates an emotional radio script via Claude, with a self-correcting
- * duration loop (up to 2 attempts). Mirrors the AURA prototype pattern.
+ * Generates an emotional radio script through whichever LLM is configured,
+ * with a self-correcting duration loop (up to 2 attempts).
  */
-export async function generateScript(input: ScriptGenerationInput): Promise<ScriptBlock[]> {
-  const client = getClient();
-  const model = process.env.AURA_CLAUDE_MODEL ?? 'claude-sonnet-4-6';
+export async function generateScript(
+  input: ScriptGenerationInput
+): Promise<ScriptBlock[]> {
+  const provider = resolveProvider();
   const systemPrompt = buildSystemPrompt();
 
   let blocks: ScriptBlock[] | null = null;
@@ -104,26 +106,11 @@ export async function generateScript(input: ScriptGenerationInput): Promise<Scri
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const userPrompt = buildUserPrompt(input, correction);
-
-    const msg = await client.messages.create({
-      model,
-      max_tokens: 2048,
-      temperature: 1.0,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    });
-
-    const text = msg.content
-      .filter((part): part is Anthropic.TextBlock => part.type === 'text')
-      .map((p) => p.text)
-      .join('');
-
+    const text = await provider.complete({ systemPrompt, userPrompt });
     blocks = parseResponse(text);
 
     const total = totalDuration(blocks);
-    if (Math.abs(total - input.targetDurationSeconds) <= 2) {
-      return blocks;
-    }
+    if (Math.abs(total - input.targetDurationSeconds) <= 2) return blocks;
     correction = { previousTotal: total };
   }
 

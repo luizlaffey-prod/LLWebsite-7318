@@ -18,7 +18,14 @@ const VARS: VarSpec[] = [
   { name: 'BETTER_AUTH_URL', required: true, group: 'Core' },
   { name: 'NEXT_PUBLIC_APP_URL', required: true, group: 'Core' },
 
-  { name: 'ANTHROPIC_API_KEY', required: false, group: 'LLM (script generation)' },
+  { name: 'ANTHROPIC_API_KEY', required: false, group: 'LLM (one of two)' },
+  { name: 'GEMINI_API_KEY', required: false, group: 'LLM (one of two)' },
+  {
+    name: 'LLM_PROVIDER',
+    required: false,
+    group: 'LLM (one of two)',
+    note: 'optional override: "claude" or "gemini"',
+  },
   { name: 'ELEVENLABS_API_KEY', required: false, group: 'TTS' },
 
   { name: 'NEWSAPI_KEY', required: false, group: 'News (at least one)' },

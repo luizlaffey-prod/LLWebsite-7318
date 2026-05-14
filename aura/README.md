@@ -4,7 +4,7 @@ B2B SaaS for radio stations to generate AI-voiced news bulletins on demand.
 
 ## One-click deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fluizlaffey-prod%2FLLWebsite-7318&root-directory=aura&project-name=aura&repository-name=aura&env=DATABASE_URL,BETTER_AUTH_SECRET,BETTER_AUTH_URL,NEXT_PUBLIC_APP_URL,ELEVENLABS_API_KEY,ANTHROPIC_API_KEY&envDescription=Minimum%20vars%20to%20boot%20AURA.%20Get%20DATABASE_URL%20from%20Neon%20(free%20tier).%20BETTER_AUTH_SECRET%20%3D%20openssl%20rand%20-base64%2032.%20Leave%20BETTER_AUTH_URL%20and%20NEXT_PUBLIC_APP_URL%20blank%20on%20first%20deploy%20and%20fill%20them%20with%20the%20Vercel%20URL%20after.&envLink=https%3A%2F%2Fgithub.com%2Fluizlaffey-prod%2FLLWebsite-7318%2Fblob%2Fclaude%2Fnews-aggregator-app-TIwT9%2Faura%2FREADME.md%23deploying-to-vercel-production-access-in-20-minutes)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fluizlaffey-prod%2FLLWebsite-7318&root-directory=aura&project-name=aura&repository-name=aura&env=DATABASE_URL,BETTER_AUTH_SECRET,BETTER_AUTH_URL,NEXT_PUBLIC_APP_URL,ELEVENLABS_API_KEY,ANTHROPIC_API_KEY,GEMINI_API_KEY&envDescription=Minimum%20vars%20to%20boot%20AURA.%20DATABASE_URL%20from%20Neon%20(free%20tier).%20BETTER_AUTH_SECRET%20%3D%20openssl%20rand%20-base64%2032.%20Leave%20BETTER_AUTH_URL%20and%20NEXT_PUBLIC_APP_URL%20blank%20on%20first%20deploy.%20Use%20EITHER%20ANTHROPIC_API_KEY%20OR%20GEMINI_API_KEY%20(the%20one%20you%20left%20blank%20can%20stay%20blank).&envLink=https%3A%2F%2Fgithub.com%2Fluizlaffey-prod%2FLLWebsite-7318%2Fblob%2Fclaude%2Fnews-aggregator-app-TIwT9%2Faura%2FREADME.md%23deploying-to-vercel-production-access-in-20-minutes)
 
 The button above clones the repo, scaffolds the project on Vercel with
 `aura/` as the root directory, and pops up a form pre-filled with every
@@ -101,9 +101,39 @@ Troubleshooting:
 - `rate limited` → too many calls in a short window; wait a minute.
 - `upstream 5xx` → ElevenLabs is degraded; retry in a few minutes.
 
-The same diagnostics page tests every other integration (Anthropic, NewsAPI,
-GNews, OpenWeather, Resend, R2, Stripe, Postgres, Better Auth). Each card
-shows which env var it expects, so finding a missing key takes seconds.
+The same diagnostics page tests every other integration (Anthropic, Gemini,
+NewsAPI, GNews, OpenWeather, Resend, R2, Stripe, Postgres, Better Auth).
+Each card shows which env var it expects, so finding a missing key takes
+seconds.
+
+## Picking the LLM provider (Claude vs Gemini)
+
+AURA can use either **Anthropic Claude** or **Google Gemini** for script
+generation — same prompt, same emotion-tagged output, same ±2s
+self-correcting duration loop. Set one (or both) of these:
+
+```
+# Either works on its own; pick whichever you already pay for.
+ANTHROPIC_API_KEY=sk-ant-...
+GEMINI_API_KEY=...
+```
+
+If both are set, the app prefers Claude. Force a specific provider with:
+
+```
+LLM_PROVIDER=gemini   # or "claude"
+```
+
+Optional model overrides (defaults shown):
+
+```
+AURA_CLAUDE_MODEL=claude-sonnet-4-6
+AURA_GEMINI_MODEL=gemini-2.5-pro
+```
+
+Where to get the keys:
+- Claude: https://console.anthropic.com → API Keys
+- Gemini: https://aistudio.google.com/apikey → Create API key
 
 ## Scripts
 
@@ -164,7 +194,7 @@ Save the output as `BETTER_AUTH_SECRET`.
    | `BETTER_AUTH_URL` | Leave blank for now, fill in after first deploy |
    | `NEXT_PUBLIC_APP_URL` | Same as `BETTER_AUTH_URL` |
    | `ELEVENLABS_API_KEY` | From step 3 |
-   | `ANTHROPIC_API_KEY` | From https://console.anthropic.com (script gen) |
+   | `ANTHROPIC_API_KEY` *or* `GEMINI_API_KEY` | Script generator — Claude (https://console.anthropic.com) **or** Gemini (https://aistudio.google.com/apikey). Pick one. |
 
 6. Click **Deploy**. First build takes ~3 minutes.
 
