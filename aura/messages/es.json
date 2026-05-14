@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "appName": "AURA",
+    "tagline": "Audio de Radio Urbana Automatizado"
+  },
+  "nav": {
+    "login": "Iniciar sesión",
+    "signup": "Empezar gratis",
+    "dashboard": "Panel",
+    "news": "Buscar Noticias",
+    "audios": "Mis Audios",
+    "voices": "Mis Voces",
+    "automations": "Automatizaciones",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión"
+  },
+  "landing": {
+    "headline": "Boletines de noticias con voz IA, listos para salir al aire.",
+    "subheadline": "Busca noticias globales, genera guiones con emoción y entrega audio profesional en minutos.",
+    "cta": "Comenzar prueba gratis de 7 días",
+    "benefits": {
+      "global": {
+        "title": "Búsqueda Global",
+        "body": "Fuentes confiables del mundo, filtradas por sesgo y geografía."
+      },
+      "smart": {
+        "title": "Resumen Inteligente",
+        "body": "Guiones generados por Claude con marcas de emoción, ajustados a tu duración."
+      },
+      "audio": {
+        "title": "Audio Profesional",
+        "body": "Voces de ElevenLabs en tres idiomas, listas para el playout."
+      }
+    },
+    "plans": {
+      "title": "Planes",
+      "starter": "Starter",
+      "standard": "Standard",
+      "pro": "Pro"
+    }
+  },
+  "auth": {
+    "loginTitle": "Bienvenido de vuelta",
+    "signupTitle": "Crea la cuenta de tu emisora",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "radioName": "Nombre de la emisora",
+    "submitLogin": "Iniciar sesión",
+    "submitSignup": "Crear cuenta",
+    "noAccount": "¿No tienes cuenta? Regístrate",
+    "hasAccount": "¿Ya tienes cuenta? Inicia sesión",
+    "errors": {
+      "invalidEmail": "Ingresa un correo válido.",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+      "passwordMismatch": "Las contraseñas no coinciden.",
+      "radioNameRequired": "El nombre de la emisora es obligatorio."
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Volver"
+  }
+}
