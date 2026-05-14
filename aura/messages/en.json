@@ -179,7 +179,26 @@
     "choosingFolder": "Choose download folder",
     "downloadedTo": "Saved to local folder",
     "approve": "Approve & publish",
-    "errorGenerate": "Generation failed. Please try again."
+    "errorGenerate": "Generation failed. Please try again.",
+    "overagePrompt": "You hit today's bulletin limit. Generate this one anyway for ${price}?",
+    "overageTrial": "You hit your trial's daily limit. Upgrade to Pro to keep going.",
+    "overageConfirm": "Pay & generate"
+  },
+  "billing": {
+    "title": "Billing",
+    "subtitle": "Plan, invoices and Stripe portal.",
+    "currentPlan": "Current plan",
+    "managePortal": "Manage in Stripe",
+    "trialEndsAt": "Trial ends {date}",
+    "changePlan": "Change plan",
+    "changePlanSub": "Upgrades take effect immediately with prorated charges. Downgrades take effect at the end of the period.",
+    "currentBadge": "Current",
+    "switchTo": "Switch to {tier}",
+    "invoices": "Recent invoices",
+    "noInvoices": "No invoices yet. Once your trial ends, charges will appear here.",
+    "viewInvoice": "View invoice",
+    "errorPortalUnavailable": "Couldn't open the billing portal. Try again in a moment.",
+    "errorChangeFailed": "Couldn't change plan. Please try again."
   },
   "dashboard": {
     "welcomeTitle": "Welcome to AURA",
