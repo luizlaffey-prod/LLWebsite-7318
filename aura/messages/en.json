@@ -11,6 +11,7 @@
     "audios": "My Audios",
     "voices": "My Voices",
     "automations": "Automations",
+    "analytics": "Analytics",
     "settings": "Settings",
     "logout": "Log out"
   },
@@ -183,6 +184,40 @@
     "overagePrompt": "You hit today's bulletin limit. Generate this one anyway for ${price}?",
     "overageTrial": "You hit your trial's daily limit. Upgrade to Pro to keep going.",
     "overageConfirm": "Pay & generate"
+  },
+  "analyticsPage": {
+    "title": "Analytics",
+    "subtitle": "How your station uses AURA — picks per language, voice, and topic.",
+    "period": "Period",
+    "period7d": "Last 7 days",
+    "period30d": "Last 30 days",
+    "period90d": "Last 90 days",
+    "periodCustom": "Custom",
+    "from": "From",
+    "to": "To",
+    "exportCsv": "Export CSV",
+    "rangeFooter": "Showing data from {start} to {end}.",
+    "emptyTitle": "No data in this period",
+    "emptyBody": "Generate a few bulletins and come back — metrics light up as soon as data arrives.",
+    "cards": {
+      "audiosTitle": "Audios Generated",
+      "audiosSub": "Last {days} day(s)",
+      "minutesTitle": "Minutes Synthesized",
+      "minutesSub": "Total runtime",
+      "languageTitle": "Top Language",
+      "voiceTitle": "Top Voice",
+      "articleTitle": "Top Article",
+      "articleSub": "{count} time(s)",
+      "averageTitle": "Daily Average",
+      "averageSub": "audios / day",
+      "percentSub": "{percent}% of total"
+    },
+    "charts": {
+      "dailyTitle": "Audios per day",
+      "languageTitle": "Language mix",
+      "articlesTitle": "Top 5 articles"
+    },
+    "errorLoad": "Couldn't load analytics. Refresh to retry."
   },
   "automationsPage": {
     "title": "Automations",
