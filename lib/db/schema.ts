@@ -55,6 +55,7 @@ export const user = pgTable('user', {
   stripeCustomerId: text('stripe_customer_id'),
   paypalSubscriptionId: text('paypal_subscription_id'),
   subscriptionStatus: subscriptionStatusEnum('subscription_status'),
+  emailNotifications: boolean('email_notifications').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
