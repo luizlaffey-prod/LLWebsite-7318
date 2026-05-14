@@ -13,6 +13,7 @@ import { generateScript } from '@/lib/llm/script-generator';
 import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { incrementUsage } from '@/lib/billing/quota';
+import { dispatchAudioToEndpoints } from '@/lib/delivery/dispatch';
 
 export interface RunResult {
   ok: boolean;
@@ -164,6 +165,16 @@ export async function runAutomationSlot(input: {
       await incrementUsage(automation.userId);
     } catch (err) {
       console.warn('[automation] quota increment failed', err);
+    }
+
+    // 11) Push to any configured delivery endpoints (FTP/HTTP/email).
+    try {
+      await dispatchAudioToEndpoints({
+        userId: automation.userId,
+        audioId: audio.id,
+      });
+    } catch (err) {
+      console.warn('[automation] delivery dispatch failed', err);
     }
 
     return { ok: true, audioId: audio.id, audioUrl: uploaded.url };

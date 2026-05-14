@@ -20,6 +20,7 @@
     "app/api/cron/trial-warning/route.ts": { "maxDuration": 60 },
     "app/api/cron/trial-downgrade/route.ts": { "maxDuration": 60 },
     "app/api/cron/automations/route.ts": { "maxDuration": 300 },
-    "app/api/automations/[id]/run/route.ts": { "maxDuration": 180 }
+    "app/api/automations/[id]/run/route.ts": { "maxDuration": 180 },
+    "app/api/voices/clone/route.ts": { "maxDuration": 120 }
   }
 }

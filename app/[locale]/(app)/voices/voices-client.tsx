@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Play, Pause, Check, Lock, Loader2, Mic } from 'lucide-react';
+import { Play, Pause, Check, Lock, Loader2, Mic, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { VoiceCloneModal } from './voice-clone-modal';
 
 interface VoiceItem {
   id: string;
@@ -44,6 +45,7 @@ export function VoicesClient() {
   const [error, setError] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [cloneOpen, setCloneOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -254,11 +256,34 @@ export function VoicesClient() {
         </div>
       )}
 
+      {!loading && tier === 'pro' && (
+        <Card className="mt-8 flex items-center justify-between gap-4 p-5">
+          <div>
+            <div className="flex items-center gap-2 text-base font-semibold">
+              <Sparkles className="h-4 w-4 text-teal" /> {t('cloneSectionTitle')}
+            </div>
+            <p className="mt-1 text-sm text-text-secondary">{t('cloneSectionBody')}</p>
+          </div>
+          <Button onClick={() => setCloneOpen(true)}>
+            <Sparkles className="h-4 w-4" /> {t('cloneCta')}
+          </Button>
+        </Card>
+      )}
+
       {!loading && tier !== 'pro' && (
         <Card className="mt-8 p-5 text-center text-sm text-text-secondary">
           {t('upgradeForMore')}
         </Card>
       )}
+
+      <VoiceCloneModal
+        open={cloneOpen}
+        onClose={() => setCloneOpen(false)}
+        onCloned={() => {
+          setCloneOpen(false);
+          load();
+        }}
+      />
     </div>
   );
 }

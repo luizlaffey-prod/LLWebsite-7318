@@ -28,6 +28,8 @@ export default async function AppLayout({
       radioName: user.radioName,
       plan: user.plan,
       trialEndsAt: user.trialEndsAt,
+      brandLogoUrl: user.brandLogoUrl,
+      brandAccentColor: user.brandAccentColor,
     })
     .from(user)
     .where(eq(user.id, session.user.id))
@@ -36,9 +38,18 @@ export default async function AppLayout({
   const tier = effectiveTier(dbUser?.plan);
   const planLabel = dbUser?.plan === 'trial' ? 'TRIAL · PRO' : tier.toUpperCase();
 
+  const styleOverride = dbUser?.brandAccentColor
+    ? ({ ['--teal' as string]: dbUser.brandAccentColor } as React.CSSProperties)
+    : undefined;
+
   return (
-    <div className="flex min-h-screen bg-base">
-      <AppSidebar locale={locale} radioName={dbUser?.radioName} planLabel={planLabel} />
+    <div className="flex min-h-screen bg-base" style={styleOverride}>
+      <AppSidebar
+        locale={locale}
+        radioName={dbUser?.radioName}
+        planLabel={planLabel}
+        brandLogoUrl={dbUser?.brandLogoUrl ?? null}
+      />
       <main className="flex-1 overflow-x-hidden">{children}</main>
     </div>
   );
