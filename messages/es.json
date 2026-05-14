@@ -322,7 +322,28 @@
     "brandSection": "Marca",
     "brandHint": "Reemplaza el logo y color de AURA con la identidad de tu emisora.",
     "openBrand": "Abrir marca",
+    "healthSection": "Estado de integraciones",
+    "healthHint": "Verifica que ElevenLabs, Anthropic, noticias, clima y storage estén accesibles. Pruebas en vivo.",
+    "openHealth": "Ejecutar diagnóstico",
     "errorSave": "No se pudo guardar. Inténtalo de nuevo."
+  },
+  "healthPage": {
+    "title": "Estado de integraciones",
+    "subtitle": "Pruebas en vivo para cada servicio externo del que AURA depende. Útil cuando algo se ve raro o tras rotar una API key.",
+    "summaryOk": "OK",
+    "summaryFailed": "fallando",
+    "summaryUnset": "sin configurar",
+    "retestAll": "Re-probar todo",
+    "retest": "Re-probar",
+    "statusOk": "OK",
+    "statusFailed": "FALLÓ",
+    "statusUnset": "SIN CONFIGURAR",
+    "ttsTestTitle": "Prueba ElevenLabs end-to-end",
+    "ttsTestHint": "Reproduce una muestra de 1s de ElevenLabs usando la primera voz seedada. Si escuchas audio, la API key y el catálogo están listos.",
+    "ttsTestCta": "Reproducir muestra",
+    "errorNoVoice": "No hay voces. Ejecuta `bun run db:seed` para llenar el catálogo.",
+    "errorPreview": "No se pudo reproducir la muestra. Mira la tarjeta de ElevenLabs para el error exacto.",
+    "explanation": "Los probes son de solo lectura y se ejecutan al abrir esta página o al hacer clic en re-probar. Los errores incluyen el status HTTP — 401 = clave incorrecta, 429 = rate-limit, 5xx = upstream con problemas."
   },
   "deliveryPage": {
     "title": "Entrega automática",

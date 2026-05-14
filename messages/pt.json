@@ -322,7 +322,28 @@
     "brandSection": "Identidade visual",
     "brandHint": "Substitua o logo e a cor de destaque da AURA pela identidade da sua rádio.",
     "openBrand": "Abrir identidade",
+    "healthSection": "Saúde das integrações",
+    "healthHint": "Verifique se ElevenLabs, Anthropic, notícias, clima e storage estão acessíveis. Testes ao vivo.",
+    "openHealth": "Rodar diagnóstico",
     "errorSave": "Não foi possível salvar. Tente novamente."
+  },
+  "healthPage": {
+    "title": "Saúde das integrações",
+    "subtitle": "Testes ao vivo para todo serviço externo que a AURA depende. Use quando algo parecer estranho ou logo após trocar uma API key.",
+    "summaryOk": "OK",
+    "summaryFailed": "falhando",
+    "summaryUnset": "não configurado",
+    "retestAll": "Re-testar tudo",
+    "retest": "Re-testar",
+    "statusOk": "OK",
+    "statusFailed": "FALHOU",
+    "statusUnset": "NÃO CONFIGURADO",
+    "ttsTestTitle": "Teste ponta-a-ponta ElevenLabs",
+    "ttsTestHint": "Toca uma amostra de 1 segundo do ElevenLabs usando a primeira voz seedada. Se você ouvir áudio, a chave e o catálogo estão certos.",
+    "ttsTestCta": "Tocar amostra de teste",
+    "errorNoVoice": "Nenhuma voz encontrada. Rode `bun run db:seed` para popular o catálogo.",
+    "errorPreview": "Não foi possível tocar a amostra. Veja o card do ElevenLabs abaixo para o erro exato.",
+    "explanation": "Probes são read-only e só rodam quando você abre a página ou clica em re-testar. Erros incluem o status HTTP do upstream — 401 = chave errada, 429 = rate-limit, 5xx = upstream com problema."
   },
   "deliveryPage": {
     "title": "Entrega automática",

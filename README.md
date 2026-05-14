@@ -67,6 +67,35 @@ See `.env.example`. The most critical for the foundation phase:
 
 The remaining keys (Anthropic, ElevenLabs, Stripe, NewsAPI, GNews, OpenWeather, Resend, R2, Inngest) are needed as their respective phases land.
 
+## Wiring ElevenLabs (testing the voice engine)
+
+ElevenLabs is the only service that produces audio. Get it working before
+testing the full bulletin flow.
+
+1. Create an account at https://elevenlabs.io and grab your API key from
+   **Profile → API Key**.
+2. Add `ELEVENLABS_API_KEY=sk_...` to `.env.local`.
+3. Seed the voice catalog so AURA knows which presets to expose:
+   ```bash
+   bun run db:seed
+   ```
+4. Restart the dev server (`bun dev`).
+5. Open `/en/settings/health` while logged in. The ElevenLabs row should
+   show `OK` with your tier + character usage. Click **Play test sample**
+   — if you hear audio, the full pipeline is live.
+
+Troubleshooting:
+- `unauthorized (check the API key)` → wrong key, paste again from the
+  ElevenLabs dashboard.
+- `forbidden` → your plan doesn't allow the voice you picked (e.g. some
+  presets are gated on the free tier). Try a different voice in `/voices`.
+- `rate limited` → too many calls in a short window; wait a minute.
+- `upstream 5xx` → ElevenLabs is degraded; retry in a few minutes.
+
+The same diagnostics page tests every other integration (Anthropic, NewsAPI,
+GNews, OpenWeather, Resend, R2, Stripe, Postgres, Better Auth). Each card
+shows which env var it expects, so finding a missing key takes seconds.
+
 ## Scripts
 
 ```bash

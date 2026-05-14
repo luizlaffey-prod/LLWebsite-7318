@@ -30,10 +30,15 @@ async function synthesizeBlock(
   if (!key) throw new ElevenLabsError('ELEVENLABS_API_KEY is not set', 0);
 
   const url = `${ELEVEN_BASE}/text-to-speech/${opts.elevenLabsVoiceId}`;
+  const voiceSettings: Record<string, number> = { ...VOICE_SETTINGS };
+  if (typeof opts.speed === 'number') {
+    // ElevenLabs accepts speed in [0.7, 1.2]; clamp our UI range [0.8, 1.5].
+    voiceSettings.speed = Math.max(0.7, Math.min(1.2, opts.speed));
+  }
   const body = {
     text,
     model_id: opts.fast ? ELEVEN_LABS_FAST_MODEL : ELEVEN_LABS_MODEL,
-    voice_settings: VOICE_SETTINGS,
+    voice_settings: voiceSettings,
   };
 
   try {
