@@ -66,8 +66,11 @@ export default async function LandingPage({
             {(['global', 'smart', 'audio'] as const).map((key) => {
               const Icon = BENEFIT_ICONS[key];
               return (
-                <div key={key} className="aura-card p-6">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-elevated">
+                <div
+                  key={key}
+                  className="group aura-card p-6 transition-all hover:border-teal/30 hover:shadow-[0_0_40px_-15px_rgba(0,229,200,0.35)]"
+                >
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-elevated transition-colors group-hover:bg-teal/10">
                     <Icon className="h-5 w-5 text-teal" />
                   </div>
                   <h3 className="mt-4 text-lg font-semibold">

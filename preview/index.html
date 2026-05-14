@@ -68,6 +68,8 @@
   <a href="#login" data-target="login">Login</a>
   <a href="#plan" data-target="plan">Plan</a>
   <a href="#dashboard" data-target="dashboard">Dashboard</a>
+  <a href="#news" data-target="news">News Search</a>
+  <a href="#drawer" data-target="drawer">Bulletin Drawer</a>
 </nav>
 
 <!-- ============== LANDING ============== -->
@@ -329,6 +331,152 @@
       <div class="mt-10 aura-card p-8 text-center text-[#9CA3AF]">More tools land in upcoming releases.</div>
     </div>
   </main>
+</section>
+
+<!-- ============== NEWS SEARCH ============== -->
+<section data-screen="news" class="flex min-h-screen">
+  <aside class="hidden md:flex w-60 shrink-0 flex-col border-r border-[#1C2030] bg-[#0D1017]">
+    <div class="flex h-16 items-center px-4 border-b border-[#1C2030]"><span class="text-lg font-semibold aura-gradient-text">AURA</span></div>
+    <div class="px-4 py-4 border-b border-[#1C2030]">
+      <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Station</p>
+      <p class="mt-1 text-sm font-medium">Rádio Exemplo FM</p>
+      <span class="mt-2 inline-flex items-center rounded-full border border-[#00E5C8]/30 bg-[#00E5C8]/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[#00E5C8]">TRIAL · PRO</span>
+    </div>
+    <nav class="flex-1 p-2 space-y-1 text-sm">
+      <a href="#news" class="flex items-center gap-3 rounded-md bg-[#141820] px-3 py-2 text-white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>News Search</a>
+      <a href="#" class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF] hover:bg-[#141820]/60 hover:text-white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>My Audios</a>
+      <a href="#" class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF] hover:bg-[#141820]/60 hover:text-white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>My Voices</a>
+      <a href="#" class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF] hover:bg-[#141820]/60 hover:text-white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18M12 14v4M10 16h4"/></svg>Automations</a>
+      <a href="#" class="flex items-center gap-3 rounded-md px-3 py-2 text-[#9CA3AF] hover:bg-[#141820]/60 hover:text-white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+    </nav>
+  </aside>
+  <main class="flex-1 px-8 py-10 overflow-x-hidden">
+    <h1 class="text-3xl font-semibold tracking-tight">Search the news</h1>
+    <p class="mt-2 text-[#9CA3AF] max-w-2xl">Pick categories, bias, and runtime — AURA pulls trusted sources and shapes a bulletin to fit.</p>
+
+    <div class="mt-8 rounded-xl border border-[#1C2030] bg-[#0D1017] p-6 max-w-5xl">
+      <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Categories</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <span class="inline-flex items-center gap-2 rounded-full border border-[#00E5C8]/40 bg-[#00E5C8]/10 px-3 py-1.5 text-xs font-medium text-[#00E5C8]"><span class="text-[#00E5C8]">✓</span>Technology</span>
+        <span class="inline-flex items-center gap-2 rounded-full border border-[#1C2030] bg-[#141820] px-3 py-1.5 text-xs text-[#9CA3AF]">Politics</span>
+        <span class="inline-flex items-center gap-2 rounded-full border border-[#1C2030] bg-[#141820] px-3 py-1.5 text-xs text-[#9CA3AF]">Cinema</span>
+        <span class="inline-flex items-center gap-2 rounded-full border border-[#1C2030] bg-[#141820] px-3 py-1.5 text-xs text-[#9CA3AF]">Music</span>
+        <span class="inline-flex items-center gap-2 rounded-full border border-[#1C2030] bg-[#141820] px-3 py-1.5 text-xs text-[#9CA3AF]">Sports</span>
+        <span class="inline-flex items-center gap-2 rounded-full border border-[#1C2030] bg-[#141820] px-3 py-1.5 text-xs text-[#9CA3AF]">Economy</span>
+      </div>
+
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Duration</p>
+          <div class="mt-3 flex items-end gap-2">
+            <div class="flex-1"><input class="h-11 w-full rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm text-white" value="2"/><p class="mt-1 text-xs text-[#4B5263]">Minutes</p></div>
+            <div class="flex-1"><input class="h-11 w-full rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm text-white" value="0"/><p class="mt-1 text-xs text-[#4B5263]">Seconds</p></div>
+            <div class="h-11 px-3 inline-flex items-center text-sm text-[#9CA3AF] border border-[#1C2030] bg-[#141820] rounded-md">120s</div>
+          </div>
+        </div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Output language</p>
+          <div class="mt-3 flex h-11 items-center justify-between rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm">English<span class="text-[#4B5263]">▾</span></div>
+        </div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Bias</p>
+          <div class="mt-3 flex h-11 items-center justify-between rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm">Center<span class="text-[#4B5263]">▾</span></div>
+        </div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Geographic scope</p>
+          <div class="mt-3 flex h-11 items-center justify-between rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm">Global<span class="text-[#4B5263]">▾</span></div>
+        </div>
+
+        <div class="md:col-span-2">
+          <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Location</p>
+          <div class="mt-3 flex gap-2">
+            <input class="h-11 flex-1 rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm text-white placeholder-[#4B5263]" placeholder="e.g. São Paulo" disabled/>
+            <button class="h-11 rounded-md border border-[#1C2030] bg-[#141820] px-4 text-sm">Use my location</button>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 flex items-center justify-between rounded-md border border-[#1C2030] bg-[#141820]/40 p-4">
+          <div class="flex items-center gap-3">
+            <span class="inline-flex h-6 w-11 items-center rounded-full bg-[#141820] border border-[#1C2030] p-0.5"><span class="h-5 w-5 rounded-full bg-white"></span></span>
+            <div><div class="text-sm font-medium">Include weather forecast</div><div class="text-xs text-[#4B5263]">Weather format</div></div>
+          </div>
+          <div class="w-56 flex h-11 items-center justify-between rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm text-[#4B5263]">Separate block</div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button class="inline-flex items-center gap-2 h-12 px-6 rounded-md text-base font-medium text-[#06080F]" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          Search news
+        </button>
+      </div>
+    </div>
+
+    <h2 class="mt-10 text-lg font-semibold tracking-tight">Results</h2>
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl">
+      <div class="rounded-xl border border-[#1C2030] bg-[#0D1017] p-5">
+        <div class="flex items-start justify-between gap-3"><h3 class="text-base font-semibold leading-snug">OpenAI ships new long-context model with native multimodal reasoning</h3><span class="inline-flex items-center rounded-full border border-[#1C2030] bg-[#141820] px-2 py-0.5 text-xs text-[#9CA3AF]">Reuters</span></div>
+        <p class="mt-3 line-clamp-3 text-sm text-[#9CA3AF]">The company unveiled a new flagship model trained to process video, audio and text together, claiming benchmark improvements...</p>
+        <div class="mt-4 flex items-center justify-between text-xs text-[#4B5263]"><span>05/14/2026</span><button class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-xs font-medium text-[#06080F]" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);">✨ Generate bulletin</button></div>
+      </div>
+      <div class="rounded-xl border border-[#1C2030] bg-[#0D1017] p-5">
+        <div class="flex items-start justify-between gap-3"><h3 class="text-base font-semibold leading-snug">EU regulators outline new framework for cross-border data flow</h3><span class="inline-flex items-center rounded-full border border-[#1C2030] bg-[#141820] px-2 py-0.5 text-xs text-[#9CA3AF]">Financial Times</span></div>
+        <p class="mt-3 line-clamp-3 text-sm text-[#9CA3AF]">Brussels published a draft proposal that would standardize how companies move user data between member states, addressing...</p>
+        <div class="mt-4 flex items-center justify-between text-xs text-[#4B5263]"><span>05/14/2026</span><button class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-xs font-medium text-[#06080F]" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);">✨ Generate bulletin</button></div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ============== BULLETIN DRAWER ============== -->
+<section data-screen="drawer" class="min-h-screen relative bg-[#06080F]/80">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+  <aside class="absolute inset-y-0 right-0 z-10 w-full max-w-2xl border-l border-[#1C2030] bg-[#0D1017] overflow-y-auto">
+    <div class="flex items-start justify-between px-6 pt-6">
+      <div>
+        <h2 class="text-lg font-semibold">Generate bulletin</h2>
+        <p class="mt-1 text-sm text-[#9CA3AF]">OpenAI ships new long-context model with native multimodal reasoning</p>
+      </div>
+      <button class="rounded p-1 text-[#9CA3AF] hover:text-white">✕</button>
+    </div>
+
+    <div class="space-y-6 px-6 py-6">
+      <div class="grid gap-4">
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Voice</p>
+          <div class="mt-2 flex h-11 items-center justify-between rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm">Adam · american<span class="text-[#4B5263]">▾</span></div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between"><p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Speed</p><span class="text-sm text-[#9CA3AF]">1.00x</span></div>
+          <div class="mt-3 relative h-1.5 w-full rounded-full bg-[#1C2030]"><div class="h-full w-2/5 rounded-full" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);"></div><span class="absolute top-1/2 left-2/5 -translate-y-1/2 block h-4 w-4 rounded-full border border-[#00E5C8] bg-[#06080F]"></span></div>
+        </div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-[#4B5263]">Background track URL (optional)</p>
+          <input class="mt-2 h-11 w-full rounded-md border border-[#1C2030] bg-[#141820] px-3 text-sm text-white placeholder-[#4B5263]" placeholder="https://..."/>
+        </div>
+        <button class="w-full h-12 rounded-md text-base font-medium text-[#06080F]" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);">🎤 Generate script &amp; audio</button>
+      </div>
+
+      <div>
+        <h3 class="text-xs uppercase tracking-wider text-[#4B5263] font-semibold">Script blocks</h3>
+        <ol class="mt-3 space-y-3">
+          <li class="rounded-md border border-[#00E5C8]/30 bg-[#0D1017] p-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#00E5C8] bg-[#00E5C8]/10">1 · ENTHUSIASM · 8s</span><p class="mt-2 text-sm text-white">Good morning! Big tech news this morning out of San Francisco — OpenAI just dropped its newest flagship model.</p></li>
+          <li class="rounded-md border border-[#3B82F6]/30 bg-[#0D1017] p-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#3B82F6] bg-[#3B82F6]/10">2 · SERIOUSNESS · 9s</span><p class="mt-2 text-sm text-white">The new model can reason across video, audio and text simultaneously, with a one-million-token context window.</p></li>
+          <li class="rounded-md border border-[#9CA3AF]/30 bg-[#0D1017] p-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#9CA3AF] bg-[#9CA3AF]/10">3 · NEUTRAL · 6s</span><p class="mt-2 text-sm text-white">It will be available to API customers next week, with broader rollout in June.</p></li>
+          <li class="rounded-md border border-[#8B5CF6]/30 bg-[#0D1017] p-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#8B5CF6] bg-[#8B5CF6]/10">4 · DRAMATIC · 7s</span><p class="mt-2 text-sm text-white">A direct shot across the bow at every major AI lab — the race for general intelligence just got hotter.</p></li>
+        </ol>
+      </div>
+
+      <div class="rounded-md border border-[#1C2030] bg-[#141820]/40 p-4 space-y-3">
+        <div class="h-10 w-full rounded bg-[#141820] flex items-center justify-center text-xs text-[#9CA3AF]">▶ &nbsp;0:00 / 0:30 ━━━━━━━━━━━</div>
+        <div class="flex flex-wrap gap-2">
+          <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-[#1C2030] bg-[#141820] text-xs text-[#9CA3AF]">↻ Regenerate audio</button>
+          <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-xs font-medium text-[#06080F]" style="background:linear-gradient(135deg,#00E5C8 0%,#8B5CF6 100%);">⬇ Download MP3</button>
+          <button class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-[#1C2030] bg-transparent text-xs">📁 Choose download folder</button>
+        </div>
+      </div>
+    </div>
+  </aside>
 </section>
 
 <script>
