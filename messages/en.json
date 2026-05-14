@@ -184,6 +184,21 @@
     "overageTrial": "You hit your trial's daily limit. Upgrade to Pro to keep going.",
     "overageConfirm": "Pay & generate"
   },
+  "voicesPage": {
+    "title": "My voices",
+    "subtitle": "Preview the catalog, pick a default. Locked voices unlock with Standard or Pro.",
+    "defaultSpeed": "Default speed",
+    "speedHint": "Used when no per-bulletin speed is set. Range 0.80x–1.50x.",
+    "preview": "Preview",
+    "stop": "Stop",
+    "use": "Use",
+    "inUse": "Default",
+    "defaultBadge": "Default",
+    "upgradeForMore": "Upgrade to Pro to unlock the full voice catalog and custom voice cloning.",
+    "errorLoad": "Couldn't load the voice catalog. Please refresh.",
+    "errorPreview": "Couldn't play the preview right now.",
+    "errorSave": "Couldn't save your voice preference. Try again."
+  },
   "billing": {
     "title": "Billing",
     "subtitle": "Plan, invoices and Stripe portal.",
