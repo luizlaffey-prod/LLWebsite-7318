@@ -15,6 +15,13 @@
       "when": 1778776753557,
       "tag": "0001_fantastic_rawhide_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778777197714,
+      "tag": "0002_conscious_boomerang",
+      "breakpoints": true
     }
   ]
 }
