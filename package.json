@@ -13,6 +13,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "bun run drizzle/seed.ts",
+    "env:check": "bun run scripts/check-env.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
