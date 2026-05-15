@@ -23,14 +23,44 @@ export interface NewsSearchInput {
 const NEWSAPI_BASE = 'https://newsapi.org/v2/everything';
 const GNEWS_BASE = 'https://gnews.io/api/v4/search';
 
+// Common country name → ISO 3166-1 alpha-2 (lowercased for GNews).
+// Accepts PT, EN and ES forms. Extend as needed.
+const COUNTRY_CODE: Record<string, string> = {
+  'united states': 'us', 'usa': 'us', 'estados unidos': 'us', 'eua': 'us',
+  'brazil': 'br', 'brasil': 'br',
+  'mexico': 'mx', 'méxico': 'mx',
+  'argentina': 'ar',
+  'spain': 'es', 'espanha': 'es', 'españa': 'es',
+  'portugal': 'pt',
+  'united kingdom': 'gb', 'uk': 'gb', 'reino unido': 'gb',
+  'france': 'fr', 'frança': 'fr', 'francia': 'fr',
+  'germany': 'de', 'alemanha': 'de', 'alemania': 'de',
+  'italy': 'it', 'itália': 'it', 'italia': 'it',
+  'canada': 'ca', 'canadá': 'ca',
+  'japan': 'jp', 'japão': 'jp', 'japón': 'jp',
+  'china': 'cn',
+  'india': 'in', 'índia': 'in',
+  'australia': 'au', 'austrália': 'au',
+  'colombia': 'co', 'colômbia': 'co',
+  'chile': 'cl',
+  'peru': 'pe', 'perú': 'pe',
+};
+
+function countryCodeFor(location?: string): string | undefined {
+  if (!location) return undefined;
+  return COUNTRY_CODE[location.trim().toLowerCase()];
+}
+
 function buildQuery(input: NewsSearchInput): string {
   const parts: string[] = [];
+  // For state/city scope, include location as a soft hint (no quotes).
+  // For country scope, the provider's native country filter handles it.
   if (
-    input.geographicScope !== 'global' &&
+    (input.geographicScope === 'state' || input.geographicScope === 'city') &&
     input.location &&
     input.location.toLowerCase() !== 'global'
   ) {
-    parts.push(`"${input.location}"`);
+    parts.push(input.location);
   }
   if (input.categories.length > 0) {
     parts.push(input.categories.join(' OR '));
@@ -80,6 +110,10 @@ async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
   url.searchParams.set('lang', input.language);
   url.searchParams.set('max', String(input.limit ?? 10));
   url.searchParams.set('apikey', key);
+  if (input.geographicScope === 'country') {
+    const code = countryCodeFor(input.location);
+    if (code) url.searchParams.set('country', code);
+  }
 
   try {
     const res = await fetchWithRetry(url.toString());
