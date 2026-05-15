@@ -9,11 +9,11 @@ export function createClaudeProvider(): LlmProvider {
 
   return {
     id: 'claude',
-    async complete({ systemPrompt, userPrompt }) {
+    async complete({ systemPrompt, userPrompt, maxTokens, temperature }) {
       const msg = await client.messages.create({
         model,
-        max_tokens: 2048,
-        temperature: 1.0,
+        max_tokens: maxTokens ?? 2048,
+        temperature: temperature ?? 1.0,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       });
