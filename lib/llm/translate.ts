@@ -61,28 +61,46 @@ function extractJsonObject(raw: string): string | null {
   return null;
 }
 
+export type TranslationStatus =
+  | 'skipped_same_language'
+  | 'ok'
+  | 'no_provider'
+  | 'llm_error'
+  | 'parse_error'
+  | 'count_mismatch';
+
+export interface TranslateResult<T> {
+  articles: T[];
+  status: TranslationStatus;
+  translatedCount: number;
+}
+
 /**
  * Translates titles and descriptions in a single batched LLM call. Articles
  * already in `targetLang` are passed through untouched. Order is preserved.
+ * Returns the (possibly-original) articles plus a status code so callers can
+ * surface translation health for debugging.
  */
 export async function translateArticles<T extends TranslatableArticle>(
   articles: T[],
   targetLang: TargetLang
-): Promise<T[]> {
+): Promise<TranslateResult<T>> {
   const toTranslate: { idx: number; title: string; description: string }[] = [];
   articles.forEach((a, idx) => {
     if (a.originalLanguage !== targetLang) {
       toTranslate.push({ idx, title: a.title, description: a.description });
     }
   });
-  if (toTranslate.length === 0) return articles;
+  if (toTranslate.length === 0) {
+    return { articles, status: 'skipped_same_language', translatedCount: 0 };
+  }
 
   let provider;
   try {
     provider = resolveProvider();
   } catch (err) {
-    console.warn('[translate] no LLM provider available, returning originals', err);
-    return articles;
+    console.warn('[translate] no LLM provider available', err);
+    return { articles, status: 'no_provider', translatedCount: 0 };
   }
   const langName = languageName(targetLang);
 
@@ -110,29 +128,33 @@ export async function translateArticles<T extends TranslatableArticle>(
       maxTokens: 4096,
       temperature: 0.2,
     });
+  } catch (err) {
+    console.warn('[translate] LLM call failed', err);
+    return { articles, status: 'llm_error', translatedCount: 0 };
+  }
+
+  try {
     const json = extractJsonObject(text);
     if (!json) throw new Error('no_json_object_in_response');
     parsed = TranslateResponse.parse(JSON.parse(json));
   } catch (err) {
     console.warn(
-      '[translate] LLM translation failed, returning originals.',
+      '[translate] failed to parse LLM response. preview=',
+      text.slice(0, 400),
       'err=',
-      err,
-      'preview=',
-      text.slice(0, 400)
+      err
     );
-    return articles;
+    return { articles, status: 'parse_error', translatedCount: 0 };
   }
 
   if (parsed.items.length !== toTranslate.length) {
     console.warn(
-      '[translate] item count mismatch, returning originals.',
-      'got=',
+      '[translate] item count mismatch. got=',
       parsed.items.length,
       'expected=',
       toTranslate.length
     );
-    return articles;
+    return { articles, status: 'count_mismatch', translatedCount: 0 };
   }
 
   const result = articles.slice();
@@ -147,5 +169,5 @@ export async function translateArticles<T extends TranslatableArticle>(
   console.log(
     `[translate] translated ${toTranslate.length} articles into ${targetLang}`
   );
-  return result;
+  return { articles: result, status: 'ok', translatedCount: toTranslate.length };
 }
