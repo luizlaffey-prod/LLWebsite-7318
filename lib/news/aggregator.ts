@@ -46,6 +46,17 @@ const COUNTRY_CODE: Record<string, string> = {
   'peru': 'pe', 'perú': 'pe',
 };
 
+// ISO country code → primary press language used by GNews's `lang` param.
+// The bulletin script generator translates source articles into the user's
+// chosen output language, so the search should pull from the country's
+// native press rather than filter by the output locale.
+const COUNTRY_PRESS_LANG: Record<string, string> = {
+  us: 'en', gb: 'en', ca: 'en', au: 'en', in: 'en',
+  br: 'pt', pt: 'pt',
+  es: 'es', mx: 'es', ar: 'es', co: 'es', cl: 'es', pe: 'es',
+  fr: 'fr', de: 'de', it: 'it', jp: 'ja', cn: 'zh',
+};
+
 function countryCodeFor(location?: string): string | undefined {
   if (!location) return undefined;
   return COUNTRY_CODE[location.trim().toLowerCase()];
@@ -105,15 +116,19 @@ async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
   const key = process.env.GNEWS_KEY;
   if (!key) return [];
 
+  // Search language follows the country's native press, not the bulletin's
+  // output language — the script generator translates as it writes.
+  const countryCode =
+    input.geographicScope === 'country' ? countryCodeFor(input.location) : undefined;
+  const searchLang =
+    (countryCode && COUNTRY_PRESS_LANG[countryCode]) || input.language;
+
   const url = new URL(GNEWS_BASE);
   url.searchParams.set('q', buildQuery(input));
-  url.searchParams.set('lang', input.language);
+  url.searchParams.set('lang', searchLang);
   url.searchParams.set('max', String(input.limit ?? 10));
   url.searchParams.set('apikey', key);
-  if (input.geographicScope === 'country') {
-    const code = countryCodeFor(input.location);
-    if (code) url.searchParams.set('country', code);
-  }
+  if (countryCode) url.searchParams.set('country', countryCode);
 
   try {
     const res = await fetchWithRetry(url.toString());
@@ -125,7 +140,7 @@ async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
       publishedAt: a.publishedAt ?? new Date().toISOString(),
       url: a.url ?? '',
       category: input.categories[0] ?? 'general',
-      originalLanguage: input.language,
+      originalLanguage: searchLang,
     }));
   } catch (err) {
     if (err instanceof FetchError) {
