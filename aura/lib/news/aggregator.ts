@@ -1,4 +1,5 @@
 import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
+import { translateArticles } from '@/lib/llm/translate';
 import { newsapiSourcesParam, type Bias } from './bias-sources';
 
 export interface NewsArticle {
@@ -166,7 +167,12 @@ export async function searchNews(input: NewsSearchInput): Promise<NewsArticle[]>
     merged.push(a);
   }
   merged.sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
-  return merged.slice(0, input.limit ?? 10);
+  const top = merged.slice(0, input.limit ?? 10);
+
+  // Translate titles + descriptions into the user's output language when
+  // sources are in a different press language (e.g. global/US scope returns
+  // English articles but the bulletin will be in Portuguese).
+  return translateArticles(top, input.language);
 }
 
 interface NewsApiArticle {
