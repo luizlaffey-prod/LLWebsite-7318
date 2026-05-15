@@ -10,9 +10,6 @@ const nextConfig = {
       bodySizeLimit: '10mb',
     },
   },
-  outputFileTracingIncludes: {
-    '/api/admin/migrate': ['./drizzle/**/*'],
-  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.r2.cloudflarestorage.com' },
