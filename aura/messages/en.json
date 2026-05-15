@@ -163,8 +163,7 @@
     "voice": "Voice",
     "voicePlaceholder": "Select a voice",
     "speed": "Speed",
-    "bgTrack": "Background track URL (optional)",
-    "bgTrackPlaceholder": "https://...",
+    "bgTrack": "Background track (optional)",
     "generate": "Generate script & audio",
     "generating": "Generating...",
     "scriptTitle": "Script blocks",
@@ -183,7 +182,11 @@
     "errorGenerate": "Generation failed. Please try again.",
     "overagePrompt": "You hit today's bulletin limit. Generate this one anyway for ${price}?",
     "overageTrial": "You hit your trial's daily limit. Upgrade to Pro to keep going.",
-    "overageConfirm": "Pay & generate"
+    "overageConfirm": "Pay & generate",
+    "bgTrackHint": "Pick a local audio file. It is mixed in your browser — nothing is uploaded.",
+    "bgTrackClear": "Remove",
+    "mixing": "Mixing audio...",
+    "errorMix": "Could not mix the background track. The voice-only version is available below."
   },
   "analyticsPage": {
     "title": "Analytics",
