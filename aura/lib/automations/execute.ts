@@ -59,7 +59,7 @@ export async function runAutomationSlot(input: {
   try {
     // 1) Pull news for the slot's categories.
     const bias = automation.bias === 'mixed' ? 'center' : automation.bias;
-    const articles = await searchNews({
+    const { articles } = await searchNews({
       categories: slot.categories,
       bias,
       language: automation.language,

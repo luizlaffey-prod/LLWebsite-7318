@@ -411,10 +411,10 @@ export function NewsClient({ locale }: { locale: Locale }) {
               {results.map((article, i) => (
                 <Card key={i} className="flex flex-col p-5">
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-base font-semibold leading-snug">
+                    <h3 className="text-lg font-semibold leading-snug text-text-primary">
                       {article.title}
                     </h3>
-                    <Badge variant="secondary">{article.source}</Badge>
+                    <Badge variant="secondary" className="shrink-0">{article.source}</Badge>
                   </div>
                   <p className="mt-3 line-clamp-3 text-sm text-text-secondary">
                     {article.description}

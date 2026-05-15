@@ -151,7 +151,13 @@ async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
   }
 }
 
-export async function searchNews(input: NewsSearchInput): Promise<NewsArticle[]> {
+export interface SearchNewsResult {
+  articles: NewsArticle[];
+  translationStatus: string;
+  translatedCount: number;
+}
+
+export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResult> {
   // Run both providers in parallel; merge, dedupe by URL, keep newest first.
   const [newsapi, gnews] = await Promise.all([
     searchNewsApi(input),
@@ -172,7 +178,12 @@ export async function searchNews(input: NewsSearchInput): Promise<NewsArticle[]>
   // Translate titles + descriptions into the user's output language when
   // sources are in a different press language (e.g. global/US scope returns
   // English articles but the bulletin will be in Portuguese).
-  return translateArticles(top, input.language);
+  const translated = await translateArticles(top, input.language);
+  return {
+    articles: translated.articles,
+    translationStatus: translated.status,
+    translatedCount: translated.translatedCount,
+  };
 }
 
 interface NewsApiArticle {

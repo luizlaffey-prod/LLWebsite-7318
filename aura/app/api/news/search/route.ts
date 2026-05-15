@@ -6,6 +6,9 @@ import { newsSearch } from '@/lib/db/schema';
 import { searchNews } from '@/lib/news/aggregator';
 
 export const runtime = 'nodejs';
+// Two parallel news provider calls + a batched LLM translation can run
+// long on the default 10s budget; give it room to finish on Vercel.
+export const maxDuration = 60;
 
 const SearchInput = z.object({
   categories: z.array(z.string()).default([]),
@@ -30,7 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_input', details: parsed.error.issues }, { status: 400 });
   }
 
-  const articles = await searchNews({
+  const { articles, translationStatus, translatedCount } = await searchNews({
     categories: parsed.data.categories,
     bias: parsed.data.bias,
     language: parsed.data.language,
@@ -54,5 +57,13 @@ export async function POST(req: Request) {
     })
     .returning({ id: newsSearch.id });
 
-  return NextResponse.json({ searchId: search.id, articles });
+  return NextResponse.json(
+    { searchId: search.id, articles, translationStatus, translatedCount },
+    {
+      headers: {
+        'x-translation-status': translationStatus,
+        'x-translated-count': String(translatedCount),
+      },
+    }
+  );
 }
