@@ -10,7 +10,7 @@ export function createGeminiProvider(): LlmProvider {
 
   return {
     id: 'gemini',
-    async complete({ systemPrompt, userPrompt }) {
+    async complete({ systemPrompt, userPrompt, maxTokens, temperature }) {
       const url = `${BASE}/models/${model}:generateContent?key=${key}`;
       const payload = {
         // Gemini treats system instructions as a separate field. Falls back
@@ -18,9 +18,9 @@ export function createGeminiProvider(): LlmProvider {
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
         generationConfig: {
-          temperature: 1.0,
+          temperature: temperature ?? 1.0,
           responseMimeType: 'application/json',
-          maxOutputTokens: 2048,
+          maxOutputTokens: maxTokens ?? 2048,
         },
       };
 

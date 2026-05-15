@@ -26,6 +26,41 @@ export interface TranslatableArticle {
   originalLanguage: string;
 }
 
+/** Strips Markdown fences and grabs the first balanced top-level JSON object. */
+function extractJsonObject(raw: string): string | null {
+  let s = raw.trim();
+  if (s.startsWith('```')) {
+    s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+  }
+  const first = s.indexOf('{');
+  if (first < 0) return null;
+  let depth = 0;
+  let inStr = false;
+  let escape = false;
+  for (let i = first; i < s.length; i++) {
+    const ch = s[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === '\\') {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inStr = !inStr;
+      continue;
+    }
+    if (inStr) continue;
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return s.slice(first, i + 1);
+    }
+  }
+  return null;
+}
+
 /**
  * Translates titles and descriptions in a single batched LLM call. Articles
  * already in `targetLang` are passed through untouched. Order is preserved.
@@ -42,44 +77,59 @@ export async function translateArticles<T extends TranslatableArticle>(
   });
   if (toTranslate.length === 0) return articles;
 
-  const provider = resolveProvider();
+  let provider;
+  try {
+    provider = resolveProvider();
+  } catch (err) {
+    console.warn('[translate] no LLM provider available, returning originals', err);
+    return articles;
+  }
   const langName = languageName(targetLang);
 
   const systemPrompt =
-    'You are a professional news translator. Output ONLY valid JSON, no Markdown, no commentary. Preserve named entities (people, places, brands) faithfully. Keep tone neutral and journalistic.';
+    'You are a professional news translator. Output ONLY valid JSON, no Markdown fences, no prose. Start your reply with `{`. Preserve named entities (people, places, brands) faithfully. Keep tone neutral and journalistic.';
 
   const userPrompt = [
-    `Translate the following news items into ${langName}.`,
-    'Return JSON with this exact shape:',
+    `Translate the following ${toTranslate.length} news items into ${langName}.`,
+    'Return JSON with this exact shape (and nothing else):',
     '{ "items": [{ "title": "...", "description": "..." }] }',
-    `Items must be returned in the same order as the input. There are ${toTranslate.length} items.`,
+    'Items MUST be returned in the same order as the input.',
     '',
     'Input:',
     JSON.stringify(
-      toTranslate.map((t) => ({ title: t.title, description: t.description })),
-      null,
-      2
+      toTranslate.map((t) => ({ title: t.title, description: t.description }))
     ),
   ].join('\n');
 
+  let text = '';
   let parsed: z.infer<typeof TranslateResponse>;
   try {
-    const text = await provider.complete({ systemPrompt, userPrompt });
-    let cleaned = text.trim();
-    if (cleaned.startsWith('```')) {
-      cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```$/i, '').trim();
-    }
-    parsed = TranslateResponse.parse(JSON.parse(cleaned));
+    text = await provider.complete({
+      systemPrompt,
+      userPrompt,
+      maxTokens: 4096,
+      temperature: 0.2,
+    });
+    const json = extractJsonObject(text);
+    if (!json) throw new Error('no_json_object_in_response');
+    parsed = TranslateResponse.parse(JSON.parse(json));
   } catch (err) {
-    console.warn('[translate] LLM translation failed, returning originals', err);
+    console.warn(
+      '[translate] LLM translation failed, returning originals.',
+      'err=',
+      err,
+      'preview=',
+      text.slice(0, 400)
+    );
     return articles;
   }
 
   if (parsed.items.length !== toTranslate.length) {
     console.warn(
-      '[translate] item count mismatch',
+      '[translate] item count mismatch, returning originals.',
+      'got=',
       parsed.items.length,
-      'vs',
+      'expected=',
       toTranslate.length
     );
     return articles;
@@ -94,5 +144,8 @@ export async function translateArticles<T extends TranslatableArticle>(
       description: tr.description || result[t.idx].description,
     };
   });
+  console.log(
+    `[translate] translated ${toTranslate.length} articles into ${targetLang}`
+  );
   return result;
 }

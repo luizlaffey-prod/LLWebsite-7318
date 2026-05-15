@@ -24,5 +24,7 @@ export interface LlmProvider {
   complete(input: {
     systemPrompt: string;
     userPrompt: string;
+    maxTokens?: number;
+    temperature?: number;
   }): Promise<string>;
 }
