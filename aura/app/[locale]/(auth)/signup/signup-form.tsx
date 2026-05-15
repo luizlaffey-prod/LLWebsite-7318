@@ -76,7 +76,7 @@ export function SignupForm({ locale }: SignupFormProps) {
         return;
       }
 
-      router.push(`/${locale}/onboarding/plan`);
+      router.push(`/${locale}/plan`);
     } catch {
       setTopError(t('errors.generic'));
       setPending(false);
