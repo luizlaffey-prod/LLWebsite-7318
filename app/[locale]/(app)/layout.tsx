@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { setRequestLocale } from 'next-intl/server';
 import { getSession } from '@/lib/auth/server';
@@ -6,7 +7,7 @@ import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { AppSidebar } from '@/components/app/app-sidebar';
 import { effectiveTier } from '@/lib/billing/quota';
-import type { Locale } from '@/i18n';
+import { locales, type Locale } from '@/i18n';
 
 export default async function AppLayout({
   children,
@@ -30,10 +31,25 @@ export default async function AppLayout({
       trialEndsAt: user.trialEndsAt,
       brandLogoUrl: user.brandLogoUrl,
       brandAccentColor: user.brandAccentColor,
+      locale: user.locale,
     })
     .from(user)
     .where(eq(user.id, session.user.id))
     .limit(1);
+
+  // Honor the user's stored UI-language preference: if the URL locale
+  // doesn't match user.locale, redirect to the same path under the
+  // preferred locale prefix.
+  const preferred = dbUser?.locale as Locale | undefined;
+  if (
+    preferred &&
+    preferred !== locale &&
+    (locales as readonly string[]).includes(preferred)
+  ) {
+    const pathname = (await headers()).get('x-pathname') ?? `/${locale}`;
+    const swapped = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, `/${preferred}`);
+    redirect(swapped);
+  }
 
   const tier = effectiveTier(dbUser?.plan);
   const planLabel = dbUser?.plan === 'trial' ? 'TRIAL · PRO' : tier.toUpperCase();
@@ -45,7 +61,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen bg-base" style={styleOverride}>
       <AppSidebar
-        locale={locale}
+        locale={preferred ?? locale}
         radioName={dbUser?.radioName}
         planLabel={planLabel}
         brandLogoUrl={dbUser?.brandLogoUrl ?? null}

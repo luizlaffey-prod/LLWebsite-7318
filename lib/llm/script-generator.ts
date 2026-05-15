@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import type { Emotion } from '@/lib/audio/emotions';
-import type { LlmProvider, ScriptBlock, ScriptGenerationInput } from './types';
-import { createClaudeProvider } from './providers/claude';
-import { createGeminiProvider } from './providers/gemini';
+import type { ScriptBlock, ScriptGenerationInput } from './types';
+import { resolveProvider } from './provider';
 
 export type { ScriptBlock, ScriptGenerationInput } from './types';
 
@@ -17,22 +16,6 @@ const ScriptResponse = z.object({
     )
     .min(1),
 });
-
-/**
- * Resolves the active LLM provider. `LLM_PROVIDER=gemini|claude` overrides
- * the auto-detect, which otherwise prefers Claude when ANTHROPIC_API_KEY is
- * set and falls back to Gemini.
- */
-function resolveProvider(): LlmProvider {
-  const explicit = (process.env.LLM_PROVIDER ?? '').toLowerCase();
-  if (explicit === 'gemini') return createGeminiProvider();
-  if (explicit === 'claude') return createClaudeProvider();
-  if (process.env.ANTHROPIC_API_KEY) return createClaudeProvider();
-  if (process.env.GEMINI_API_KEY) return createGeminiProvider();
-  throw new Error(
-    'No LLM provider configured. Set ANTHROPIC_API_KEY or GEMINI_API_KEY.'
-  );
-}
 
 function languageName(lang: 'en' | 'pt' | 'es'): string {
   return lang === 'pt'
