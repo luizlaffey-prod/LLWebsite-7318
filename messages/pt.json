@@ -163,8 +163,7 @@
     "voice": "Voz",
     "voicePlaceholder": "Selecione uma voz",
     "speed": "Velocidade",
-    "bgTrack": "URL da trilha de fundo (opcional)",
-    "bgTrackPlaceholder": "https://...",
+    "bgTrack": "Trilha de fundo (opcional)",
     "generate": "Gerar roteiro e áudio",
     "generating": "Gerando...",
     "scriptTitle": "Blocos do roteiro",
@@ -183,7 +182,11 @@
     "errorGenerate": "Falha na geração. Tente novamente.",
     "overagePrompt": "Você atingiu o limite diário. Quer gerar este mesmo assim por US$ {price}?",
     "overageTrial": "Você atingiu o limite diário do seu trial. Faça upgrade para Pro para continuar.",
-    "overageConfirm": "Pagar e gerar"
+    "overageConfirm": "Pagar e gerar",
+    "bgTrackHint": "Escolha um arquivo de áudio local. A mixagem acontece no seu navegador — nada é enviado.",
+    "bgTrackClear": "Remover",
+    "mixing": "Mixando áudio...",
+    "errorMix": "Não foi possível mixar a trilha. A versão sem trilha está disponível abaixo."
   },
   "analyticsPage": {
     "title": "Analytics",

@@ -37,6 +37,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { EMOTIONS, EMOTION_COLOR, type Emotion } from '@/lib/audio/emotions';
+import { mixVoiceWithBackground } from '@/lib/audio/mix';
 import {
   chooseDownloadFolder,
   defaultFilename,
@@ -99,9 +100,10 @@ function DrawerBody(props: Props) {
   const [voices, setVoices] = useState<VoiceOpt[]>([]);
   const [voiceId, setVoiceId] = useState<string>('');
   const [speed, setSpeed] = useState(1.0);
-  const [bgTrack, setBgTrack] = useState('');
+  const [bgFile, setBgFile] = useState<File | null>(null);
 
   const [generating, setGenerating] = useState(false);
+  const [mixing, setMixing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [audioId, setAudioId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -159,7 +161,6 @@ function DrawerBody(props: Props) {
           },
           voiceId,
           speed,
-          bgTrackUrl: bgTrack || undefined,
           durationSeconds: props.durationSeconds,
           language: props.language,
           includeWeather: props.includeWeather,
@@ -181,8 +182,25 @@ function DrawerBody(props: Props) {
         return;
       }
       setAudioId(data.audioId);
-      setAudioUrl(data.audioUrl);
       setBlocks(data.script ?? []);
+
+      if (bgFile) {
+        setMixing(true);
+        try {
+          const mixed = await mixVoiceWithBackground({
+            voiceUrl: data.audioUrl,
+            bgFile,
+          });
+          setAudioUrl(URL.createObjectURL(mixed));
+        } catch {
+          setError(t('errorMix'));
+          setAudioUrl(data.audioUrl);
+        } finally {
+          setMixing(false);
+        }
+      } else {
+        setAudioUrl(data.audioUrl);
+      }
     } catch {
       setError(t('errorGenerate'));
     } finally {
@@ -208,7 +226,18 @@ function DrawerBody(props: Props) {
         setError(data.message || t('errorGenerate'));
         return;
       }
-      setAudioUrl(data.audioUrl + `?t=${Date.now()}`); // bust cache
+      const fresh = data.audioUrl + `?t=${Date.now()}`; // bust cache
+      if (bgFile) {
+        try {
+          const mixed = await mixVoiceWithBackground({ voiceUrl: fresh, bgFile });
+          setAudioUrl(URL.createObjectURL(mixed));
+        } catch {
+          setError(t('errorMix'));
+          setAudioUrl(fresh);
+        }
+      } else {
+        setAudioUrl(fresh);
+      }
     } catch {
       setError(t('errorGenerate'));
     } finally {
@@ -280,23 +309,45 @@ function DrawerBody(props: Props) {
             <Label className="text-xs uppercase tracking-wider text-text-muted">
               {t('bgTrack')}
             </Label>
-            <Input
-              className="mt-2"
-              value={bgTrack}
-              onChange={(e) => setBgTrack(e.target.value)}
-              placeholder={t('bgTrackPlaceholder')}
-            />
+            <p className="mt-1 text-xs text-text-secondary">{t('bgTrackHint')}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <Input
+                type="file"
+                accept="audio/*"
+                onChange={(e) => setBgFile(e.target.files?.[0] ?? null)}
+                className="flex-1"
+              />
+              {bgFile && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setBgFile(null)}
+                >
+                  {t('bgTrackClear')}
+                </Button>
+              )}
+            </div>
+            {bgFile && (
+              <p className="mt-1 truncate text-xs text-text-secondary" title={bgFile.name}>
+                {bgFile.name} · {(bgFile.size / 1024 / 1024).toFixed(1)} MB
+              </p>
+            )}
           </div>
 
           <Button
             size="lg"
             onClick={onGenerate}
-            disabled={generating || !voiceId}
+            disabled={generating || mixing || !voiceId}
             className="w-full"
           >
             {generating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> {t('generating')}
+              </>
+            ) : mixing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> {t('mixing')}
               </>
             ) : (
               <>
