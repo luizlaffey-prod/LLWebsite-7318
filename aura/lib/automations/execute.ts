@@ -84,11 +84,19 @@ export async function runAutomationSlot(input: {
   try {
     // 1) Pull news for the slot's categories.
     const bias = automation.bias === 'mixed' ? 'center' : automation.bias;
+    // The DB enum still includes legacy 'state'/'city' values for rows
+    // written before the UI dropped them. Coerce to 'country' at the edge
+    // so the news aggregator's narrower type holds.
+    const scope =
+      automation.geographicScope === 'global' ||
+      automation.geographicScope === 'country'
+        ? automation.geographicScope
+        : ('country' as const);
     const { articles } = await searchNews({
       categories: slot.categories,
       bias,
       language: automation.language,
-      geographicScope: automation.geographicScope,
+      geographicScope: scope,
       location: automation.location ?? undefined,
       limit: 6,
     });
