@@ -38,7 +38,10 @@ export async function GET(
 
   const { id } = await ctx.params;
   const [v] = await db
-    .select({ elevenLabsVoiceId: voiceTable.elevenLabsVoiceId })
+    .select({
+      elevenLabsVoiceId: voiceTable.elevenLabsVoiceId,
+      previewUrl: voiceTable.previewUrl,
+    })
     .from(voiceTable)
     .where(eq(voiceTable.id, id))
     .limit(1);
@@ -49,6 +52,13 @@ export async function GET(
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) {
     return NextResponse.json({ error: 'tts_not_configured' }, { status: 503 });
+  }
+
+  // Layer 0: if the synced library row has an ElevenLabs CDN preview URL,
+  // redirect straight to it. These URLs are public, served from
+  // ElevenLabs' CDN, and don't burn any quota — best possible path.
+  if (v.previewUrl && /^https?:\/\//.test(v.previewUrl)) {
+    return NextResponse.redirect(v.previewUrl, 302);
   }
 
   // Layer 1: redirect to cached R2 preview if it exists.
@@ -65,7 +75,9 @@ export async function GET(
     }
   }
 
-  // Layer 2: ElevenLabs preview_url.
+  // Layer 2: ElevenLabs preview_url via metadata endpoint (covers voices
+  // we haven't synced yet — e.g. static seed rows on deployments without a
+  // live ElevenLabs sync).
   let bytes: Uint8Array | null = null;
   try {
     const metaRes = await fetchWithRetry(
