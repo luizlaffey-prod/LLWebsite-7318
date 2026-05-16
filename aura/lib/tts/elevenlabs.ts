@@ -4,9 +4,24 @@ import {
   ELEVEN_LABS_FAST_MODEL,
   VOICE_SETTINGS,
 } from './voice-catalog';
+import type { Emotion } from '@/lib/audio/emotions';
 import type { ScriptBlock } from '@/lib/llm/script-generator';
 
 const ELEVEN_BASE = 'https://api.elevenlabs.io/v1';
+
+/**
+ * Per-emotion overrides for ElevenLabs voice_settings. Lower stability makes
+ * the voice more expressive/variable; higher stability keeps it steady. The
+ * multilingual_v2 model honors these knobs — it does NOT honor inline
+ * bracketed cues, so the script text must be sent clean.
+ */
+const EMOTION_SETTINGS: Record<Emotion, { stability: number; similarity_boost: number }> = {
+  ENTHUSIASM: { stability: 0.35, similarity_boost: 0.8 },
+  DRAMATIC: { stability: 0.3, similarity_boost: 0.85 },
+  SERIOUSNESS: { stability: 0.65, similarity_boost: 0.75 },
+  CONCERN: { stability: 0.6, similarity_boost: 0.7 },
+  NEUTRAL: { stability: 0.5, similarity_boost: 0.75 },
+};
 
 export class ElevenLabsError extends Error {
   constructor(message: string, public readonly status: number) {
@@ -20,6 +35,8 @@ export interface SynthesizeOptions {
   speed?: number;
   /** Use Flash model (cheaper, faster) for previews/regenerations. */
   fast?: boolean;
+  /** Emotion for this block — drives voice_settings tweaks. */
+  emotion?: Emotion;
 }
 
 async function synthesizeBlock(
@@ -30,7 +47,11 @@ async function synthesizeBlock(
   if (!key) throw new ElevenLabsError('ELEVENLABS_API_KEY is not set', 0);
 
   const url = `${ELEVEN_BASE}/text-to-speech/${opts.elevenLabsVoiceId}`;
-  const voiceSettings: Record<string, number> = { ...VOICE_SETTINGS };
+  const emotionPreset = opts.emotion ? EMOTION_SETTINGS[opts.emotion] : null;
+  const voiceSettings: Record<string, number> = {
+    ...VOICE_SETTINGS,
+    ...(emotionPreset ?? {}),
+  };
   if (typeof opts.speed === 'number') {
     // ElevenLabs accepts speed in [0.7, 1.2]; clamp our UI range [0.8, 1.5].
     voiceSettings.speed = Math.max(0.7, Math.min(1.2, opts.speed));
@@ -87,10 +108,10 @@ export async function synthesizeBulletin(
 
   for (const block of blocks) {
     if (!block.text.trim()) continue;
-    // Prefix the text with an emotion-shaping cue. ElevenLabs honors
-    // bracketed cues for the multilingual_v2 model.
-    const cued = `[${block.emotion.toLowerCase()}] ${block.text}`;
-    const audio = await synthesizeBlock(cued, opts);
+    // Send the script text clean — multilingual_v2 would read inline cues
+    // like "[seriousness]" aloud. The voice shaping comes from per-emotion
+    // voice_settings instead.
+    const audio = await synthesizeBlock(block.text, { ...opts, emotion: block.emotion });
     chunks.push(audio);
     durationEstimate += block.duracaoSegundos;
   }
