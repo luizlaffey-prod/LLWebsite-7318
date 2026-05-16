@@ -64,11 +64,34 @@ function countryCodeFor(location?: string): string | undefined {
   return COUNTRY_CODE[location.trim().toLowerCase()];
 }
 
-function buildQuery(input: NewsSearchInput): string {
+// Category keyword translation per search language. GNews and NewsAPI match
+// against the article text in whatever language they're searching, so passing
+// the English token "politics" while lang=pt returns ~zero hits. We translate
+// the user-selected category to the appropriate keyword for the search
+// language so each provider gets a query it can actually match.
+const CATEGORY_KEYWORD: Record<string, Record<string, string>> = {
+  politics: { en: 'politics', pt: 'política', es: 'política' },
+  cinema: { en: 'cinema', pt: 'cinema', es: 'cine' },
+  music: { en: 'music', pt: 'música', es: 'música' },
+  arts: { en: 'arts', pt: 'artes', es: 'arte' },
+  sports: { en: 'sports', pt: 'esportes', es: 'deportes' },
+  technology: { en: 'technology', pt: 'tecnologia', es: 'tecnología' },
+  health: { en: 'health', pt: 'saúde', es: 'salud' },
+  economy: { en: 'economy', pt: 'economia', es: 'economía' },
+  culture: { en: 'culture', pt: 'cultura', es: 'cultura' },
+};
+
+function localizedKeyword(category: string, lang: string): string {
+  return CATEGORY_KEYWORD[category]?.[lang] ?? category;
+}
+
+function buildQuery(input: NewsSearchInput, lang: string): string {
   // Country scope is enforced via the provider's native filter; categories
-  // contribute the only free-text component.
+  // contribute the only free-text component — translated to the search
+  // language so it actually matches articles.
   if (input.categories.length === 0) return 'news';
-  return input.categories.join(' OR ');
+  const keywords = input.categories.map((c) => localizedKeyword(c, lang));
+  return keywords.join(' OR ');
 }
 
 async function searchNewsApi(input: NewsSearchInput): Promise<NewsArticle[]> {
@@ -76,7 +99,9 @@ async function searchNewsApi(input: NewsSearchInput): Promise<NewsArticle[]> {
   if (!key) return [];
 
   const url = new URL(NEWSAPI_BASE);
-  url.searchParams.set('q', buildQuery(input));
+  // NewsAPI's source list is English-press oriented, so we keep the query
+  // in English regardless of the user's output language.
+  url.searchParams.set('q', buildQuery(input, 'en'));
   url.searchParams.set('sources', newsapiSourcesParam(input.bias));
   url.searchParams.set('language', 'en');
   url.searchParams.set('sortBy', 'publishedAt');
@@ -117,7 +142,7 @@ async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
     (countryCode && COUNTRY_PRESS_LANG[countryCode]) || input.language;
 
   const url = new URL(GNEWS_BASE);
-  url.searchParams.set('q', buildQuery(input));
+  url.searchParams.set('q', buildQuery(input, searchLang));
   url.searchParams.set('lang', searchLang);
   url.searchParams.set('max', String(input.limit ?? 10));
   url.searchParams.set('apikey', key);
