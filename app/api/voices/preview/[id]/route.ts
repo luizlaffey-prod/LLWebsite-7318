@@ -114,7 +114,7 @@ export async function GET(
     } catch (err) {
       const status = err instanceof FetchError ? err.status : 500;
       const body =
-        err instanceof FetchError ? (err.responseText ?? '').slice(0, 200) : '';
+        err instanceof FetchError ? (err.responseText ?? '').slice(0, 300) : '';
       console.warn(
         '[voice-preview] TTS synth failed',
         v.elevenLabsVoiceId,
@@ -122,7 +122,12 @@ export async function GET(
         body
       );
       return NextResponse.json(
-        { error: 'preview_failed', upstream: status },
+        {
+          error: 'preview_failed',
+          voiceId: v.elevenLabsVoiceId,
+          upstream: status,
+          message: body || (err instanceof Error ? err.message : 'unknown'),
+        },
         { status: 502 }
       );
     }
