@@ -10,12 +10,19 @@ import {
   Clock,
   RotateCw,
   Download,
+  Folder,
   Truck,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import {
+  chooseDownloadFolder,
+  defaultFilename,
+  downloadBlob,
+  hasFolderConfigured,
+} from '@/lib/storage/local-folder';
 import type { Locale } from '@/i18n';
 
 interface Delivery {
@@ -54,6 +61,40 @@ export function RunsClient({ automationId, locale }: Props) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
+  const [folderReady, setFolderReady] = useState(false);
+
+  useEffect(() => {
+    hasFolderConfigured().then(setFolderReady);
+  }, []);
+
+  const onChooseFolder = async () => {
+    const ok = await chooseDownloadFolder();
+    setFolderReady(ok);
+  };
+
+  const onDownload = async (run: Run) => {
+    if (!run.audio?.url) return;
+    setDownloading(run.id);
+    setDownloadMsg(null);
+    try {
+      const filename = defaultFilename({
+        topic: run.audio.title || `bulletin-${run.slotTime}`,
+      });
+      const result = await downloadBlob({ filename, fromUrl: run.audio.url });
+      setDownloadMsg(
+        result.kind === 'folder'
+          ? `${t('downloadedTo')}: ${result.path}`
+          : t('runsAudio')
+      );
+      setTimeout(() => setDownloadMsg(null), 3000);
+    } catch {
+      setError(t('errorLoad'));
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -107,6 +148,21 @@ export function RunsClient({ automationId, locale }: Props) {
         </div>
       )}
 
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <span className="text-xs text-text-muted">
+          {folderReady ? t('folderReady') : t('folderNotConfigured')}
+        </span>
+        {!folderReady && (
+          <Button variant="outline" size="sm" onClick={onChooseFolder}>
+            <Folder className="h-3.5 w-3.5" /> {t('choosingFolder')}
+          </Button>
+        )}
+      </div>
+
+      {downloadMsg && (
+        <p className="mb-4 text-xs text-success">{downloadMsg}</p>
+      )}
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -132,7 +188,9 @@ export function RunsClient({ automationId, locale }: Props) {
               run={run}
               locale={locale}
               retrying={retrying === run.id}
+              downloading={downloading === run.id}
               onRetry={() => onRetry(run)}
+              onDownload={() => onDownload(run)}
             />
           ))}
         </ol>
@@ -145,12 +203,16 @@ function RunRow({
   run,
   locale,
   retrying,
+  downloading,
   onRetry,
+  onDownload,
 }: {
   run: Run;
   locale: Locale;
   retrying: boolean;
+  downloading: boolean;
   onRetry: () => void;
+  onDownload: () => void;
 }) {
   const t = useTranslations('automationsPage');
   const scheduled = new Date(run.scheduledFor);
@@ -192,10 +254,18 @@ function RunRow({
 
         <div className="flex shrink-0 items-center gap-1">
           {run.audio?.url && (
-            <Button asChild variant="ghost" size="sm">
-              <a href={run.audio.url} target="_blank" rel="noreferrer">
-                <Download className="h-3.5 w-3.5" /> {t('runsAudio')}
-              </a>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onDownload}
+              disabled={downloading}
+            >
+              {downloading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              {t('runsAudio')}
             </Button>
           )}
           {run.status === 'failed' && (
