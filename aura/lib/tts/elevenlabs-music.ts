@@ -12,6 +12,11 @@ export interface MusicGenerationInput {
   language: 'en' | 'pt' | 'es';
 }
 
+export interface MusicGenerationOutput {
+  bytes: Uint8Array;
+  contentType: string;
+}
+
 /**
  * Synthesizes an instrumental background bed from a derived prompt. The
  * resulting MP3 is meant to be mixed under the spoken bulletin, so the prompt
@@ -19,7 +24,7 @@ export interface MusicGenerationInput {
  */
 export async function generateBulletinMusic(
   input: MusicGenerationInput
-): Promise<Uint8Array> {
+): Promise<MusicGenerationOutput> {
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) throw new ElevenLabsError('ELEVENLABS_API_KEY is not set', 0);
 
@@ -52,7 +57,37 @@ export async function generateBulletinMusic(
         delays: [3_000, 7_000, 15_000],
       }
     );
-    return new Uint8Array(await res.arrayBuffer());
+    const contentType = res.headers.get('content-type') ?? 'unknown';
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    // First 4 bytes of an MP3 frame start with 0xFFFB / 0xFFF3 / 0xFFFA, or
+    // 'ID3' for tagged files. Anything else (JSON, WAV 'RIFF', etc.) means
+    // the upload is going to confuse the browser decoder downstream.
+    const header = Array.from(bytes.slice(0, 8))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join(' ');
+    const asciiHead = new TextDecoder('utf-8', { fatal: false }).decode(bytes.slice(0, 16));
+    console.log('[music] elevenlabs response', {
+      contentType,
+      bytes: bytes.length,
+      headerHex: header,
+      asciiHead,
+    });
+    if (bytes.length < 1024) {
+      throw new ElevenLabsError(
+        `music_too_small: ${bytes.length} bytes, contentType=${contentType}, head="${asciiHead}"`,
+        0
+      );
+    }
+    // Some ElevenLabs deployments return a JSON envelope instead of raw
+    // audio. Detect the common case ("{" first byte) and surface it instead
+    // of silently uploading garbage.
+    if (asciiHead.trimStart().startsWith('{')) {
+      throw new ElevenLabsError(
+        `music_json_envelope: contentType=${contentType}, head="${asciiHead}"`,
+        0
+      );
+    }
+    return { bytes, contentType: contentType.split(';')[0] || 'audio/mpeg' };
   } catch (err) {
     if (err instanceof FetchError) {
       const body = (err.responseText ?? '').slice(0, 400);

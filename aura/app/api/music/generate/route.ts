@@ -64,12 +64,15 @@ export async function POST(req: Request) {
   }
 
   let audio: Uint8Array;
+  let audioContentType: string;
   try {
-    audio = await generateBulletinMusic({
+    const out = await generateBulletinMusic({
       durationSeconds: parsed.data.durationSeconds,
       emotions: parsed.data.emotions as Emotion[],
       language: parsed.data.language,
     });
+    audio = out.bytes;
+    audioContentType = out.contentType;
   } catch (err) {
     const message =
       err instanceof ElevenLabsError
@@ -82,8 +85,15 @@ export async function POST(req: Request) {
   }
 
   const trackId = crypto.randomUUID();
-  const key = `audio/${session.user.id}/music-${trackId}.mp3`;
-  const { url } = await uploadAudio(key, audio);
+  // Extension from content-type so the URL hints at the right decoder.
+  const ext =
+    audioContentType.includes('wav')
+      ? 'wav'
+      : audioContentType.includes('ogg')
+        ? 'ogg'
+        : 'mp3';
+  const key = `audio/${session.user.id}/music-${trackId}.${ext}`;
+  const { url } = await uploadAudio(key, audio, audioContentType);
 
   if (usingOverage) {
     await recordMusicOverage(session.user.id);

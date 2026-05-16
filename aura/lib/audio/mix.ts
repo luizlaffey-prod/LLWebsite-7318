@@ -31,16 +31,43 @@ export async function mixVoiceWithBackground({
     (window as unknown as { webkitAudioContext: typeof AudioContext })
       .webkitAudioContext)();
 
-  const bgArrayBuffer = bgFile
-    ? await bgFile.arrayBuffer()
-    : await fetch(bgUrl as string).then((r) => r.arrayBuffer());
+  let bgArrayBuffer: ArrayBuffer;
+  if (bgFile) {
+    bgArrayBuffer = await bgFile.arrayBuffer();
+  } else {
+    const res = await fetch(bgUrl as string);
+    if (!res.ok) {
+      console.error('[mix] bg fetch failed', {
+        url: bgUrl,
+        status: res.status,
+        contentType: res.headers.get('content-type'),
+      });
+      throw new Error(`mix_bg_fetch_${res.status}`);
+    }
+    bgArrayBuffer = await res.arrayBuffer();
+    console.log('[mix] bg fetched', {
+      url: bgUrl,
+      contentType: res.headers.get('content-type'),
+      bytes: bgArrayBuffer.byteLength,
+    });
+  }
 
-  const [voiceBuf, bgBuf] = await Promise.all([
-    fetch(voiceUrl)
-      .then((r) => r.arrayBuffer())
-      .then((b) => tempCtx.decodeAudioData(b)),
-    tempCtx.decodeAudioData(bgArrayBuffer),
-  ]);
+  let voiceBuf: AudioBuffer;
+  let bgBuf: AudioBuffer;
+  try {
+    [voiceBuf, bgBuf] = await Promise.all([
+      fetch(voiceUrl)
+        .then((r) => r.arrayBuffer())
+        .then((b) => tempCtx.decodeAudioData(b)),
+      // decodeAudioData mutates the buffer — slice() defends against the
+      // implementations that detach the original.
+      tempCtx.decodeAudioData(bgArrayBuffer.slice(0)),
+    ]);
+  } catch (err) {
+    console.error('[mix] decodeAudioData failed', err);
+    await tempCtx.close();
+    throw err;
+  }
   await tempCtx.close();
 
   const channels = Math.max(voiceBuf.numberOfChannels, bgBuf.numberOfChannels, 2);
