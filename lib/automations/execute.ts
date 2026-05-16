@@ -160,14 +160,37 @@ export async function runAutomationSlot(input: {
       .where(eq(generatedAudio.id, audio.id));
 
     // 7) ElevenLabs synth.
-    const { audio: bytes, durationEstimateSeconds } = await synthesizeBulletin(blocks, {
+    const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeBulletin(blocks, {
       elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
       speed: automation.speed,
     });
 
+    // 7b) Optional server-side mix with the automation's background track.
+    // We fall back to voice-only on any mix failure so a broken bg URL or
+    // ffmpeg hiccup doesn't lose the bulletin.
+    let finalBytes: Uint8Array = voiceBytes;
+    if (automation.bgTrackUrl) {
+      try {
+        const { mixVoiceAndBackgroundServerSide } = await import(
+          '@/lib/audio/server-mix'
+        );
+        finalBytes = await mixVoiceAndBackgroundServerSide({
+          voiceBytes,
+          bgUrl: automation.bgTrackUrl,
+          duck: automation.duckAudio,
+        });
+      } catch (err) {
+        console.warn(
+          '[automation] bg mix failed, falling back to voice-only',
+          automation.bgTrackUrl,
+          err
+        );
+      }
+    }
+
     // 8) Upload to R2.
     const key = audioKey(automation.userId, audio.id);
-    const uploaded = await uploadAudio(key, bytes);
+    const uploaded = await uploadAudio(key, finalBytes);
 
     await db
       .update(generatedAudio)

@@ -9,6 +9,17 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    // Bundle the ffmpeg binary (platform-specific) with any route that mixes
+    // voice + background track server-side. Without this, Next's output
+    // tracing skips the native binary and Vercel's serverless function
+    // can't find it at runtime.
+    outputFileTracingIncludes: {
+      '/api/cron/automations': ['./node_modules/@ffmpeg-installer/**/*'],
+      '/api/automations/[id]/run': ['./node_modules/@ffmpeg-installer/**/*'],
+      '/api/automations/[id]/runs/[runId]/retry': [
+        './node_modules/@ffmpeg-installer/**/*',
+      ],
+    },
   },
   images: {
     remotePatterns: [
