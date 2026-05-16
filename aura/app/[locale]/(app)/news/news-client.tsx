@@ -9,6 +9,8 @@ import {
   Calendar,
   MapPin,
   Sparkles,
+  Radio,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BulletinDrawer } from './bulletin-drawer';
@@ -36,6 +37,7 @@ interface Article {
   url: string;
   category: string;
   originalLanguage: string;
+  image?: string;
 }
 
 const CATEGORIES = [
@@ -79,6 +81,7 @@ export function NewsClient({ locale }: { locale: Locale }) {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<Article[]>([]);
   const [searchId, setSearchId] = useState<string | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   const [selected, setSelected] = useState<Article | null>(null);
 
@@ -149,12 +152,20 @@ export function NewsClient({ locale }: { locale: Locale }) {
       const data = (await res.json()) as { searchId: string; articles: Article[] };
       setSearchId(data.searchId);
       setResults(data.articles);
+      setLastUpdatedAt(new Date());
     } catch {
       setError(t('errorGeneric'));
     } finally {
       setSearching(false);
     }
   };
+
+  const lastUpdatedLabel = lastUpdatedAt
+    ? lastUpdatedAt.toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '';
 
   return (
     <div className="px-8 py-10">
@@ -352,11 +363,13 @@ export function NewsClient({ locale }: { locale: Locale }) {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex items-center justify-between gap-4 border-t border-border pt-6">
+            <p className="text-sm text-text-muted">{t('searchHint')}</p>
             <Button
               size="lg"
               onClick={onSearch}
               disabled={searching || categories.length === 0 || totalSeconds < 15}
+              className="bg-teal text-base hover:bg-teal/90 active:bg-teal/80"
             >
               {searching ? (
                 <>
@@ -375,7 +388,25 @@ export function NewsClient({ locale }: { locale: Locale }) {
 
         {/* Results */}
         <div className="mt-10">
-          <h2 className="text-lg font-semibold tracking-tight">{t('results')}</h2>
+          {(searched || searching) && (
+            <div className="flex items-center justify-between gap-4">
+              <div className="inline-flex items-center gap-2 text-sm text-text-secondary">
+                <span className="inline-block h-2 w-2 rounded-full bg-teal shadow-[0_0_8px_var(--teal)]" />
+                {lastUpdatedAt
+                  ? t('lastUpdated', { time: lastUpdatedLabel })
+                  : t('searching')}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onSearch}
+                disabled={searching || categories.length === 0 || totalSeconds < 15}
+              >
+                <RefreshCw className={searching ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
+                {t('refreshNow')}
+              </Button>
+            </div>
+          )}
 
           {error && (
             <div className="mt-4 flex items-start gap-2 rounded-md border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
@@ -385,15 +416,15 @@ export function NewsClient({ locale }: { locale: Locale }) {
           )}
 
           {searching && (
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="p-5">
-                  <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="mt-3 h-3 w-full" />
-                  <Skeleton className="mt-2 h-3 w-4/5" />
-                  <div className="mt-4 flex justify-between">
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-8 w-28 rounded-md" />
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i} className="overflow-hidden p-0">
+                  <Skeleton className="h-40 w-full rounded-none" />
+                  <div className="p-5">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="mt-3 h-5 w-3/4" />
+                    <Skeleton className="mt-2 h-4 w-2/3" />
+                    <Skeleton className="mt-4 h-4 w-32" />
                   </div>
                 </Card>
               ))}
@@ -407,27 +438,62 @@ export function NewsClient({ locale }: { locale: Locale }) {
           )}
 
           {!searching && results.length > 0 && (
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {results.map((article, i) => (
-                <Card key={i} className="flex flex-col p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-lg font-semibold leading-snug text-text-primary">
+                <Card
+                  key={i}
+                  className="group flex flex-col overflow-hidden p-0 transition-colors hover:border-teal/40"
+                >
+                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-elevated">
+                    {article.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={article.image}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-text-muted">
+                        <Radio className="h-10 w-10 opacity-30" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="inline-flex items-center rounded-md bg-violet/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-violet">
+                        {(CATEGORIES as readonly string[]).includes(article.category)
+                          ? tCat(article.category as (typeof CATEGORIES)[number])
+                          : article.category}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs text-text-muted">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(article.publishedAt).toLocaleDateString(locale)}
+                      </span>
+                    </div>
+                    <h3 className="mt-3 text-lg font-semibold leading-snug text-text-primary line-clamp-3">
                       {article.title}
                     </h3>
-                    <Badge variant="secondary" className="shrink-0">{article.source}</Badge>
-                  </div>
-                  <p className="mt-3 line-clamp-3 text-sm text-text-secondary">
-                    {article.description}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between text-xs text-text-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(article.publishedAt).toLocaleDateString(locale)}
-                    </span>
-                    <Button size="sm" onClick={() => setSelected(article)}>
-                      <Sparkles className="h-3.5 w-3.5" />
-                      {t('generate')}
-                    </Button>
+                    <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-teal">
+                      <Radio className="h-3.5 w-3.5" />
+                      {article.source}
+                    </div>
+                    <p className="mt-3 line-clamp-3 text-sm text-text-secondary">
+                      {article.description}
+                    </p>
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        size="sm"
+                        onClick={() => setSelected(article)}
+                        className="bg-teal text-base hover:bg-teal/90 active:bg-teal/80"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        {t('generate')}
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
