@@ -11,11 +11,11 @@ import {
   Sparkles,
   Radio,
   RefreshCw,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -197,7 +197,17 @@ export function NewsClient({ locale }: { locale: Locale }) {
                           : 'border-border bg-elevated text-text-secondary hover:text-text-primary')
                       }
                     >
-                      <Checkbox checked={active} tabIndex={-1} className="h-3.5 w-3.5" />
+                      <span
+                        aria-hidden="true"
+                        className={
+                          'inline-flex h-3.5 w-3.5 items-center justify-center rounded-sm border ' +
+                          (active
+                            ? 'border-teal bg-teal text-base'
+                            : 'border-border bg-transparent')
+                        }
+                      >
+                        {active && <Check className="h-2.5 w-2.5" />}
+                      </span>
                       {tCat(id)}
                     </button>
                   );

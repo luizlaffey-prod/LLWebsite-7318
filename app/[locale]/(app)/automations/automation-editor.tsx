@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2, Plus, X } from 'lucide-react';
+import { Check, Loader2, Plus, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -15,7 +15,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -258,7 +257,17 @@ export function AutomationEditor({
                               : 'border-border bg-elevated text-text-secondary hover:text-text-primary')
                           }
                         >
-                          <Checkbox checked={active} tabIndex={-1} className="h-3 w-3" />
+                          <span
+                            aria-hidden="true"
+                            className={
+                              'inline-flex h-3 w-3 items-center justify-center rounded-sm border ' +
+                              (active
+                                ? 'border-teal bg-teal text-base'
+                                : 'border-border bg-transparent')
+                            }
+                          >
+                            {active && <Check className="h-2.5 w-2.5" />}
+                          </span>
                           {tCat(id)}
                         </button>
                       );
