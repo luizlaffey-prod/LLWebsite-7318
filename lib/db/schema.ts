@@ -37,6 +37,9 @@ export const audioStatusEnum = pgEnum('audio_status', [
 ]);
 export const voiceGenderEnum = pgEnum('voice_gender', ['male', 'female', 'neutral']);
 export const weatherFormatEnum = pgEnum('weather_format', ['separate', 'integrated']);
+// pgEnum keeps all four historical values for backwards compatibility with
+// rows written before the UI dropped 'state'/'city'. The app-level Zod and
+// TS types now restrict new writes to ['global', 'country'].
 export const geoScopeEnum = pgEnum('geo_scope', ['global', 'country', 'state', 'city']);
 
 // --- Better Auth core tables ---

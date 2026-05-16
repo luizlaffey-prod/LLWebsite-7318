@@ -84,6 +84,17 @@ interface Slot {
   categories: string[];
 }
 
+/**
+ * Existing automations may carry legacy 'state' / 'city' values from before
+ * the UI dropped those options. Collapse them to 'country' so the Select
+ * shows the closest equivalent and a save round-trip succeeds.
+ */
+function normalizeScope(form: AutomationInputType): AutomationInputType {
+  const scope = form.geographicScope as string;
+  if (scope === 'global' || scope === 'country') return form;
+  return { ...form, geographicScope: 'country' };
+}
+
 function emptyForm(defaultLanguage: Locale, defaultTimezone: string): AutomationInputType {
   return {
     name: '',
@@ -116,7 +127,7 @@ export function AutomationEditor({
   const tCat = useTranslations('newsPage.categoryNames');
 
   const [form, setForm] = useState<AutomationInputType>(() =>
-    initial ?? emptyForm(defaultLanguage, defaultTimezone)
+    normalizeScope(initial ?? emptyForm(defaultLanguage, defaultTimezone))
   );
   const [voices, setVoices] = useState<VoiceOpt[]>([]);
   const [saving, setSaving] = useState(false);
@@ -223,7 +234,7 @@ export function AutomationEditor({
 
   useEffect(() => {
     if (open) {
-      setForm(initial ?? emptyForm(defaultLanguage, defaultTimezone));
+      setForm(normalizeScope(initial ?? emptyForm(defaultLanguage, defaultTimezone)));
       setError(null);
     }
   }, [open, initial, defaultLanguage, defaultTimezone]);
@@ -434,7 +445,7 @@ export function AutomationEditor({
               <Label>{t('scope')}</Label>
               <Select
                 value={form.geographicScope}
-                onValueChange={(v) => update('geographicScope', v as 'global' | 'country' | 'state' | 'city')}
+                onValueChange={(v) => update('geographicScope', v as 'global' | 'country')}
               >
                 <SelectTrigger className="mt-2">
                   <SelectValue />
@@ -442,8 +453,6 @@ export function AutomationEditor({
                 <SelectContent>
                   <SelectItem value="global">{t('scopeGlobal')}</SelectItem>
                   <SelectItem value="country">{t('scopeCountry')}</SelectItem>
-                  <SelectItem value="state">{t('scopeState')}</SelectItem>
-                  <SelectItem value="city">{t('scopeCity')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

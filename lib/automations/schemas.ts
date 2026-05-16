@@ -18,7 +18,7 @@ export const AutomationInput = z.object({
   duckAudio: z.boolean().default(true),
   includeWeather: z.boolean().default(false),
   weatherFormat: z.enum(['separate', 'integrated']).default('separate'),
-  geographicScope: z.enum(['global', 'country', 'state', 'city']).default('global'),
+  geographicScope: z.enum(['global', 'country']).default('global'),
   location: z.string().optional().nullable(),
   bias: z.enum(['left', 'center', 'right']).default('center'),
   timezone: z.string().default('UTC'),

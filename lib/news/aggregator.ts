@@ -17,7 +17,7 @@ export interface NewsSearchInput {
   categories: string[];
   bias: Bias;
   language: 'en' | 'pt' | 'es';
-  geographicScope: 'global' | 'country' | 'state' | 'city';
+  geographicScope: 'global' | 'country';
   location?: string;
   limit?: number;
 }
@@ -65,20 +65,10 @@ function countryCodeFor(location?: string): string | undefined {
 }
 
 function buildQuery(input: NewsSearchInput): string {
-  const parts: string[] = [];
-  // For state/city scope, include location as a soft hint (no quotes).
-  // For country scope, the provider's native country filter handles it.
-  if (
-    (input.geographicScope === 'state' || input.geographicScope === 'city') &&
-    input.location &&
-    input.location.toLowerCase() !== 'global'
-  ) {
-    parts.push(input.location);
-  }
-  if (input.categories.length > 0) {
-    parts.push(input.categories.join(' OR '));
-  }
-  return parts.join(' ') || 'news';
+  // Country scope is enforced via the provider's native filter; categories
+  // contribute the only free-text component.
+  if (input.categories.length === 0) return 'news';
+  return input.categories.join(' OR ');
 }
 
 async function searchNewsApi(input: NewsSearchInput): Promise<NewsArticle[]> {

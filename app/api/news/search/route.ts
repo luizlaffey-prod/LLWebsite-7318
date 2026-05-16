@@ -17,7 +17,7 @@ const SearchInput = z.object({
   durationSeconds: z.number().int().min(15).max(600),
   includeWeather: z.boolean().default(false),
   weatherFormat: z.enum(['separate', 'integrated']).default('separate'),
-  geographicScope: z.enum(['global', 'country', 'state', 'city']).default('global'),
+  geographicScope: z.enum(['global', 'country']).default('global'),
   location: z.string().optional(),
 });
 

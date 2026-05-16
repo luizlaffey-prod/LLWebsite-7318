@@ -53,7 +53,7 @@ const CATEGORIES = [
 ] as const;
 
 type Bias = 'left' | 'center' | 'right';
-type Scope = 'global' | 'country' | 'state' | 'city';
+type Scope = 'global' | 'country';
 
 interface SuggestItem {
   label: string;
@@ -293,8 +293,6 @@ export function NewsClient({ locale }: { locale: Locale }) {
                 <SelectContent>
                   <SelectItem value="global">{t('scopeGlobal')}</SelectItem>
                   <SelectItem value="country">{t('scopeCountry')}</SelectItem>
-                  <SelectItem value="state">{t('scopeState')}</SelectItem>
-                  <SelectItem value="city">{t('scopeCity')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
