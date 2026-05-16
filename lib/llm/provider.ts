@@ -3,16 +3,50 @@ import { createClaudeProvider } from './providers/claude';
 import { createGeminiProvider } from './providers/gemini';
 
 /**
- * Resolves the active LLM provider. `LLM_PROVIDER=gemini|claude` overrides
- * auto-detect, which otherwise prefers Claude when ANTHROPIC_API_KEY is set
- * and falls back to Gemini.
+ * Wraps a primary provider with a secondary failover. If the primary throws,
+ * we log the error and retry the same prompt on the secondary. Used to keep
+ * generation working when one provider is rate-limited (e.g. Gemini 429).
+ */
+function withFallback(primary: LlmProvider, secondary: LlmProvider): LlmProvider {
+  return {
+    id: primary.id,
+    async complete(input) {
+      try {
+        return await primary.complete(input);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(
+          `[llm] primary provider ${primary.id} failed (${msg}); failing over to ${secondary.id}`
+        );
+        return secondary.complete(input);
+      }
+    },
+  };
+}
+
+/**
+ * Resolves the active LLM provider. `LLM_PROVIDER=gemini|claude` forces a
+ * specific primary (still with the other as failover when both keys exist).
+ * With no override: Claude preferred, Gemini as backup, both directions.
  */
 export function resolveProvider(): LlmProvider {
+  const hasClaude = Boolean(process.env.ANTHROPIC_API_KEY);
+  const hasGemini = Boolean(process.env.GEMINI_API_KEY);
   const explicit = (process.env.LLM_PROVIDER ?? '').toLowerCase();
-  if (explicit === 'gemini') return createGeminiProvider();
-  if (explicit === 'claude') return createClaudeProvider();
-  if (process.env.ANTHROPIC_API_KEY) return createClaudeProvider();
-  if (process.env.GEMINI_API_KEY) return createGeminiProvider();
+
+  if (explicit === 'gemini') {
+    const gemini = createGeminiProvider();
+    return hasClaude ? withFallback(gemini, createClaudeProvider()) : gemini;
+  }
+  if (explicit === 'claude') {
+    const claude = createClaudeProvider();
+    return hasGemini ? withFallback(claude, createGeminiProvider()) : claude;
+  }
+  if (hasClaude && hasGemini) {
+    return withFallback(createClaudeProvider(), createGeminiProvider());
+  }
+  if (hasClaude) return createClaudeProvider();
+  if (hasGemini) return createGeminiProvider();
   throw new Error(
     'No LLM provider configured. Set ANTHROPIC_API_KEY or GEMINI_API_KEY.'
   );
