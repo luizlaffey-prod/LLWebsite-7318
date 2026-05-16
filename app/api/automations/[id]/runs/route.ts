@@ -67,7 +67,7 @@ export async function GET(
   // Pull delivery logs for the audios we just listed so the UI can show
   // per-run delivery status without N+1 queries.
   const audioIds = runs.map((r) => r.audioId).filter((x): x is string => !!x);
-  let deliveryByAudio: Record<
+  const deliveryByAudio: Record<
     string,
     { status: string; endpointName: string; endpointType: string; error: string | null; at: string }[]
   > = {};
