@@ -49,7 +49,11 @@ export function createGeminiProvider(): LlmProvider {
         return text;
       } catch (err) {
         if (err instanceof FetchError) {
-          throw new Error(`gemini_${err.status}_${err.message}`);
+          // Surface the upstream body — for 429s Gemini includes the
+          // consumer project number which is the only way to know which
+          // GCP project the key is attached to.
+          const body = (err.responseText ?? '').slice(0, 600);
+          throw new Error(`gemini_${err.status}_${err.message} ${body}`);
         }
         throw err;
       }
