@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, Loader2, Plus, X } from 'lucide-react';
+import {
+  Check,
+  Loader2,
+  Plus,
+  X,
+  Upload,
+  Sparkles,
+  Lock,
+  Music,
+  Trash2,
+} from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -111,6 +121,105 @@ export function AutomationEditor({
   const [voices, setVoices] = useState<VoiceOpt[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Background track state — initialised from form.bgTrackUrl so the mode
+  // sticks across editor opens.
+  const [bgMode, setBgMode] = useState<'upload' | 'ai'>('upload');
+  const [bgBusy, setBgBusy] = useState(false);
+  const [bgError, setBgError] = useState<string | null>(null);
+  const [musicTier, setMusicTier] = useState<'starter' | 'standard' | 'pro'>(
+    'starter'
+  );
+  const [musicQuota, setMusicQuota] = useState<
+    { used: number; limit: number } | null
+  >(null);
+  const [bgOverage, setBgOverage] = useState<
+    { priceCents: number } | null
+  >(null);
+  const aiUnlocked = musicTier === 'pro';
+
+  useEffect(() => {
+    if (!open) return;
+    fetch('/api/music/quota')
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (
+          d: {
+            tier: 'starter' | 'standard' | 'pro';
+            used: number;
+            limit: number;
+          } | null
+        ) => {
+          if (!d) return;
+          setMusicTier(d.tier);
+          setMusicQuota({ used: d.used, limit: d.limit });
+        }
+      )
+      .catch(() => {});
+  }, [open]);
+
+  const onUploadBg = async (file: File) => {
+    setBgBusy(true);
+    setBgError(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/uploads/bg-track', {
+        method: 'POST',
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setBgError(data.error ?? t('errorSave'));
+        return;
+      }
+      update('bgTrackUrl', data.url);
+    } catch {
+      setBgError(t('errorSave'));
+    } finally {
+      setBgBusy(false);
+    }
+  };
+
+  const onGenerateBg = async (acceptOverage: boolean) => {
+    setBgBusy(true);
+    setBgError(null);
+    setBgOverage(null);
+    try {
+      const res = await fetch('/api/music/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          durationSeconds: Math.min(form.durationSeconds, 120),
+          emotions: ['NEUTRAL'],
+          language: form.language,
+          acceptOverage,
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 402) {
+        setBgOverage({ priceCents: data.overagePriceCents ?? 75 });
+        return;
+      }
+      if (res.status === 403) {
+        setBgError(t('musicLockedShort'));
+        return;
+      }
+      if (!res.ok) {
+        setBgError(data.message ?? t('errorSave'));
+        return;
+      }
+      update('bgTrackUrl', data.musicUrl);
+      // Refresh quota
+      fetch('/api/music/quota')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => d && setMusicQuota({ used: d.used, limit: d.limit }));
+    } catch {
+      setBgError(t('errorSave'));
+    } finally {
+      setBgBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -425,12 +534,170 @@ export function AutomationEditor({
 
           <div>
             <Label>{t('bgTrack')}</Label>
-            <Input
-              className="mt-2"
-              value={form.bgTrackUrl ?? ''}
-              onChange={(e) => update('bgTrackUrl', e.target.value || null)}
-              placeholder="https://..."
-            />
+
+            <div className="mt-2 inline-flex w-full rounded-md border border-border bg-elevated p-1">
+              <button
+                type="button"
+                onClick={() => setBgMode('upload')}
+                className={
+                  'flex-1 inline-flex items-center justify-center gap-2 rounded-sm px-3 py-1.5 text-xs font-medium transition-colors ' +
+                  (bgMode === 'upload'
+                    ? 'bg-surface text-text-primary shadow-sm'
+                    : 'text-text-muted hover:text-text-primary')
+                }
+              >
+                <Upload className="h-3.5 w-3.5" /> {t('bgTabUpload')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBgMode('ai')}
+                className={
+                  'flex-1 inline-flex items-center justify-center gap-2 rounded-sm px-3 py-1.5 text-xs font-medium transition-colors ' +
+                  (bgMode === 'ai'
+                    ? 'bg-surface text-text-primary shadow-sm'
+                    : 'text-text-muted hover:text-text-primary')
+                }
+              >
+                {aiUnlocked ? (
+                  <Sparkles className="h-3.5 w-3.5 text-violet" />
+                ) : (
+                  <Lock className="h-3.5 w-3.5 text-text-muted" />
+                )}
+                {t('bgTabAi')}{' '}
+                <span className="inline-flex items-center rounded-sm bg-violet/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-violet">
+                  Pro
+                </span>
+              </button>
+            </div>
+
+            {bgMode === 'upload' && (
+              <div className="mt-2">
+                <Input
+                  type="file"
+                  accept="audio/*"
+                  disabled={bgBusy}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) onUploadBg(f);
+                  }}
+                />
+                <p className="mt-1 text-xs text-text-muted">
+                  {t('bgTrackUploadHint')}
+                </p>
+              </div>
+            )}
+
+            {bgMode === 'ai' && !aiUnlocked && (
+              <div className="mt-2 rounded-md border border-violet/30 bg-violet/5 p-3 text-xs">
+                <p className="font-medium text-text-primary">
+                  {t('musicLocked')}
+                </p>
+                <p className="mt-1 text-text-secondary">
+                  {t('musicLockedHint')}
+                </p>
+              </div>
+            )}
+
+            {bgMode === 'ai' && aiUnlocked && (
+              <div className="mt-2 rounded-md border border-border bg-elevated/40 p-3 text-xs">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet" />
+                  <div className="flex-1">
+                    <p className="text-text-primary">
+                      {t('bgTrackAiHint')}
+                    </p>
+                    {musicQuota && (
+                      <p className="mt-1 text-text-muted">
+                        {t('musicQuotaLine', {
+                          used: musicQuota.used,
+                          limit: musicQuota.limit,
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => onGenerateBg(false)}
+                    disabled={bgBusy}
+                  >
+                    {bgBusy ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />{' '}
+                        {t('musicGenerating')}
+                      </>
+                    ) : (
+                      <>
+                        <Music className="h-3.5 w-3.5" />{' '}
+                        {form.bgTrackUrl ? t('musicRegenerate') : t('musicGenerate')}
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {bgOverage && (
+                  <div className="mt-3 rounded-md border border-warning/30 bg-warning/10 p-2">
+                    <p className="text-warning">
+                      {t('musicOveragePrompt', {
+                        price: (bgOverage.priceCents / 100).toFixed(2),
+                      })}
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => onGenerateBg(true)}
+                        disabled={bgBusy}
+                      >
+                        {t('overageConfirm')}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setBgOverage(null)}
+                      >
+                        {t('cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {form.bgTrackUrl && (
+              <div className="mt-3 rounded-md border border-border bg-elevated/40 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs text-text-secondary">
+                      {form.bgTrackUrl}
+                    </p>
+                    <audio
+                      controls
+                      className="mt-2 w-full"
+                      src={form.bgTrackUrl}
+                    >
+                      <track kind="captions" />
+                    </audio>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => update('bgTrackUrl', null)}
+                    title={t('bgTrackClear')}
+                  >
+                    <Trash2 className="h-4 w-4 text-text-muted hover:text-error" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {bgError && (
+              <p className="mt-2 text-xs text-error">{bgError}</p>
+            )}
+
             <div className="mt-3 flex items-center justify-between">
               <Label>{t('duckAudio')}</Label>
               <Switch

@@ -310,7 +310,21 @@
     "lastRunFailed": "Última falló {ago}",
     "lastRunRunning": "En ejecución",
     "deliveryConfigured": "{n} endpoint(s) de entrega",
-    "deliveryNone": "Sin entrega configurada"
+    "deliveryNone": "Sin entrega configurada",
+    "bgTabUpload": "Subir",
+    "bgTabAi": "Generar con IA",
+    "bgTrackUploadHint": "Archivo MP3, WAV, OGG, AAC o M4A hasta 15 MB. Almacenado para reutilizar en cada ejecución.",
+    "bgTrackAiHint": "AURA compone una pista instrumental que se reutilizará en cada ejecución de esta automatización.",
+    "bgTrackClear": "Quitar pista",
+    "musicLocked": "Pistas con IA son exclusivas del plan Pro.",
+    "musicLockedShort": "Pistas con IA son Pro.",
+    "musicLockedHint": "Mejora tu plan para generar pistas a medida.",
+    "musicGenerate": "Generar pista",
+    "musicQuotaLine": "Usadas {used} de {limit} pistas este mes",
+    "musicGenerating": "Generando...",
+    "musicRegenerate": "Generar de nuevo",
+    "musicOveragePrompt": "Agotaste las pistas del mes. ¿Generar una más por US$ {price}?",
+    "overageConfirm": "Pagar y generar"
   },
   "audiosPage": {
     "title": "Mis audios",
@@ -358,7 +372,14 @@
     "healthSection": "Estado de integraciones",
     "healthHint": "Verifica que ElevenLabs, Anthropic, noticias, clima y storage estén accesibles. Pruebas en vivo.",
     "openHealth": "Ejecutar diagnóstico",
-    "errorSave": "No se pudo guardar. Inténtalo de nuevo."
+    "errorSave": "No se pudo guardar. Inténtalo de nuevo.",
+    "downloadFolderSection": "Carpeta de descarga predeterminada",
+    "downloadFolderHint": "Cuando está configurada, los boletines descargados y sincronizados van directo a esta carpeta sin preguntar.",
+    "downloadFolderUnsupported": "Tu navegador no soporta la API de carpeta directa. Firefox y Safari usan la descarga tradicional.",
+    "downloadFolderConfigured": "Carpeta configurada — lista para usar",
+    "downloadFolderChoose": "Elegir carpeta",
+    "downloadFolderChange": "Cambiar carpeta",
+    "downloadFolderClear": "Limpiar"
   },
   "healthPage": {
     "title": "Estado de integraciones",
