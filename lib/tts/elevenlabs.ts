@@ -108,12 +108,13 @@ async function synthesizeBlock(
     return buf;
   } catch (err) {
     if (err instanceof FetchError) {
+      const body = (err.responseText ?? '').slice(0, 400);
       throw new ElevenLabsError(
         err.status === 429
           ? 'rate_limited'
           : err.status === 401
             ? 'invalid_api_key'
-            : `elevenlabs_${err.status}`,
+            : `elevenlabs_${err.status} model=${opts.fast ? ELEVEN_LABS_FAST_MODEL : ELEVEN_LABS_MODEL} voice=${opts.elevenLabsVoiceId} ${body}`,
         err.status
       );
     }
