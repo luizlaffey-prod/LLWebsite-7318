@@ -141,7 +141,11 @@ function Body({ audioId }: { audioId: string }) {
   const onDownload = async () => {
     if (!audioUrl) return;
     const filename = defaultFilename({ topic: audio?.title ?? 'bulletin' });
-    const result = await downloadBlob({ filename, fromUrl: audioUrl });
+    const result = await downloadBlob({
+      filename,
+      fromUrl: audioUrl,
+      proxyUrl: `/api/audios/${audioId}/download`,
+    });
     setDownloadMsg(
       result.kind === 'folder' ? `${t('downloadedTo')}: ${result.path}` : t('download')
     );
