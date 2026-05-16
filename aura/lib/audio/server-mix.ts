@@ -1,0 +1,108 @@
+import { spawn } from 'node:child_process';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
+
+/**
+ * Mixes the synthesized voice MP3 with a looping background track via
+ * the bundled ffmpeg binary (@ffmpeg-installer/ffmpeg). Output is MP3.
+ *
+ * The bg track is downloaded to /tmp (Vercel allows up to 512 MB there
+ * and clears it per invocation), the voice bytes are written next to
+ * it, ffmpeg runs once, and the mixed bytes are returned. Temp files
+ * are cleaned up even on error.
+ *
+ * When `duck` is true the bg sits lower under the voice — closer to a
+ * proper sidechain feel without the cost of running asidechain filter.
+ */
+export interface ServerMixInput {
+  voiceBytes: Uint8Array;
+  bgUrl: string;
+  duck?: boolean;
+}
+
+export async function mixVoiceAndBackgroundServerSide(
+  input: ServerMixInput
+): Promise<Uint8Array> {
+  const bgGain = input.duck === false ? 0.3 : 0.18;
+  const bgBytes = await fetchBg(input.bgUrl);
+
+  const dir = await mkdtemp(join(tmpdir(), 'aura-mix-'));
+  const voicePath = join(dir, 'voice.mp3');
+  // Preserve the bg's extension so ffmpeg's demuxer picks the right one.
+  const bgExt = guessExt(input.bgUrl) || 'mp3';
+  const bgPath = join(dir, `bg.${bgExt}`);
+  const outPath = join(dir, 'mixed.mp3');
+
+  try {
+    await Promise.all([
+      writeFile(voicePath, input.voiceBytes),
+      writeFile(bgPath, bgBytes),
+    ]);
+
+    await runFfmpeg([
+      '-y',
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-i',
+      voicePath,
+      '-stream_loop',
+      '-1',
+      '-i',
+      bgPath,
+      '-filter_complex',
+      `[1:a]volume=${bgGain}[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=0`,
+      '-c:a',
+      'libmp3lame',
+      '-b:a',
+      '128k',
+      '-ar',
+      '44100',
+      outPath,
+    ]);
+
+    return new Uint8Array(await readFile(outPath));
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+async function fetchBg(url: string): Promise<Uint8Array> {
+  try {
+    const res = await fetchWithRetry(url, {}, { timeoutMs: 60_000 });
+    return new Uint8Array(await res.arrayBuffer());
+  } catch (err) {
+    if (err instanceof FetchError) {
+      throw new Error(`bg_fetch_${err.status}: ${err.message}`);
+    }
+    throw err;
+  }
+}
+
+function guessExt(url: string): string | null {
+  const m = url.match(/\.([a-zA-Z0-9]{2,5})(?:\?|$)/);
+  if (!m) return null;
+  const ext = m[1].toLowerCase();
+  if (['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac', 'opus'].includes(ext)) {
+    return ext;
+  }
+  return null;
+}
+
+function runFfmpeg(args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(ffmpegInstaller.path, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stderr = '';
+    proc.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    proc.on('error', (err) => reject(err));
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`ffmpeg exited ${code}: ${stderr.slice(-400)}`));
+    });
+  });
+}
