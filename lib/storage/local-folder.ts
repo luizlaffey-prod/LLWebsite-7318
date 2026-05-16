@@ -160,21 +160,30 @@ export async function downloadBlob(opts: {
 }): Promise<DownloadOutcome> {
   // Folder path: requires us to have the bytes in hand. Only used when a
   // folder is configured; otherwise we skip the cross-origin fetch entirely.
+  // On ANY failure inside this branch (CORS, permission revoked, write error)
+  // we silently fall through to the proxy/anchor path below so the user
+  // still gets a saved file instead of a broken icon.
   const tryFolder =
     typeof window !== 'undefined' && !!window.showDirectoryPicker;
   if (tryFolder) {
-    const handle = await readHandle();
-    if (handle && (await ensurePermission(handle))) {
-      const blob = opts.bytes
-        ? opts.bytes instanceof Blob
-          ? opts.bytes
-          : new Blob([opts.bytes as BlobPart], { type: 'audio/mpeg' })
-        : await (await fetch(opts.fromUrl!)).blob();
-      const fileHandle = await handle.getFileHandle(opts.filename, { create: true });
-      const writable = await fileHandle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      return { kind: 'folder', path: opts.filename };
+    try {
+      const handle = await readHandle();
+      if (handle && (await ensurePermission(handle))) {
+        const blob = opts.bytes
+          ? opts.bytes instanceof Blob
+            ? opts.bytes
+            : new Blob([opts.bytes as BlobPart], { type: 'audio/mpeg' })
+          : await (await fetch(opts.fromUrl!)).blob();
+        const fileHandle = await handle.getFileHandle(opts.filename, {
+          create: true,
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return { kind: 'folder', path: opts.filename };
+      }
+    } catch (err) {
+      console.warn('[local-folder] folder write failed, falling back', err);
     }
   }
 
