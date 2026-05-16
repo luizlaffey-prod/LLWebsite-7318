@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { setRequestLocale } from 'next-intl/server';
 import { getSession } from '@/lib/auth/server';
+import { isAdminSession } from '@/lib/auth/admin';
 import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { AppSidebar } from '@/components/app/app-sidebar';
@@ -25,7 +26,7 @@ export default async function AppLayout({
     redirect(`/${locale}/login`);
   }
 
-  const [dbUser] = await db
+  let [dbUser] = await db
     .select({
       radioName: user.radioName,
       plan: user.plan,
@@ -37,6 +38,27 @@ export default async function AppLayout({
     .from(user)
     .where(eq(user.id, session.user.id))
     .limit(1);
+
+  // Auto-promote admins to the Pro plan on first authenticated request.
+  // The ADMIN_EMAILS allowlist is the source of truth — anyone listed
+  // there gets full Pro features without going through Stripe. Idempotent:
+  // re-runs are a no-op once plan='pro' and subscriptionStatus='active'.
+  if (
+    dbUser &&
+    isAdminSession(session) &&
+    dbUser.plan !== 'pro'
+  ) {
+    await db
+      .update(user)
+      .set({
+        plan: 'pro',
+        subscriptionStatus: 'active',
+        trialEndsAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, session.user.id));
+    dbUser = { ...dbUser, plan: 'pro', trialEndsAt: null };
+  }
 
   // Honor the user's stored UI-language preference: if the URL locale
   // doesn't match user.locale, redirect to the same path under the
