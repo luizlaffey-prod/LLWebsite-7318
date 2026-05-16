@@ -367,7 +367,11 @@ function DrawerBody(props: Props) {
   const onDownload = async () => {
     if (!audioUrl) return;
     const filename = defaultFilename({ topic: article?.title ?? 'bulletin' });
-    const result = await downloadBlob({ filename, fromUrl: audioUrl });
+    const result = await downloadBlob({
+      filename,
+      fromUrl: audioUrl,
+      proxyUrl: audioId ? `/api/audios/${audioId}/download` : undefined,
+    });
     setDownloadMsg(
       result.kind === 'folder' ? `${t('downloadedTo')}: ${result.path}` : t('download')
     );

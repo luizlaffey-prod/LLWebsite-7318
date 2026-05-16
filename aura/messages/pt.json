@@ -348,7 +348,8 @@
     "cancel": "Cancelar",
     "confirmDelete": "Excluir agora",
     "errorLoad": "Não conseguimos carregar os áudios. Recarregue a página.",
-    "errorDelete": "Não foi possível excluir. Tente novamente."
+    "errorDelete": "Não foi possível excluir. Tente novamente.",
+    "errorDownload": "Não conseguimos baixar agora. Tente novamente."
   },
   "settingsPage": {
     "title": "Configurações",

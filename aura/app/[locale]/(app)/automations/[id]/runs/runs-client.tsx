@@ -75,14 +75,18 @@ export function RunsClient({ automationId, locale }: Props) {
   };
 
   const onDownload = async (run: Run) => {
-    if (!run.audio?.url) return;
+    if (!run.audio?.url || !run.audio?.id) return;
     setDownloading(run.id);
     setDownloadMsg(null);
     try {
       const filename = defaultFilename({
         topic: run.audio.title || `bulletin-${run.slotTime}`,
       });
-      const result = await downloadBlob({ filename, fromUrl: run.audio.url });
+      const result = await downloadBlob({
+        filename,
+        fromUrl: run.audio.url,
+        proxyUrl: `/api/audios/${run.audio.id}/download`,
+      });
       setDownloadMsg(
         result.kind === 'folder'
           ? `${t('downloadedTo')}: ${result.path}`
