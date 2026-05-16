@@ -140,23 +140,36 @@ export type DownloadOutcome =
 
 /**
  * Downloads `bytes` (or fetches `fromUrl`) as `filename`. If the user previously
- * picked a folder via the File System Access API, saves directly into it; otherwise
- * falls back to a regular browser download.
+ * picked a folder via the File System Access API, saves directly into it.
+ *
+ * If no folder is configured AND a `proxyUrl` is provided, the browser is sent
+ * to that URL — typically a server-side route that fetches the binary and
+ * replies with `Content-Disposition: attachment`. This avoids cross-origin
+ * fetch problems (CORS, opaque responses) that would otherwise break a plain
+ * createObjectURL fallback when `fromUrl` lives on another host.
+ *
+ * When `bytes` are passed in directly (e.g. an in-memory mix Blob), the
+ * createObjectURL anchor is used regardless.
  */
 export async function downloadBlob(opts: {
   filename: string;
   bytes?: Uint8Array | Blob;
   fromUrl?: string;
+  /** Server-side proxy that streams the file with attachment headers. */
+  proxyUrl?: string;
 }): Promise<DownloadOutcome> {
-  const blob = opts.bytes
-    ? opts.bytes instanceof Blob
-      ? opts.bytes
-      : new Blob([opts.bytes as BlobPart], { type: 'audio/mpeg' })
-    : await (await fetch(opts.fromUrl!)).blob();
-
-  if (typeof window !== 'undefined' && window.showDirectoryPicker) {
+  // Folder path: requires us to have the bytes in hand. Only used when a
+  // folder is configured; otherwise we skip the cross-origin fetch entirely.
+  const tryFolder =
+    typeof window !== 'undefined' && !!window.showDirectoryPicker;
+  if (tryFolder) {
     const handle = await readHandle();
     if (handle && (await ensurePermission(handle))) {
+      const blob = opts.bytes
+        ? opts.bytes instanceof Blob
+          ? opts.bytes
+          : new Blob([opts.bytes as BlobPart], { type: 'audio/mpeg' })
+        : await (await fetch(opts.fromUrl!)).blob();
       const fileHandle = await handle.getFileHandle(opts.filename, { create: true });
       const writable = await fileHandle.createWritable();
       await writable.write(blob);
@@ -165,6 +178,24 @@ export async function downloadBlob(opts: {
     }
   }
 
+  // No folder. Prefer the same-origin proxy route so the browser save dialog
+  // fires reliably; only synthesise a Blob URL if the caller already has the
+  // bytes (mixed audio, etc.) or there's no proxy.
+  if (opts.proxyUrl) {
+    const a = document.createElement('a');
+    a.href = opts.proxyUrl;
+    a.download = opts.filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    return { kind: 'browser' };
+  }
+
+  const blob = opts.bytes
+    ? opts.bytes instanceof Blob
+      ? opts.bytes
+      : new Blob([opts.bytes as BlobPart], { type: 'audio/mpeg' })
+    : await (await fetch(opts.fromUrl!)).blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

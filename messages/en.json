@@ -348,7 +348,8 @@
     "cancel": "Cancel",
     "confirmDelete": "Delete forever",
     "errorLoad": "Couldn't load your audios. Please refresh.",
-    "errorDelete": "Couldn't delete this audio. Try again."
+    "errorDelete": "Couldn't delete this audio. Try again.",
+    "errorDownload": "Couldn't download right now. Try again."
   },
   "settingsPage": {
     "title": "Settings",

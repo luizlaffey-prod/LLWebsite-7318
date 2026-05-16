@@ -128,11 +128,16 @@ export function AudiosClient({ locale }: { locale: Locale }) {
   const onDownload = async (audio: AudioItem) => {
     if (!audio.audioUrl) return;
     setDownloading(audio.id);
+    setError(null);
     try {
       await downloadBlob({
         filename: defaultFilename({ topic: audio.title }),
         fromUrl: audio.audioUrl,
+        proxyUrl: `/api/audios/${audio.id}/download`,
       });
+    } catch (err) {
+      console.error('[audios] download failed', err);
+      setError(t('errorDownload'));
     } finally {
       setDownloading(null);
     }
