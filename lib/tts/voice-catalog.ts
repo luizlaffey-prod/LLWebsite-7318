@@ -129,8 +129,12 @@ export const VOICE_CATALOG: VoiceSeed[] = [
   },
 ];
 
-export const ELEVEN_LABS_MODEL = 'eleven_multilingual_v2';
-export const ELEVEN_LABS_FAST_MODEL = 'eleven_flash_v2_5';
+// v3 supports inline audio tags ([excited], [serious], etc.) so we use it
+// as the primary model. AURA_TTS_MODEL / AURA_TTS_FAST_MODEL env vars
+// override per-deploy if you need to roll back to v2.
+export const ELEVEN_LABS_MODEL = process.env.AURA_TTS_MODEL ?? 'eleven_v3';
+export const ELEVEN_LABS_FAST_MODEL =
+  process.env.AURA_TTS_FAST_MODEL ?? 'eleven_flash_v2_5';
 export const VOICE_SETTINGS = {
   stability: 0.5,
   similarity_boost: 0.75,
