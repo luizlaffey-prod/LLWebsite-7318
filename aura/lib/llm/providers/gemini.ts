@@ -32,7 +32,14 @@ export function createGeminiProvider(): LlmProvider {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           },
-          { timeoutMs: 60_000, retryOn: [503] }
+          {
+            timeoutMs: 60_000,
+            // Free-tier rate limits hit 429 frequently; back off and retry
+            // rather than failing fast.
+            retryOn: [429, 500, 502, 503, 504],
+            failFast: [400, 401, 403, 404],
+            delays: [2_000, 5_000, 10_000],
+          }
         );
         const data = (await res.json()) as {
           candidates?: { content?: { parts?: { text?: string }[] } }[];
