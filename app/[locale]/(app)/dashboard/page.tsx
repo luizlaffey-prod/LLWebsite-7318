@@ -37,7 +37,7 @@ export default async function DashboardPage({
   const trialDaysLeft = isTrial ? daysUntil(dbUser?.trialEndsAt ?? null) : 0;
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-4 py-6 md:px-8 md:py-10">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <div>

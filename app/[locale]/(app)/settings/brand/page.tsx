@@ -34,7 +34,7 @@ export default async function BrandPage({
   const t = await getTranslations('brandPage');
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-4 py-6 md:px-8 md:py-10">
       <div className="mx-auto max-w-3xl">
         <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="mt-2 text-text-secondary">{t('subtitle')}</p>
