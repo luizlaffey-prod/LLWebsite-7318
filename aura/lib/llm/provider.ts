@@ -11,14 +11,25 @@ function withFallback(primary: LlmProvider, secondary: LlmProvider): LlmProvider
   return {
     id: primary.id,
     async complete(input) {
+      let primaryErr: unknown;
       try {
         return await primary.complete(input);
       } catch (err) {
+        primaryErr = err;
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(
           `[llm] primary provider ${primary.id} failed (${msg}); failing over to ${secondary.id}`
         );
-        return secondary.complete(input);
+      }
+      try {
+        return await secondary.complete(input);
+      } catch (err) {
+        const primaryMsg =
+          primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
+        const secondaryMsg = err instanceof Error ? err.message : String(err);
+        throw new Error(
+          `both LLM providers failed: ${primary.id}=${primaryMsg} | ${secondary.id}=${secondaryMsg}`
+        );
       }
     },
   };

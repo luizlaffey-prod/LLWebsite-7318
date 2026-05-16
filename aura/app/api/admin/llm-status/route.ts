@@ -24,7 +24,7 @@ export async function GET() {
     hasGeminiKey: geminiKey.length > 0,
     geminiKeyPrefix: geminiKey.slice(0, 4) || null,
     llmProvider: process.env.LLM_PROVIDER ?? null,
-    claudeModel: process.env.AURA_CLAUDE_MODEL ?? 'claude-sonnet-4-6 (default)',
+    claudeModel: process.env.AURA_CLAUDE_MODEL ?? 'claude-sonnet-4-5-20250929 (default)',
     geminiModel: process.env.AURA_GEMINI_MODEL ?? 'gemini-2.5-pro (default)',
     vercelEnv: process.env.VERCEL_ENV ?? null,
   });

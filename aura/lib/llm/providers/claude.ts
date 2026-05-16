@@ -6,7 +6,9 @@ const RATE_LIMIT_DELAYS_MS = [2_000, 5_000, 10_000];
 export function createClaudeProvider(): LlmProvider {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('ANTHROPIC_API_KEY is not set');
-  const model = process.env.AURA_CLAUDE_MODEL ?? 'claude-sonnet-4-6';
+  // Default to the stable public-API model name. Override via env if you have
+  // access to a newer alias on your Anthropic account.
+  const model = process.env.AURA_CLAUDE_MODEL ?? 'claude-sonnet-4-5-20250929';
   const client = new Anthropic({ apiKey: key });
 
   return {
