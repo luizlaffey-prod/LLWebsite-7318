@@ -11,9 +11,9 @@ const ELEVEN_BASE = 'https://api.elevenlabs.io/v1';
 
 /**
  * Per-emotion overrides for ElevenLabs voice_settings. Lower stability makes
- * the voice more expressive/variable; higher stability keeps it steady. The
- * multilingual_v2 model honors these knobs — it does NOT honor inline
- * bracketed cues, so the script text must be sent clean.
+ * the voice more expressive/variable; higher stability keeps it steady.
+ * Used as a fallback shaping when the configured model doesn't interpret
+ * inline tags (e.g. multilingual_v2). v3 honors tags directly.
  */
 const EMOTION_SETTINGS: Record<Emotion, { stability: number; similarity_boost: number }> = {
   ENTHUSIASM: { stability: 0.35, similarity_boost: 0.8 },
@@ -22,6 +22,23 @@ const EMOTION_SETTINGS: Record<Emotion, { stability: number; similarity_boost: n
   CONCERN: { stability: 0.6, similarity_boost: 0.7 },
   NEUTRAL: { stability: 0.5, similarity_boost: 0.75 },
 };
+
+/**
+ * v3 audio tags — read by the model as performance directions, not spoken
+ * aloud. Mapped from our 5 emotions to v3's recognised vocabulary. NEUTRAL
+ * gets no tag so the line plays plain.
+ */
+const EMOTION_V3_TAG: Record<Emotion, string | null> = {
+  ENTHUSIASM: '[excited]',
+  DRAMATIC: '[dramatic]',
+  SERIOUSNESS: '[serious]',
+  CONCERN: '[concerned]',
+  NEUTRAL: null,
+};
+
+function isV3Model(modelId: string): boolean {
+  return modelId.startsWith('eleven_v3');
+}
 
 export class ElevenLabsError extends Error {
   constructor(message: string, public readonly status: number) {
@@ -47,6 +64,7 @@ async function synthesizeBlock(
   if (!key) throw new ElevenLabsError('ELEVENLABS_API_KEY is not set', 0);
 
   const url = `${ELEVEN_BASE}/text-to-speech/${opts.elevenLabsVoiceId}`;
+  const modelId = opts.fast ? ELEVEN_LABS_FAST_MODEL : ELEVEN_LABS_MODEL;
   const emotionPreset = opts.emotion ? EMOTION_SETTINGS[opts.emotion] : null;
   const voiceSettings: Record<string, number> = {
     ...VOICE_SETTINGS,
@@ -56,9 +74,18 @@ async function synthesizeBlock(
     // ElevenLabs accepts speed in [0.7, 1.2]; clamp our UI range [0.8, 1.5].
     voiceSettings.speed = Math.max(0.7, Math.min(1.2, opts.speed));
   }
+
+  // v3 reads inline audio tags as performance directions; older models would
+  // read them aloud, so we prepend the tag only when the active model is v3.
+  let finalText = text;
+  if (opts.emotion && isV3Model(modelId)) {
+    const tag = EMOTION_V3_TAG[opts.emotion];
+    if (tag) finalText = `${tag} ${text}`;
+  }
+
   const body = {
-    text,
-    model_id: opts.fast ? ELEVEN_LABS_FAST_MODEL : ELEVEN_LABS_MODEL,
+    text: finalText,
+    model_id: modelId,
     voice_settings: voiceSettings,
   };
 
