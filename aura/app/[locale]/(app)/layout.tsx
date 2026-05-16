@@ -6,6 +6,7 @@ import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { AppSidebar } from '@/components/app/app-sidebar';
+import { MobileTopBar } from '@/components/app/mobile-top-bar';
 import { effectiveTier } from '@/lib/billing/quota';
 import { locales, type Locale } from '@/i18n';
 
@@ -58,15 +59,20 @@ export default async function AppLayout({
     ? ({ ['--teal' as string]: dbUser.brandAccentColor } as React.CSSProperties)
     : undefined;
 
+  const navProps = {
+    locale: preferred ?? locale,
+    radioName: dbUser?.radioName,
+    planLabel,
+    brandLogoUrl: dbUser?.brandLogoUrl ?? null,
+  };
+
   return (
-    <div className="flex min-h-screen bg-base" style={styleOverride}>
-      <AppSidebar
-        locale={preferred ?? locale}
-        radioName={dbUser?.radioName}
-        planLabel={planLabel}
-        brandLogoUrl={dbUser?.brandLogoUrl ?? null}
-      />
-      <main className="flex-1 overflow-x-hidden">{children}</main>
+    <div className="flex min-h-screen bg-base md:flex-row" style={styleOverride}>
+      <AppSidebar {...navProps} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileTopBar {...navProps} />
+        <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
+      </div>
     </div>
   );
 }
