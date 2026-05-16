@@ -35,8 +35,14 @@ export async function runAutomationSlot(input: {
   automationId: string;
   scheduledFor: Date;
   slot: ScheduleSlot;
+  /**
+   * If provided, the existing execution row is updated in place — used for
+   * retries (manual and automatic). The row's retryCount is incremented and
+   * any prior error cleared as we re-enter the running state.
+   */
+  existingExecutionId?: string;
 }): Promise<RunResult> {
-  const { automationId, scheduledFor, slot } = input;
+  const { automationId, scheduledFor, slot, existingExecutionId } = input;
 
   const [automation] = await db
     .select()
@@ -45,16 +51,35 @@ export async function runAutomationSlot(input: {
     .limit(1);
   if (!automation) return { ok: false, error: 'automation_not_found' };
 
-  // Create a pending execution row up-front so concurrent triggers see it.
-  const [execRow] = await db
-    .insert(automationExecution)
-    .values({
-      automationScheduleId: automation.id,
-      scheduledFor,
-      slotTime: slot.time,
-      status: 'running',
-    })
-    .returning({ id: automationExecution.id });
+  let execRowId: string;
+  if (existingExecutionId) {
+    const [prior] = await db
+      .select({ id: automationExecution.id, retryCount: automationExecution.retryCount })
+      .from(automationExecution)
+      .where(eq(automationExecution.id, existingExecutionId))
+      .limit(1);
+    if (!prior) return { ok: false, error: 'execution_not_found' };
+    await db
+      .update(automationExecution)
+      .set({
+        status: 'running',
+        error: null,
+        retryCount: prior.retryCount + 1,
+      })
+      .where(eq(automationExecution.id, prior.id));
+    execRowId = prior.id;
+  } else {
+    const [execRow] = await db
+      .insert(automationExecution)
+      .values({
+        automationScheduleId: automation.id,
+        scheduledFor,
+        slotTime: slot.time,
+        status: 'running',
+      })
+      .returning({ id: automationExecution.id });
+    execRowId = execRow.id;
+  }
 
   try {
     // 1) Pull news for the slot's categories.
@@ -158,7 +183,7 @@ export async function runAutomationSlot(input: {
     await db
       .update(automationExecution)
       .set({ status: 'succeeded', audioId: audio.id, executedAt: new Date() })
-      .where(eq(automationExecution.id, execRow.id));
+      .where(eq(automationExecution.id, execRowId));
 
     // 10) Charge quota.
     try {
@@ -184,7 +209,7 @@ export async function runAutomationSlot(input: {
     await db
       .update(automationExecution)
       .set({ status: 'failed', error: message, executedAt: new Date() })
-      .where(eq(automationExecution.id, execRow.id));
+      .where(eq(automationExecution.id, execRowId));
     return { ok: false, error: message };
   }
 }

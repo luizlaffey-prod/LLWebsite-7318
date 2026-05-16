@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { automationSchedule, user } from '@/lib/db/schema';
+import { automationSchedule, automationExecution, user } from '@/lib/db/schema';
 import { canSchedule } from '@/lib/billing/feature-gates';
 import { effectiveTier } from '@/lib/billing/quota';
 import { AutomationInput } from '@/lib/automations/schemas';
@@ -21,7 +21,59 @@ export async function GET() {
     .where(eq(automationSchedule.userId, session.user.id))
     .orderBy(desc(automationSchedule.createdAt));
 
-  return NextResponse.json({ automations: rows });
+  // Attach the most recent execution per automation in a single round-trip
+  // using DISTINCT ON (latest scheduled_for first per automation_schedule_id).
+  let lastByAutomation: Record<string, {
+    status: string;
+    scheduledFor: string;
+    executedAt: string | null;
+    error: string | null;
+    audioId: string | null;
+  }> = {};
+  if (rows.length > 0) {
+    const ids = rows.map((r) => r.id);
+    const lastRuns = await db
+      .selectDistinctOn([automationExecution.automationScheduleId], {
+        automationScheduleId: automationExecution.automationScheduleId,
+        status: automationExecution.status,
+        scheduledFor: automationExecution.scheduledFor,
+        executedAt: automationExecution.executedAt,
+        error: automationExecution.error,
+        audioId: automationExecution.audioId,
+      })
+      .from(automationExecution)
+      .where(inArray(automationExecution.automationScheduleId, ids))
+      .orderBy(
+        automationExecution.automationScheduleId,
+        desc(automationExecution.scheduledFor)
+      );
+
+    lastByAutomation = Object.fromEntries(
+      lastRuns.map((r) => [
+        r.automationScheduleId,
+        {
+          status: r.status,
+          scheduledFor: r.scheduledFor.toISOString(),
+          executedAt: r.executedAt?.toISOString() ?? null,
+          error: r.error,
+          audioId: r.audioId,
+        },
+      ])
+    );
+  }
+
+  // Count delivery endpoints per user — surfaced as a single number in the UI.
+  const [deliveryCount] = await db.execute<{ count: number }>(
+    sql`SELECT COUNT(*)::int AS count FROM delivery_endpoint WHERE user_id = ${session.user.id} AND enabled = true`
+  ).then((r) => (r.rows ?? []) as { count: number }[]);
+  const deliveryEndpoints = Number(deliveryCount?.count ?? 0);
+
+  const automations = rows.map((r) => ({
+    ...r,
+    lastRun: lastByAutomation[r.id] ?? null,
+  }));
+
+  return NextResponse.json({ automations, deliveryEndpoints });
 }
 
 export async function POST(req: Request) {

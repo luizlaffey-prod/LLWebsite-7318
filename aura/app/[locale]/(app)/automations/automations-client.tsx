@@ -10,6 +10,11 @@ import {
   Trash2,
   Loader2,
   Lock,
+  History,
+  CheckCircle2,
+  XCircle,
+  Truck,
+  AlertTriangle,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,9 +34,18 @@ import { cn } from '@/lib/utils';
 import type { Locale } from '@/i18n';
 import type { AutomationInputType } from '@/lib/automations/schemas';
 
+interface LastRunInfo {
+  status: 'pending' | 'running' | 'succeeded' | 'failed';
+  scheduledFor: string;
+  executedAt: string | null;
+  error: string | null;
+  audioId: string | null;
+}
+
 interface AutomationRow extends AutomationInputType {
   id: string;
   createdAt: string;
+  lastRun: LastRunInfo | null;
 }
 
 interface Props {
@@ -55,6 +69,7 @@ export function AutomationsClient({
   const [running, setRunning] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deliveryEndpoints, setDeliveryEndpoints] = useState(0);
 
   const load = async () => {
     setLoading(true);
@@ -65,8 +80,12 @@ export function AutomationsClient({
         setError(t('errorLoad'));
         return;
       }
-      const data = (await res.json()) as { automations: AutomationRow[] };
+      const data = (await res.json()) as {
+        automations: AutomationRow[];
+        deliveryEndpoints?: number;
+      };
       setList(data.automations);
+      setDeliveryEndpoints(data.deliveryEndpoints ?? 0);
     } catch {
       setError(t('errorLoad'));
     } finally {
@@ -103,6 +122,8 @@ export function AutomationsClient({
         const data = await res.json().catch(() => ({}));
         setError(data.error ? `${t('errorRun')} (${data.error})` : t('errorRun'));
       }
+      // Refresh so the new execution appears in the lastRun badge.
+      await load();
     } catch {
       setError(t('errorRun'));
     } finally {
@@ -200,12 +221,32 @@ export function AutomationsClient({
                 )}
               </div>
 
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+                <LastRunBadge lastRun={row.lastRun} locale={locale} t={t} />
+                <DeliveryHint count={deliveryEndpoints} t={t} />
+              </div>
+
               <div className="mt-4 flex items-center justify-between gap-2">
-                <span className={cn('inline-flex items-center gap-1 text-xs', row.enabled ? 'text-success' : 'text-text-muted')}>
-                  <span className={cn('h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-success' : 'bg-text-muted')} />
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 text-xs',
+                    row.enabled ? 'text-success' : 'text-text-muted'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full',
+                      row.enabled ? 'bg-success' : 'bg-text-muted'
+                    )}
+                  />
                   {row.enabled ? t('active') : t('paused')}
                 </span>
                 <div className="flex items-center gap-1">
+                  <Button asChild variant="ghost" size="icon" title={t('history')}>
+                    <a href={`/${locale}/automations/${row.id}/runs`}>
+                      <History className="h-4 w-4" />
+                    </a>
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -255,7 +296,10 @@ export function AutomationsClient({
         }}
       />
 
-      <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+      <Dialog
+        open={!!confirmDelete}
+        onOpenChange={(o) => !o && setConfirmDelete(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('confirmDeleteTitle')}</DialogTitle>
@@ -276,4 +320,71 @@ export function AutomationsClient({
       </Dialog>
     </div>
   );
+}
+
+function LastRunBadge({
+  lastRun,
+  locale,
+  t,
+}: {
+  lastRun: LastRunInfo | null;
+  locale: Locale;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (!lastRun) {
+    return <span className="text-text-muted">{t("noRuns")}</span>;
+  }
+  const when = lastRun.executedAt ?? lastRun.scheduledFor;
+  const ago = relativeTime(new Date(when), locale);
+  if (lastRun.status === "succeeded") {
+    return (
+      <span className="inline-flex items-center gap-1 text-success">
+        <CheckCircle2 className="h-3 w-3" /> {t("lastRunOk", { ago })}
+      </span>
+    );
+  }
+  if (lastRun.status === "failed") {
+    return (
+      <span className="inline-flex items-center gap-1 text-error">
+        <XCircle className="h-3 w-3" /> {t("lastRunFailed", { ago })}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-text-muted">
+      <Loader2 className="h-3 w-3 animate-spin" /> {t("lastRunRunning")}
+    </span>
+  );
+}
+
+function DeliveryHint({
+  count,
+  t,
+}: {
+  count: number;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (count > 0) {
+    return (
+      <span className="inline-flex items-center gap-1 text-text-secondary">
+        <Truck className="h-3 w-3" /> {t("deliveryConfigured", { n: count })}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-warning">
+      <AlertTriangle className="h-3 w-3" /> {t("deliveryNone")}
+    </span>
+  );
+}
+
+function relativeTime(date: Date, locale: string): string {
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.round(diffMs / 60000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (Math.abs(minutes) < 60) return rtf.format(-minutes, "minute");
+  const hours = Math.round(minutes / 60);
+  if (Math.abs(hours) < 48) return rtf.format(-hours, "hour");
+  const days = Math.round(hours / 24);
+  return rtf.format(-days, "day");
 }
