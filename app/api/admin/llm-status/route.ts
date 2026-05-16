@@ -17,12 +17,16 @@ export async function GET() {
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY ?? '';
   const geminiKey = process.env.GEMINI_API_KEY ?? '';
+  const elevenLabsKey = process.env.ELEVENLABS_API_KEY ?? '';
 
   return NextResponse.json({
     hasAnthropicKey: anthropicKey.length > 0,
     anthropicKeyPrefix: anthropicKey.slice(0, 7) || null,
     hasGeminiKey: geminiKey.length > 0,
     geminiKeyPrefix: geminiKey.slice(0, 4) || null,
+    hasElevenLabsKey: elevenLabsKey.length > 0,
+    elevenLabsKeyPrefix: elevenLabsKey.slice(0, 4) || null,
+    elevenLabsKeyLength: elevenLabsKey.length || 0,
     llmProvider: process.env.LLM_PROVIDER ?? null,
     claudeModel: process.env.AURA_CLAUDE_MODEL ?? 'claude-sonnet-4-5-20250929 (default)',
     geminiModel: process.env.AURA_GEMINI_MODEL ?? 'gemini-2.5-pro (default)',
