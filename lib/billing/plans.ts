@@ -14,6 +14,8 @@ export interface PlanDefinition {
   whiteLabel: boolean;
   support: 'email' | 'email-chat' | 'priority';
   stripePriceEnvVar: string;
+  /** Premium AI-generated background tracks per calendar month. 0 = locked. */
+  musicTracksPerMonth: number;
 }
 
 export const PLANS: Record<PlanTier, PlanDefinition> = {
@@ -31,6 +33,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     whiteLabel: false,
     support: 'email',
     stripePriceEnvVar: 'STRIPE_PRICE_STARTER',
+    musicTracksPerMonth: 0,
   },
   standard: {
     tier: 'standard',
@@ -46,6 +49,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     whiteLabel: false,
     support: 'email-chat',
     stripePriceEnvVar: 'STRIPE_PRICE_STANDARD',
+    musicTracksPerMonth: 0,
   },
   pro: {
     tier: 'pro',
@@ -61,6 +65,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     whiteLabel: true,
     support: 'priority',
     stripePriceEnvVar: 'STRIPE_PRICE_PRO',
+    musicTracksPerMonth: 30,
   },
 };
 

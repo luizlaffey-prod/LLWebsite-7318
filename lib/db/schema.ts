@@ -141,6 +141,26 @@ export const usagePeriod = pgTable(
   })
 );
 
+export const monthlyMusicUsage = pgTable(
+  'monthly_music_usage',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    periodStart: timestamp('period_start', { withTimezone: true }).notNull(),
+    periodEnd: timestamp('period_end', { withTimezone: true }).notNull(),
+    tracksUsed: integer('tracks_used').notNull().default(0),
+    tracksLimit: integer('tracks_limit').notNull(),
+    overageCount: integer('overage_count').notNull().default(0),
+    overageAmountCents: integer('overage_amount_cents').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userPeriodIdx: uniqueIndex('music_usage_user_period_idx').on(t.userId, t.periodStart),
+  })
+);
+
 // --- AURA content ---
 export const newsSource = pgTable(
   'news_source',
@@ -266,6 +286,7 @@ export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 export type Subscription = typeof subscription.$inferSelect;
 export type UsagePeriod = typeof usagePeriod.$inferSelect;
+export type MonthlyMusicUsage = typeof monthlyMusicUsage.$inferSelect;
 export type NewsSource = typeof newsSource.$inferSelect;
 export type NewsSearch = typeof newsSearch.$inferSelect;
 export type GeneratedAudio = typeof generatedAudio.$inferSelect;

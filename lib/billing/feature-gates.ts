@@ -34,6 +34,11 @@ export function canCloneVoice(tier: PlanTier): boolean {
   return tier === 'pro';
 }
 
+/** Whether a tier may generate AI background music tracks. Pro-only premium. */
+export function canUseAIBackgroundTrack(tier: PlanTier): boolean {
+  return PLANS[tier].musicTracksPerMonth > 0;
+}
+
 export function canWhiteLabel(tier: PlanTier): boolean {
   return PLANS[tier].whiteLabel;
 }

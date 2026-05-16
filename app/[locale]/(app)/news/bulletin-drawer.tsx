@@ -9,6 +9,9 @@ import {
   RotateCcw,
   Edit3,
   Folder,
+  Sparkles,
+  Lock,
+  Upload,
 } from 'lucide-react';
 import {
   Sheet,
@@ -101,6 +104,15 @@ function DrawerBody(props: Props) {
   const [voiceId, setVoiceId] = useState<string>('');
   const [speed, setSpeed] = useState(1.0);
   const [bgFile, setBgFile] = useState<File | null>(null);
+  const [bgMode, setBgMode] = useState<'upload' | 'ai'>('upload');
+  const [aiMusicUrl, setAiMusicUrl] = useState<string | null>(null);
+  const [generatingMusic, setGeneratingMusic] = useState(false);
+  const [musicTier, setMusicTier] = useState<'starter' | 'standard' | 'pro'>('starter');
+  const [musicQuota, setMusicQuota] = useState<{ used: number; limit: number } | null>(null);
+  const [musicOveragePrompt, setMusicOveragePrompt] = useState<
+    { priceCents: number } | null
+  >(null);
+  const [musicError, setMusicError] = useState<string | null>(null);
 
   const [generating, setGenerating] = useState(false);
   const [mixing, setMixing] = useState(false);
@@ -136,7 +148,59 @@ function DrawerBody(props: Props) {
       )
       .catch(() => setVoices([]));
     hasFolderConfigured().then(setFolderReady);
+    fetch('/api/music/quota')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { tier: 'starter' | 'standard' | 'pro'; used: number; limit: number } | null) => {
+        if (!d) return;
+        setMusicTier(d.tier);
+        setMusicQuota({ used: d.used, limit: d.limit });
+      })
+      .catch(() => {});
   }, [props.language]);
+
+  const aiUnlocked = musicTier === 'pro';
+
+  const callGenerateMusic = async (acceptOverage: boolean): Promise<string | null> => {
+    setGeneratingMusic(true);
+    setMusicError(null);
+    setMusicOveragePrompt(null);
+    try {
+      const res = await fetch('/api/music/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          durationSeconds: props.durationSeconds,
+          emotions: blocks.map((b) => b.emotion),
+          language: props.language,
+          acceptOverage,
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 402) {
+        setMusicOveragePrompt({ priceCents: data.overagePriceCents ?? 75 });
+        return null;
+      }
+      if (res.status === 403) {
+        setMusicError(t('musicLocked'));
+        return null;
+      }
+      if (!res.ok) {
+        setMusicError(data.message || t('errorGenerate'));
+        return null;
+      }
+      setAiMusicUrl(data.musicUrl);
+      // Refresh quota after a successful generation.
+      fetch('/api/music/quota')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => d && setMusicQuota({ used: d.used, limit: d.limit }));
+      return data.musicUrl as string;
+    } catch {
+      setMusicError(t('errorGenerate'));
+      return null;
+    } finally {
+      setGeneratingMusic(false);
+    }
+  };
 
   const callGenerate = async (acceptOverage: boolean) => {
     if (!article || !voiceId) return;
@@ -184,12 +248,56 @@ function DrawerBody(props: Props) {
       setAudioId(data.audioId);
       setBlocks(data.script ?? []);
 
-      if (bgFile) {
+      const freshBlocks: ScriptBlock[] = data.script ?? [];
+
+      // Decide background source for mixing.
+      let bgUrlForMix: string | null = null;
+      let bgFileForMix: File | null = null;
+      if (bgMode === 'upload' && bgFile) {
+        bgFileForMix = bgFile;
+      } else if (bgMode === 'ai' && aiUnlocked && freshBlocks.length > 0) {
+        // Reuse a track from this drawer session if already generated, else mint one.
+        if (aiMusicUrl) {
+          bgUrlForMix = aiMusicUrl;
+        } else {
+          setGeneratingMusic(true);
+          try {
+            const musicRes = await fetch('/api/music/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                durationSeconds: props.durationSeconds,
+                emotions: freshBlocks.map((b) => b.emotion),
+                language: props.language,
+                acceptOverage: false,
+              }),
+            });
+            const musicData = await musicRes.json();
+            if (musicRes.status === 402) {
+              setMusicOveragePrompt({
+                priceCents: musicData.overagePriceCents ?? 75,
+              });
+            } else if (musicRes.ok) {
+              bgUrlForMix = musicData.musicUrl;
+              setAiMusicUrl(musicData.musicUrl);
+            } else {
+              setMusicError(musicData.message || t('errorGenerate'));
+            }
+          } catch {
+            setMusicError(t('errorGenerate'));
+          } finally {
+            setGeneratingMusic(false);
+          }
+        }
+      }
+
+      if (bgFileForMix || bgUrlForMix) {
         setMixing(true);
         try {
           const mixed = await mixVoiceWithBackground({
             voiceUrl: data.audioUrl,
-            bgFile,
+            bgFile: bgFileForMix ?? undefined,
+            bgUrl: bgUrlForMix ?? undefined,
           });
           setAudioUrl(URL.createObjectURL(mixed));
         } catch {
@@ -227,9 +335,15 @@ function DrawerBody(props: Props) {
         return;
       }
       const fresh = data.audioUrl + `?t=${Date.now()}`; // bust cache
-      if (bgFile) {
+      const useAiBg = bgMode === 'ai' && aiUnlocked && aiMusicUrl;
+      const useUploadBg = bgMode === 'upload' && bgFile;
+      if (useAiBg || useUploadBg) {
         try {
-          const mixed = await mixVoiceWithBackground({ voiceUrl: fresh, bgFile });
+          const mixed = await mixVoiceWithBackground({
+            voiceUrl: fresh,
+            bgFile: useUploadBg ? (bgFile as File) : undefined,
+            bgUrl: useAiBg ? (aiMusicUrl as string) : undefined,
+          });
           setAudioUrl(URL.createObjectURL(mixed));
         } catch {
           setError(t('errorMix'));
@@ -309,29 +423,152 @@ function DrawerBody(props: Props) {
             <Label className="text-xs uppercase tracking-wider text-text-muted">
               {t('bgTrack')}
             </Label>
-            <p className="mt-1 text-xs text-text-secondary">{t('bgTrackHint')}</p>
-            <div className="mt-2 flex items-center gap-2">
-              <Input
-                type="file"
-                accept="audio/*"
-                onChange={(e) => setBgFile(e.target.files?.[0] ?? null)}
-                className="flex-1"
-              />
-              {bgFile && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setBgFile(null)}
-                >
-                  {t('bgTrackClear')}
-                </Button>
-              )}
+
+            {/* Segmented tabs: upload vs AI generation */}
+            <div className="mt-2 inline-flex w-full rounded-md border border-border bg-elevated p-1">
+              <button
+                type="button"
+                onClick={() => setBgMode('upload')}
+                className={cn(
+                  'flex-1 inline-flex items-center justify-center gap-2 rounded-sm px-3 py-1.5 text-xs font-medium transition-colors',
+                  bgMode === 'upload'
+                    ? 'bg-surface text-text-primary shadow-sm'
+                    : 'text-text-muted hover:text-text-primary'
+                )}
+              >
+                <Upload className="h-3.5 w-3.5" /> {t('bgTabUpload')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBgMode('ai')}
+                className={cn(
+                  'flex-1 inline-flex items-center justify-center gap-2 rounded-sm px-3 py-1.5 text-xs font-medium transition-colors',
+                  bgMode === 'ai'
+                    ? 'bg-surface text-text-primary shadow-sm'
+                    : 'text-text-muted hover:text-text-primary'
+                )}
+              >
+                {aiUnlocked ? (
+                  <Sparkles className="h-3.5 w-3.5 text-violet" />
+                ) : (
+                  <Lock className="h-3.5 w-3.5 text-text-muted" />
+                )}
+                {t('bgTabAi')}{' '}
+                <span className="inline-flex items-center rounded-sm bg-violet/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-violet">
+                  Pro
+                </span>
+              </button>
             </div>
-            {bgFile && (
-              <p className="mt-1 truncate text-xs text-text-secondary" title={bgFile.name}>
-                {bgFile.name} · {(bgFile.size / 1024 / 1024).toFixed(1)} MB
-              </p>
+
+            {bgMode === 'upload' && (
+              <>
+                <p className="mt-2 text-xs text-text-secondary">{t('bgTrackHint')}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => setBgFile(e.target.files?.[0] ?? null)}
+                    className="flex-1"
+                  />
+                  {bgFile && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setBgFile(null)}
+                    >
+                      {t('bgTrackClear')}
+                    </Button>
+                  )}
+                </div>
+                {bgFile && (
+                  <p
+                    className="mt-1 truncate text-xs text-text-secondary"
+                    title={bgFile.name}
+                  >
+                    {bgFile.name} · {(bgFile.size / 1024 / 1024).toFixed(1)} MB
+                  </p>
+                )}
+              </>
+            )}
+
+            {bgMode === 'ai' && !aiUnlocked && (
+              <div className="mt-2 rounded-md border border-violet/30 bg-violet/5 p-3 text-xs">
+                <p className="font-medium text-text-primary">{t('musicLocked')}</p>
+                <p className="mt-1 text-text-secondary">{t('musicLockedHint')}</p>
+              </div>
+            )}
+
+            {bgMode === 'ai' && aiUnlocked && (
+              <div className="mt-2 rounded-md border border-border bg-elevated/40 p-3 text-xs">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet" />
+                  <div className="flex-1">
+                    <p className="text-text-primary">{t('musicAiHint')}</p>
+                    {musicQuota && (
+                      <p className="mt-1 text-text-muted">
+                        {t('musicQuotaLine', {
+                          used: musicQuota.used,
+                          limit: musicQuota.limit,
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {aiMusicUrl && (
+                  <div className="mt-3">
+                    <audio controls className="w-full" src={aiMusicUrl}>
+                      <track kind="captions" />
+                    </audio>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAiMusicUrl(null);
+                        setMusicError(null);
+                      }}
+                      className="mt-1 text-[11px] text-text-muted hover:text-text-primary"
+                    >
+                      {t('musicRegenerate')}
+                    </button>
+                  </div>
+                )}
+                {generatingMusic && (
+                  <div className="mt-3 inline-flex items-center gap-2 text-text-secondary">
+                    <Loader2 className="h-3 w-3 animate-spin" /> {t('musicGenerating')}
+                  </div>
+                )}
+                {musicError && (
+                  <p className="mt-2 text-text-secondary text-error">{musicError}</p>
+                )}
+                {musicOveragePrompt && (
+                  <div className="mt-3 rounded-md border border-warning/30 bg-warning/10 p-2">
+                    <p className="text-warning">
+                      {t('musicOveragePrompt', {
+                        price: (musicOveragePrompt.priceCents / 100).toFixed(2),
+                      })}
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          const url = await callGenerateMusic(true);
+                          if (url) setAiMusicUrl(url);
+                        }}
+                        disabled={generatingMusic}
+                      >
+                        {t('overageConfirm')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setMusicOveragePrompt(null)}
+                      >
+                        {t('cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

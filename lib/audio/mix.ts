@@ -9,7 +9,10 @@
 
 export interface MixOptions {
   voiceUrl: string;
-  bgFile: File;
+  /** Local file (upload path). */
+  bgFile?: File;
+  /** Remote URL (AI-generated music path). */
+  bgUrl?: string;
   /** Background gain 0..1 — keep low so the voice stays on top. */
   bgGain?: number;
 }
@@ -17,17 +20,26 @@ export interface MixOptions {
 export async function mixVoiceWithBackground({
   voiceUrl,
   bgFile,
+  bgUrl,
   bgGain = 0.22,
 }: MixOptions): Promise<Blob> {
+  if (!bgFile && !bgUrl) {
+    throw new Error('mix: either bgFile or bgUrl must be provided');
+  }
+
   const tempCtx = new (window.AudioContext ||
     (window as unknown as { webkitAudioContext: typeof AudioContext })
       .webkitAudioContext)();
+
+  const bgArrayBuffer = bgFile
+    ? await bgFile.arrayBuffer()
+    : await fetch(bgUrl as string).then((r) => r.arrayBuffer());
 
   const [voiceBuf, bgBuf] = await Promise.all([
     fetch(voiceUrl)
       .then((r) => r.arrayBuffer())
       .then((b) => tempCtx.decodeAudioData(b)),
-    bgFile.arrayBuffer().then((b) => tempCtx.decodeAudioData(b)),
+    tempCtx.decodeAudioData(bgArrayBuffer),
   ]);
   await tempCtx.close();
 
