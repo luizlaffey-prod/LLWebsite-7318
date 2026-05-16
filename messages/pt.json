@@ -139,9 +139,12 @@
     "weatherFormat": "Formato do tempo",
     "weatherSeparate": "Bloco separado",
     "weatherIntegrated": "Integrado ao boletim",
-    "search": "Buscar notícias",
+    "search": "Agregar notícias",
+    "searchHint": "Configure os parâmetros e clique em buscar.",
     "searching": "Buscando...",
     "results": "Resultados",
+    "lastUpdated": "Última atualização às {time}",
+    "refreshNow": "Atualizar Agora",
     "noResults": "Nenhuma matéria encontrada. Tente outros filtros.",
     "generate": "Gerar boletim",
     "categoryNames": {

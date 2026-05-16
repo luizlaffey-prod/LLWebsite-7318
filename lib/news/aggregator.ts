@@ -10,6 +10,7 @@ export interface NewsArticle {
   url: string;
   category: string;
   originalLanguage: string;
+  image?: string;
 }
 
 export interface NewsSearchInput {
@@ -104,6 +105,7 @@ async function searchNewsApi(input: NewsSearchInput): Promise<NewsArticle[]> {
       url: a.url ?? '',
       category: input.categories[0] ?? 'general',
       originalLanguage: 'en',
+      image: a.urlToImage || undefined,
     }));
   } catch (err) {
     if (err instanceof FetchError) {
@@ -142,6 +144,7 @@ async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
       url: a.url ?? '',
       category: input.categories[0] ?? 'general',
       originalLanguage: searchLang,
+      image: a.image || undefined,
     }));
   } catch (err) {
     if (err instanceof FetchError) {
@@ -193,6 +196,7 @@ interface NewsApiArticle {
   source?: { name?: string };
   publishedAt?: string;
   url?: string;
+  urlToImage?: string;
 }
 
 interface GNewsArticle {
@@ -201,4 +205,5 @@ interface GNewsArticle {
   source?: { name?: string; url?: string };
   publishedAt?: string;
   url?: string;
+  image?: string;
 }

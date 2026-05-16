@@ -139,9 +139,12 @@
     "weatherFormat": "Weather format",
     "weatherSeparate": "Separate block",
     "weatherIntegrated": "Integrated into bulletin",
-    "search": "Search news",
+    "search": "Aggregate news",
+    "searchHint": "Configure the parameters and click search.",
     "searching": "Searching...",
     "results": "Results",
+    "lastUpdated": "Last updated at {time}",
+    "refreshNow": "Refresh Now",
     "noResults": "No articles found. Try different filters.",
     "generate": "Generate bulletin",
     "categoryNames": {
