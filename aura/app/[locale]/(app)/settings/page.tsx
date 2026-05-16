@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getSession } from '@/lib/auth/server';
+import { isAdminSession } from '@/lib/auth/admin';
 import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { effectiveTier } from '@/lib/billing/quota';
@@ -33,6 +34,7 @@ export default async function SettingsPage({
 
   const t = await getTranslations('settingsPage');
   const tier = effectiveTier(u?.plan);
+  const showAdmin = isAdminSession(session);
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-10">
@@ -107,22 +109,26 @@ export default async function SettingsPage({
           </div>
         </Card>
 
-        <Card className="mt-6 p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-wider text-text-muted">
-                {t('healthSection')}
+        {showAdmin && (
+          <Card className="mt-6 p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-text-muted">
+                  {t('healthSection')}
+                </div>
+                <p className="mt-1 text-sm text-text-secondary">
+                  {t('healthHint')}
+                </p>
               </div>
-              <p className="mt-1 text-sm text-text-secondary">{t('healthHint')}</p>
+              <Button asChild variant="secondary">
+                <Link href={`/${locale}/settings/health`}>
+                  <Activity className="h-4 w-4" /> {t('openHealth')}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
             </div>
-            <Button asChild variant="secondary">
-              <Link href={`/${locale}/settings/health`}>
-                <Activity className="h-4 w-4" /> {t('openHealth')}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
     </div>
   );

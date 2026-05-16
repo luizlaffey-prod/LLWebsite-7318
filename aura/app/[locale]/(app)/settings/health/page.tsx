@@ -1,6 +1,7 @@
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getSession } from '@/lib/auth/server';
+import { isAdminSession } from '@/lib/auth/admin';
 import { HealthClient } from './health-client';
 import type { Locale } from '@/i18n';
 
@@ -14,6 +15,8 @@ export default async function HealthPage({
 
   const session = await getSession();
   if (!session?.user) redirect(`/${locale}/login`);
+  // Operator-only — keeps integration credentials/state out of customer view.
+  if (!isAdminSession(session)) notFound();
 
   const t = await getTranslations('healthPage');
 
