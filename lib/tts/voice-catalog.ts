@@ -129,10 +129,13 @@ export const VOICE_CATALOG: VoiceSeed[] = [
   },
 ];
 
-// v3 supports inline audio tags ([excited], [serious], etc.) so we use it
-// as the primary model. AURA_TTS_MODEL / AURA_TTS_FAST_MODEL env vars
-// override per-deploy if you need to roll back to v2.
-export const ELEVEN_LABS_MODEL = process.env.AURA_TTS_MODEL ?? 'eleven_v3';
+// We default to multilingual_v2 because it preserves the distinct timbre of
+// each preset voice (Adam vs Josh vs Sam, etc.) and respects per-emotion
+// voice_settings shaping. v3 supports inline [emotion] audio tags but tends
+// to homogenize voice character on classic preset IDs that weren't trained
+// for v3 — opt in per-deploy via AURA_TTS_MODEL=eleven_v3 when you have
+// v3-native voices configured.
+export const ELEVEN_LABS_MODEL = process.env.AURA_TTS_MODEL ?? 'eleven_multilingual_v2';
 export const ELEVEN_LABS_FAST_MODEL =
   process.env.AURA_TTS_FAST_MODEL ?? 'eleven_flash_v2_5';
 export const VOICE_SETTINGS = {
