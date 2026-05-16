@@ -23,7 +23,6 @@ export default async function AutomationRunsPage({
       id: automationSchedule.id,
       name: automationSchedule.name,
       timezone: automationSchedule.timezone,
-      slots: automationSchedule.slots,
     })
     .from(automationSchedule)
     .where(
@@ -54,11 +53,7 @@ export default async function AutomationRunsPage({
           {t('runsSubtitle', { timezone: automation.timezone })}
         </p>
         <div className="mt-8">
-          <RunsClient
-            automationId={automation.id}
-            locale={locale}
-            slots={automation.slots}
-          />
+          <RunsClient automationId={automation.id} locale={locale} />
         </div>
       </div>
     </div>

@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/i18n';
-import type { ScheduleSlot } from '@/lib/db/schema';
 
 interface Delivery {
   status: 'pending' | 'success' | 'failed';
@@ -47,10 +46,9 @@ interface Run {
 interface Props {
   automationId: string;
   locale: Locale;
-  slots: ScheduleSlot[];
 }
 
-export function RunsClient({ automationId, locale, slots }: Props) {
+export function RunsClient({ automationId, locale }: Props) {
   const t = useTranslations('automationsPage');
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<Run[]>([]);
