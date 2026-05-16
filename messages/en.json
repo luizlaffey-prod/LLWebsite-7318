@@ -310,7 +310,21 @@
     "lastRunFailed": "Last failed {ago}",
     "lastRunRunning": "Running",
     "deliveryConfigured": "{n} delivery endpoint(s)",
-    "deliveryNone": "No delivery configured"
+    "deliveryNone": "No delivery configured",
+    "bgTabUpload": "Upload",
+    "bgTabAi": "Generate with AI",
+    "bgTrackUploadHint": "MP3, WAV, OGG, AAC or M4A file up to 15 MB. Hosted for reuse across runs.",
+    "bgTrackAiHint": "AURA composes an instrumental track that will be reused on every run of this automation.",
+    "bgTrackClear": "Remove track",
+    "musicLocked": "AI tracks are a Pro-only feature.",
+    "musicLockedShort": "AI tracks are Pro.",
+    "musicLockedHint": "Upgrade to generate custom tracks.",
+    "musicGenerate": "Generate track",
+    "musicQuotaLine": "Used {used} of {limit} tracks this month",
+    "musicGenerating": "Generating...",
+    "musicRegenerate": "Generate again",
+    "musicOveragePrompt": "You're out of monthly tracks. Generate one more for US$ {price}?",
+    "overageConfirm": "Pay and generate"
   },
   "audiosPage": {
     "title": "My audios",
@@ -358,7 +372,14 @@
     "healthSection": "Integration health",
     "healthHint": "Verify ElevenLabs, Anthropic, news, weather, and storage are reachable. Tests run live.",
     "openHealth": "Run diagnostics",
-    "errorSave": "Couldn't save your changes. Try again."
+    "errorSave": "Couldn't save your changes. Try again.",
+    "downloadFolderSection": "Default download folder",
+    "downloadFolderHint": "When configured, downloaded and synced bulletins go straight to this folder without a prompt.",
+    "downloadFolderUnsupported": "Your browser doesn't support the direct folder API. Firefox and Safari fall back to a regular download.",
+    "downloadFolderConfigured": "Folder configured — ready to use",
+    "downloadFolderChoose": "Choose folder",
+    "downloadFolderChange": "Change folder",
+    "downloadFolderClear": "Clear"
   },
   "healthPage": {
     "title": "Integration health",

@@ -98,6 +98,41 @@ export async function hasFolderConfigured(): Promise<boolean> {
   return !!handle;
 }
 
+export async function clearDownloadFolder(): Promise<void> {
+  try {
+    const db = await openDb();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    /* ignore — IndexedDB unavailable */
+  }
+}
+
+/**
+ * Writes `blob` to the configured folder without prompting if permission is
+ * still granted. Returns false if no folder is configured, permission was
+ * revoked, or the API isn't supported.
+ */
+export async function writeToConfiguredFolder(
+  filename: string,
+  blob: Blob | Uint8Array
+): Promise<boolean> {
+  if (typeof window === 'undefined' || !window.showDirectoryPicker) return false;
+  const handle = await readHandle();
+  if (!handle) return false;
+  const ok = await ensurePermission(handle);
+  if (!ok) return false;
+  const fileHandle = await handle.getFileHandle(filename, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(blob instanceof Blob ? blob : new Blob([blob as BlobPart], { type: 'audio/mpeg' }));
+  await writable.close();
+  return true;
+}
+
 export type DownloadOutcome =
   | { kind: 'folder'; path: string }
   | { kind: 'browser' }

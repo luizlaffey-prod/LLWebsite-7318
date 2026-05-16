@@ -310,7 +310,21 @@
     "lastRunFailed": "Última falhou {ago}",
     "lastRunRunning": "Em execução",
     "deliveryConfigured": "{n} endpoint(s) de entrega",
-    "deliveryNone": "Sem entrega configurada"
+    "deliveryNone": "Sem entrega configurada",
+    "bgTabUpload": "Upload",
+    "bgTabAi": "Gerar com IA",
+    "bgTrackUploadHint": "Arquivo MP3, WAV, OGG, AAC ou M4A até 15 MB. Hospedado para uso em cada execução.",
+    "bgTrackAiHint": "A AURA compõe uma trilha instrumental que será reutilizada em toda execução desta automação.",
+    "bgTrackClear": "Remover trilha",
+    "musicLocked": "Trilha automática é exclusiva do plano Pro.",
+    "musicLockedShort": "Trilha com IA é Pro.",
+    "musicLockedHint": "Faça upgrade para gerar trilha sob medida.",
+    "musicGenerate": "Gerar trilha",
+    "musicQuotaLine": "Usadas {used} de {limit} trilhas neste mês",
+    "musicGenerating": "Gerando...",
+    "musicRegenerate": "Gerar de novo",
+    "musicOveragePrompt": "Você esgotou as trilhas do mês. Gerar mais uma por US$ {price}?",
+    "overageConfirm": "Pagar e gerar"
   },
   "audiosPage": {
     "title": "Meus áudios",
@@ -358,7 +372,14 @@
     "healthSection": "Saúde das integrações",
     "healthHint": "Verifique se ElevenLabs, Anthropic, notícias, clima e storage estão acessíveis. Testes ao vivo.",
     "openHealth": "Rodar diagnóstico",
-    "errorSave": "Não foi possível salvar. Tente novamente."
+    "errorSave": "Não foi possível salvar. Tente novamente.",
+    "downloadFolderSection": "Pasta de download padrão",
+    "downloadFolderHint": "Quando configurada, boletins baixados e sincronizados vão direto pra essa pasta sem prompt.",
+    "downloadFolderUnsupported": "Seu navegador não suporta a API de pasta direta. Firefox e Safari caem no download tradicional.",
+    "downloadFolderConfigured": "Pasta configurada — pronta para uso",
+    "downloadFolderChoose": "Escolher pasta",
+    "downloadFolderChange": "Trocar pasta",
+    "downloadFolderClear": "Limpar"
   },
   "healthPage": {
     "title": "Saúde das integrações",

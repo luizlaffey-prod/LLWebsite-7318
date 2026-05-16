@@ -11,6 +11,7 @@ import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { effectiveTier } from '@/lib/billing/quota';
 import { SettingsForm } from './settings-form';
+import { DownloadFolderCard } from './download-folder-card';
 import type { Locale } from '@/i18n';
 
 export default async function SettingsPage({
@@ -39,7 +40,7 @@ export default async function SettingsPage({
         <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="mt-2 text-text-secondary">{t('subtitle')}</p>
 
-        <div className="mt-8">
+        <div className="mt-8 space-y-6">
           <SettingsForm
             initial={{
               radioName: u?.radioName ?? '',
@@ -49,6 +50,7 @@ export default async function SettingsPage({
               emailNotifications: u?.emailNotifications ?? true,
             }}
           />
+          <DownloadFolderCard />
         </div>
 
         <Card className="mt-6 p-6">
