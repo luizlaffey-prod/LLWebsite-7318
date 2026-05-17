@@ -27,11 +27,11 @@
       },
       "smart": {
         "title": "Resumen Inteligente",
-        "body": "Guiones generados por Claude con marcas de emoción, ajustados a tu duración."
+        "body": "Guiones con marcas de emoción, ajustados a tu duración."
       },
       "audio": {
         "title": "Audio Profesional",
-        "body": "Voces de ElevenLabs en tres idiomas, listas para el playout."
+        "body": "Voces de alta calidad en tres idiomas, listas para el playout."
       }
     },
     "plansTitle": "Planes",
