@@ -72,6 +72,11 @@ export function NewsClient({ locale }: { locale: Locale }) {
   const [location, setLocation] = useState('');
   const [includeWeather, setIncludeWeather] = useState(false);
   const [weatherFormat, setWeatherFormat] = useState<'separate' | 'integrated'>('separate');
+  // City for the weather block. Decoupled from the news-search `location`
+  // so the operator can pick global news with local weather. Falls back to
+  // `location` when this is blank — that's the placeholder hint shown in
+  // the input.
+  const [weatherCity, setWeatherCity] = useState('');
 
   const [suggestions, setSuggestions] = useState<SuggestItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -344,30 +349,54 @@ export function NewsClient({ locale }: { locale: Locale }) {
             </div>
 
             {/* Weather */}
-            <div className="md:col-span-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-md border border-border bg-elevated/40 p-4">
-              <div className="flex items-center gap-3">
-                <Switch
-                  checked={includeWeather}
-                  onCheckedChange={(v) => setIncludeWeather(v)}
-                />
-                <div>
-                  <div className="text-sm font-medium">{t('includeWeather')}</div>
-                  <div className="text-xs text-text-muted">{t('weatherFormat')}</div>
+            <div className="md:col-span-2 rounded-md border border-border bg-elevated/40 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={includeWeather}
+                    onCheckedChange={(v) => setIncludeWeather(v)}
+                  />
+                  <div>
+                    <div className="text-sm font-medium">{t('includeWeather')}</div>
+                    <div className="text-xs text-text-muted">{t('weatherFormat')}</div>
+                  </div>
                 </div>
+                <Select
+                  value={weatherFormat}
+                  onValueChange={(v) => setWeatherFormat(v as 'separate' | 'integrated')}
+                  disabled={!includeWeather}
+                >
+                  <SelectTrigger className="sm:w-56">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="separate">{t('weatherSeparate')}</SelectItem>
+                    <SelectItem value="integrated">{t('weatherIntegrated')}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select
-                value={weatherFormat}
-                onValueChange={(v) => setWeatherFormat(v as 'separate' | 'integrated')}
-                disabled={!includeWeather}
-              >
-                <SelectTrigger className="sm:w-56">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="separate">{t('weatherSeparate')}</SelectItem>
-                  <SelectItem value="integrated">{t('weatherIntegrated')}</SelectItem>
-                </SelectContent>
-              </Select>
+
+              {includeWeather && (
+                <div className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3 sm:flex-row sm:items-center">
+                  <Label className="text-xs text-text-muted sm:w-32 sm:shrink-0">
+                    {t('weatherCityLabel')}
+                  </Label>
+                  <div className="flex-1">
+                    <Input
+                      value={weatherCity}
+                      onChange={(e) => setWeatherCity(e.target.value)}
+                      placeholder={location || t('weatherCityPlaceholder')}
+                    />
+                    <p className="mt-1 text-xs text-text-muted">
+                      {weatherCity.trim()
+                        ? t('weatherCityHint')
+                        : location
+                          ? t('weatherCityFallback', { location })
+                          : t('weatherCityRequired')}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -518,7 +547,12 @@ export function NewsClient({ locale }: { locale: Locale }) {
         language={language}
         includeWeather={includeWeather}
         weatherFormat={weatherFormat}
-        weatherLocation={location || undefined}
+        // Prefer the dedicated weather city; fall back to the news-search
+        // location so existing flows that didn't touch the new field still
+        // get a usable value.
+        weatherLocation={
+          (weatherCity.trim() || location || '').trim() || undefined
+        }
         onClose={() => setSelected(null)}
       />
     </div>
