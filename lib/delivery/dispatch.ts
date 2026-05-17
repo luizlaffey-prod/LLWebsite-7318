@@ -153,6 +153,7 @@ export async function dispatchAudioToEndpoints(
   for (const ep of endpoints.filter((e: DeliveryEndpoint) => e.enabled)) {
     const filename = renderName(ep.slotNamingPattern, { name: audio.title, date });
     try {
+      let recordStatus: 'success' | 'pending' = 'success';
       switch (ep.type) {
         case 'http': {
           const config = decryptJSON<HttpConfig>(ep.configEncrypted);
@@ -177,11 +178,20 @@ export async function dispatchAudioToEndpoints(
           await pushFtp(config, { audioUrl: audio.audioUrl, filename });
           break;
         }
+        case 'local_folder': {
+          // No server-side push — a client worker in the operator's browser
+          // pulls everything marked 'pending' for a local_folder endpoint
+          // and writes to the configured filesystem directory via the
+          // File System Access API. Record the log as pending so the badge
+          // shows "queued" until the client acks.
+          recordStatus = 'pending';
+          break;
+        }
       }
       await db.insert(deliveryLog).values({
         deliveryEndpointId: ep.id,
         audioId: audio.id,
-        status: 'success',
+        status: recordStatus,
       });
       await db
         .update(deliveryEndpoint)

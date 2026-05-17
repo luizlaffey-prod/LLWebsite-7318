@@ -370,12 +370,27 @@ export type AutomationSchedule = typeof automationSchedule.$inferSelect;
 export type AutomationExecution = typeof automationExecution.$inferSelect;
 
 // --- Delivery endpoints (Pro) ---
-export const deliveryTypeEnum = pgEnum('delivery_type', ['ftp', 'http', 'email']);
+export const deliveryTypeEnum = pgEnum('delivery_type', [
+  'ftp',
+  'http',
+  'email',
+  // 'local_folder' is a pull-style destination: the dispatcher records
+  // status='pending' so a client-side worker running in the operator's
+  // browser can pick the audio up and write it to a chosen filesystem
+  // folder via the File System Access API. No outbound network call
+  // from the server side for this type.
+  'local_folder',
+]);
 export const deliveryStatusEnum = pgEnum('delivery_status', [
   'pending',
   'success',
   'failed',
 ]);
+
+export interface LocalFolderConfig {
+  /** Label only — the browser holds the actual directory handle. */
+  label?: string;
+}
 
 export interface FtpConfig {
   host: string;

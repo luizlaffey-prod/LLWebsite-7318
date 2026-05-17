@@ -8,6 +8,7 @@ import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { AppSidebar } from '@/components/app/app-sidebar';
 import { MobileTopBar } from '@/components/app/mobile-top-bar';
+import { LocalFolderSyncWorker } from '@/components/app/local-folder-sync-worker';
 import { effectiveTier } from '@/lib/billing/quota';
 import { locales, type Locale } from '@/i18n';
 
@@ -95,6 +96,7 @@ export default async function AppLayout({
         <MobileTopBar {...navProps} />
         <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
       </div>
+      <LocalFolderSyncWorker />
     </div>
   );
 }
