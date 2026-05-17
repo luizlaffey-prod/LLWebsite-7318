@@ -46,7 +46,7 @@ export default async function AutomationRunsPage({
         >
           ← {t('backToList')}
         </a>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight">
           {automation.name}
         </h1>
         <p className="mt-2 text-text-secondary">
