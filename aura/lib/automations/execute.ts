@@ -181,8 +181,12 @@ export async function runAutomationSlot(input: {
 
     // 7b) Optional server-side mix with the automation's background track.
     // We fall back to voice-only on any mix failure so a broken bg URL or
-    // ffmpeg hiccup doesn't lose the bulletin.
+    // ffmpeg hiccup doesn't lose the bulletin. We DO capture the error
+    // onto the audio row's errorMessage column so the operator notices
+    // "bg failed but voice survived" instead of silently shipping a
+    // mono voice when they configured background music.
     let finalBytes: Uint8Array = voiceBytes;
+    let bgMixError: string | null = null;
     if (automation.bgTrackUrl) {
       try {
         const { mixVoiceAndBackgroundServerSide } = await import(
@@ -194,12 +198,16 @@ export async function runAutomationSlot(input: {
           duck: automation.duckAudio,
         });
       } catch (err) {
-        console.warn(
-          '[automation] bg mix failed, falling back to voice-only',
+        const msg = err instanceof Error ? err.message : 'unknown';
+        bgMixError = `bg_mix_failed: ${msg.slice(0, 300)}`;
+        console.error(
+          '[automation] bg mix failed',
           automation.bgTrackUrl,
           err
         );
       }
+    } else {
+      console.log('[automation] no bgTrackUrl configured for', automation.id);
     }
 
     // 8) Upload to R2.
@@ -212,6 +220,11 @@ export async function runAutomationSlot(input: {
         audioUrl: uploaded.url,
         durationSeconds: durationEstimateSeconds,
         status: 'ready',
+        // bgMixError, when set, means the bulletin shipped voice-only
+        // even though a background track was configured. The audio is
+        // still usable so status='ready' — the message is a warning
+        // pointing the operator at the failed bg leg.
+        errorMessage: bgMixError,
         updatedAt: new Date(),
       })
       .where(eq(generatedAudio.id, audio.id));
