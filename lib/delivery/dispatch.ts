@@ -75,13 +75,47 @@ async function pushFtp(
   config: FtpConfig,
   payload: { audioUrl: string; filename: string }
 ): Promise<void> {
-  // FTP push is best done from a Node serverless function. We avoid the
-  // basic-ftp dep on hot paths; production deployments should swap this
-  // for a dedicated FTP worker. For now we throw a structured error so
-  // the log captures the unsupported state without failing silently.
-  void config;
-  void payload;
-  throw new Error('ftp_delivery_pending_implementation');
+  // Lazy-load basic-ftp so routes that never use FTP delivery don't pull
+  // the client + its socket plumbing into their cold-start path.
+  const { Client } = await import('basic-ftp');
+
+  const audioRes = await fetchWithRetry(payload.audioUrl, {}, { timeoutMs: 60_000 });
+  const audioBytes = Buffer.from(await audioRes.arrayBuffer());
+
+  const client = new Client(30_000);
+  client.ftp.verbose = false;
+  try {
+    await client.access({
+      host: config.host,
+      port: config.port,
+      user: config.username,
+      password: config.password,
+      // basic-ftp's `secure: true` negotiates explicit FTPS on the control
+      // channel (the modern standard). secureOptions are forwarded to
+      // tls.connect so customers can pin a self-signed CA later if their
+      // station's server requires it.
+      secure: config.secure ?? false,
+    });
+
+    if (config.remoteDir && config.remoteDir.trim().length > 0) {
+      await client.ensureDir(config.remoteDir);
+    }
+
+    // Stream the bytes from memory — keeps tmpdir clean and lets us
+    // bound total memory usage by the audio size (typically < 5 MB).
+    const { Readable } = await import('node:stream');
+    const stream = Readable.from(audioBytes);
+    // Naming pattern + .mp3 — the dispatcher already formatted the base
+    // name; we just append the extension so the radio's automation
+    // system recognises it as MP3 (some need the extension even with
+    // correct MIME).
+    const safeName = payload.filename.endsWith('.mp3')
+      ? payload.filename
+      : `${payload.filename}.mp3`;
+    await client.uploadFrom(stream, safeName);
+  } finally {
+    client.close();
+  }
 }
 
 export async function dispatchAudioToEndpoints(
