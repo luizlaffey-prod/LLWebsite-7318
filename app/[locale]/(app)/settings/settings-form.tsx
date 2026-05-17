@@ -17,20 +17,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { updateSettings } from './actions';
+import { TIMEZONE_OPTIONS } from '@/lib/constants/timezones';
 import type { Locale } from '@/i18n';
 
-const TIMEZONES = [
-  'UTC',
-  'America/Sao_Paulo',
-  'America/New_York',
-  'America/Los_Angeles',
-  'America/Mexico_City',
-  'America/Bogota',
-  'America/Buenos_Aires',
-  'Europe/London',
-  'Europe/Madrid',
-  'Europe/Lisbon',
-];
 
 interface Props {
   initial: {
@@ -130,9 +119,9 @@ export function SettingsForm({ initial }: Props) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIMEZONES.map((tz) => (
-                  <SelectItem key={tz} value={tz}>
-                    {tz}
+                {TIMEZONE_OPTIONS.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
                   </SelectItem>
                 ))}
               </SelectContent>
