@@ -27,6 +27,25 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     autoSignIn: true,
   },
+  // Stamp every new user with a 7-day trial window. trialEndsAt is
+  // nullable in the schema and nothing else was setting it on signup,
+  // so dashboards rendered "0 days left" the moment an account was
+  // created. The hook runs inside the same transaction as the user
+  // insert so it can't leave half-baked rows.
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (data: Record<string, unknown>) => ({
+          data: {
+            ...data,
+            trialEndsAt:
+              (data.trialEndsAt as Date | null | undefined) ??
+              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          },
+        }),
+      },
+    },
+  },
   // Conditionally register Google so betterAuth doesn't try to bind a
   // provider with empty credentials on deploys that haven't set them
   // yet. The auth callback path is /api/auth/callback/google by
