@@ -203,7 +203,14 @@ export function AutomationsClient({
             <Card key={row.id} className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="truncate text-base font-semibold">{row.name}</h3>
+                  <h3
+                    className={cn(
+                      'truncate text-base font-semibold',
+                      row.enabled ? 'text-success' : 'text-text-secondary'
+                    )}
+                  >
+                    {row.name}
+                  </h3>
                   <p className="mt-1 text-xs text-text-muted">
                     {row.slots.length} {t('slotsLabel')} · {row.timezone} ·{' '}
                     {row.language.toUpperCase()} · {row.bias}
