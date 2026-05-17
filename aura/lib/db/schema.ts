@@ -61,6 +61,11 @@ export const user = pgTable('user', {
   emailNotifications: boolean('email_notifications').notNull().default(true),
   brandLogoUrl: text('brand_logo_url'),
   brandAccentColor: text('brand_accent_color'),
+  // Per-user opaque token for the public RSS feed at /feed/<token>.xml.
+  // Null until the user first opens /settings/delivery, then a 32-byte
+  // hex string. Rotating it invalidates any external subscriber — that
+  // IS the security model since the feed URL itself is the only auth.
+  feedToken: text('feed_token').unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
