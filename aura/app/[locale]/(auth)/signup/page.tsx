@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { Locale } from '@/i18n';
 import { SignupForm } from './signup-form';
 import { LanguageSwitcher } from '@/components/site/language-switcher';
+import { isGoogleAuthConfigured } from '@/lib/auth/config';
 
 export default async function SignupPage({
   params,
@@ -50,7 +51,7 @@ export default async function SignupPage({
           </h1>
           <p className="mt-2 text-sm text-text-secondary">{t('signupSubtitle')}</p>
           <div className="mt-8">
-            <SignupForm locale={locale} />
+            <SignupForm locale={locale} showGoogle={isGoogleAuthConfigured()} />
           </div>
         </div>
       </div>

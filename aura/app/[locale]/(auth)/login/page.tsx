@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { Locale } from '@/i18n';
 import { LoginForm } from './login-form';
 import { LanguageSwitcher } from '@/components/site/language-switcher';
+import { isGoogleAuthConfigured } from '@/lib/auth/config';
 
 export default async function LoginPage({
   params,
@@ -50,7 +51,7 @@ export default async function LoginPage({
           </h1>
           <p className="mt-2 text-sm text-text-secondary">{t('loginSubtitle')}</p>
           <div className="mt-8">
-            <LoginForm locale={locale} />
+            <LoginForm locale={locale} showGoogle={isGoogleAuthConfigured()} />
           </div>
         </div>
       </div>

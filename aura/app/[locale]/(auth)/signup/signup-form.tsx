@@ -10,13 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormError } from '@/components/ui/form-error';
+import { GoogleAuthButton } from '@/components/auth/google-auth-button';
 import type { Locale } from '@/i18n';
 
 interface SignupFormProps {
   locale: Locale;
+  showGoogle?: boolean;
 }
 
-export function SignupForm({ locale }: SignupFormProps) {
+export function SignupForm({ locale, showGoogle }: SignupFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -89,6 +91,22 @@ export function SignupForm({ locale }: SignupFormProps) {
         <div className="rounded-md border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">
           {topError}
         </div>
+      )}
+
+      {showGoogle && (
+        <>
+          <GoogleAuthButton locale={locale} />
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-base px-3 text-xs uppercase tracking-wider text-text-muted">
+                {t('orDivider')}
+              </span>
+            </div>
+          </div>
+        </>
       )}
 
       <div>

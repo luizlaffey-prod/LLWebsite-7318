@@ -92,6 +92,8 @@
     "confirmPassword": "Confirmar contraseña",
     "radioName": "Nombre de la emisora",
     "radioNamePlaceholder": "Nombre de tu emisora",
+    "continueWithGoogle": "Continuar con Google",
+    "orDivider": "o",
     "submitLogin": "Iniciar sesión",
     "submitSignup": "Crear cuenta",
     "noAccount": "¿No tienes cuenta?",
