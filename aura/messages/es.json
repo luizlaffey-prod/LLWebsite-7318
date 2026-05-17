@@ -345,7 +345,14 @@
     "confirmDelete": "Eliminar ahora",
     "errorLoad": "No pudimos cargar tus audios. Recarga la página.",
     "errorDelete": "No se pudo eliminar. Inténtalo de nuevo.",
-    "errorDownload": "No se pudo descargar ahora. Inténtalo de nuevo."
+    "errorDownload": "No se pudo descargar ahora. Inténtalo de nuevo.",
+    "selectAll": "Seleccionar todos",
+    "selectOne": "Seleccionar este audio",
+    "selectedLabel": "{n} seleccionado(s)",
+    "deleteSelected": "Eliminar {n}",
+    "confirmBulkDeleteTitle": "¿Eliminar {n} audios?",
+    "confirmBulkDeleteBody": "Los MP3 y los guiones se eliminarán permanentemente. No se puede deshacer.",
+    "errorBulkDelete": "{failed} audio(s) no se pudieron eliminar. Los demás se eliminaron."
   },
   "settingsPage": {
     "title": "Configuración",
