@@ -27,11 +27,11 @@
       },
       "smart": {
         "title": "Smart Summary",
-        "body": "Claude-powered scripts with emotion cues, tailored to your runtime."
+        "body": "Powered scripts with emotion cues, tailored to your runtime."
       },
       "audio": {
         "title": "Pro Audio",
-        "body": "ElevenLabs voices in three languages, ready for the playout system."
+        "body": "High quality voices in three languages, ready for the playout system."
       }
     },
     "plansTitle": "Pricing",

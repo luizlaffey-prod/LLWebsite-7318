@@ -27,11 +27,11 @@
       },
       "smart": {
         "title": "Resumo Inteligente",
-        "body": "Roteiros gerados pelo Claude com marcações de emoção, no tempo que você definir."
+        "body": "Roteiros com marcações de emoção, no tempo que você definir."
       },
       "audio": {
         "title": "Áudio Profissional",
-        "body": "Vozes do ElevenLabs em três idiomas, prontas para o playout."
+        "body": "Vozes de alta qualidade em três idiomas, prontas para o playout."
       }
     },
     "plansTitle": "Planos",
