@@ -401,10 +401,17 @@ function LastDeliveryBadge({
       </span>
     );
   }
-  // Anything that isn't a clear "success" is treated as failed for the UI —
-  // the dispatch layer only writes 'success' or 'failed' today, but new
-  // states (pending, retry, etc.) should still surface visually so we don't
-  // accidentally hide problems.
+  // local_folder destinations write status='pending' when dispatch
+  // queues the audio for the browser-side sync worker. Show that as a
+  // neutral "queued" state instead of red — it's only an error when
+  // status='failed'.
+  if (lastDelivery.status === "pending") {
+    return (
+      <span className="inline-flex items-center gap-1 text-text-secondary">
+        <Truck className="h-3 w-3" /> {t("deliveryLastPending")}
+      </span>
+    );
+  }
   return (
     <span
       className="inline-flex items-center gap-1 text-error"

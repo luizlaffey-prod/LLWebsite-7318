@@ -317,6 +317,7 @@
     "deliveryConfigured": "{n} destino(s) configurado(s)",
     "deliveryNone": "Sem destino — só fica em Meus Áudios",
     "deliveryLastSuccess": "Último envio: ok",
+    "deliveryLastPending": "Aguardando sync local",
     "deliveryLastFailed": "Último envio falhou",
     "folderReady": "Pasta padrão configurada — download salva direto.",
     "folderNotConfigured": "Sem pasta padrão. Configure pra baixar sem prompt.",

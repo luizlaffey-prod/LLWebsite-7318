@@ -317,6 +317,7 @@
     "deliveryConfigured": "{n} destination(s) configured",
     "deliveryNone": "No destination — stays in My Audios",
     "deliveryLastSuccess": "Last drop: ok",
+    "deliveryLastPending": "Waiting for local sync",
     "deliveryLastFailed": "Last drop failed",
     "folderReady": "Default folder configured — downloads land there.",
     "folderNotConfigured": "No default folder. Pick one to download without a prompt.",
