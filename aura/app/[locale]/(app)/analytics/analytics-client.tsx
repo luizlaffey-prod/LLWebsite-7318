@@ -283,7 +283,7 @@ function MetricCard({
         <span className="text-teal">{icon}</span>
         {label}
       </div>
-      <div className="mt-3 truncate text-3xl font-semibold tracking-tight">{value}</div>
+      <div className="mt-3 truncate font-serif text-3xl font-semibold tracking-tight">{value}</div>
       <div className="mt-1 text-xs text-text-muted">{sub}</div>
     </Card>
   );

@@ -171,7 +171,7 @@ export function NewsClient({ locale }: { locale: Locale }) {
     <div className="px-4 py-6 md:px-8 md:py-10">
       <div className="mx-auto max-w-6xl">
         <div className="max-w-2xl">
-          <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="mt-2 text-text-secondary">{t('subtitle')}</p>
         </div>
 

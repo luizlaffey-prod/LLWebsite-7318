@@ -41,7 +41,7 @@ export default async function DashboardPage({
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">{t('welcomeTitle')}</h1>
+            <h1 className="font-serif text-3xl font-semibold tracking-tight">{t('welcomeTitle')}</h1>
             <p className="mt-2 max-w-2xl text-text-secondary">{t('welcomeBody')}</p>
           </div>
           {isTrial && (
