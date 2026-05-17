@@ -11,7 +11,7 @@ import { AppBrandHeader } from '@/components/app/app-brand-header';
 import { MobileTopBar } from '@/components/app/mobile-top-bar';
 import { LocalFolderSyncWorker } from '@/components/app/local-folder-sync-worker';
 import { effectiveTier } from '@/lib/billing/quota';
-import { locales, type Locale } from '@/i18n';
+import type { Locale } from '@/i18n';
 
 export default async function AppLayout({
   children,
@@ -64,12 +64,17 @@ export default async function AppLayout({
 
   // Honor the user's stored UI-language preference: if the URL locale
   // doesn't match user.locale, redirect to the same path under the
-  // preferred locale prefix.
+  // preferred locale prefix. The in-app language switcher also writes
+  // user.locale before navigating, so picking a different language
+  // there sticks — the next request matches and this redirect is a
+  // no-op. Behavior intended: brand-new accounts always open in the
+  // language picked at signup; switcher edits propagate to future
+  // sessions.
   const preferred = dbUser?.locale as Locale | undefined;
   if (
     preferred &&
     preferred !== locale &&
-    (locales as readonly string[]).includes(preferred)
+    (['en', 'pt', 'es'] as const).includes(preferred)
   ) {
     const pathname = (await headers()).get('x-pathname') ?? `/${locale}`;
     const swapped = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, `/${preferred}`);
@@ -84,7 +89,7 @@ export default async function AppLayout({
     : undefined;
 
   const navProps = {
-    locale: preferred ?? locale,
+    locale,
     radioName: dbUser?.radioName,
     planLabel,
     brandLogoUrl: dbUser?.brandLogoUrl ?? null,
@@ -95,7 +100,7 @@ export default async function AppLayout({
       <AppSidebar {...navProps} />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopBar {...navProps} />
-        <AppBrandHeader locale={preferred ?? locale} />
+        <AppBrandHeader locale={locale} />
         <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
       </div>
       <LocalFolderSyncWorker />
