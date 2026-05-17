@@ -42,10 +42,17 @@ interface LastRunInfo {
   audioId: string | null;
 }
 
+interface LastDeliveryInfo {
+  status: string;
+  error: string | null;
+  at: string;
+}
+
 interface AutomationRow extends AutomationInputType {
   id: string;
   createdAt: string;
   lastRun: LastRunInfo | null;
+  lastDelivery: LastDeliveryInfo | null;
 }
 
 interface Props {
@@ -224,6 +231,7 @@ export function AutomationsClient({
               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
                 <LastRunBadge lastRun={row.lastRun} locale={locale} t={t} />
                 <DeliveryHint count={deliveryEndpoints} t={t} />
+                <LastDeliveryBadge lastDelivery={row.lastDelivery} t={t} />
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-2">
@@ -374,6 +382,35 @@ function DeliveryHint({
   return (
     <span className="inline-flex items-center gap-1 text-warning">
       <AlertTriangle className="h-3 w-3" /> {t("deliveryNone")}
+    </span>
+  );
+}
+
+function LastDeliveryBadge({
+  lastDelivery,
+  t,
+}: {
+  lastDelivery: LastDeliveryInfo | null;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (!lastDelivery) return null;
+  if (lastDelivery.status === "success") {
+    return (
+      <span className="inline-flex items-center gap-1 text-success">
+        <Truck className="h-3 w-3" /> {t("deliveryLastSuccess")}
+      </span>
+    );
+  }
+  // Anything that isn't a clear "success" is treated as failed for the UI —
+  // the dispatch layer only writes 'success' or 'failed' today, but new
+  // states (pending, retry, etc.) should still surface visually so we don't
+  // accidentally hide problems.
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-error"
+      title={lastDelivery.error ?? undefined}
+    >
+      <AlertTriangle className="h-3 w-3" /> {t("deliveryLastFailed")}
     </span>
   );
 }
