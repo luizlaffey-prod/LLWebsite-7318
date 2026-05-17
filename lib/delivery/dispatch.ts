@@ -12,6 +12,8 @@ import {
 import { decryptJSON } from '@/lib/crypto/secrets';
 import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
 import { Resend } from 'resend';
+import { render } from '@react-email/render';
+import { DeliveryEmail } from '@/lib/email/templates/delivery';
 
 export interface DispatchInput {
   userId: string;
@@ -59,15 +61,23 @@ async function pushEmail(
   const key = process.env.RESEND_API_KEY;
   if (!key) throw new Error('email_delivery_not_configured');
   const resend = new Resend(key);
+  // Render through the shared EmailShell so delivery notifications carry
+  // the AURA brand header + dark/mint palette, matching welcome and
+  // trial-ending. The previous inline HTML was unbranded and looked
+  // generic compared to the rest of the customer's experience.
+  const html = await render(
+    DeliveryEmail({
+      title: payload.title,
+      filename: payload.filename,
+      audioUrl: payload.audioUrl,
+      locale: 'en',
+    })
+  );
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? 'AURA <noreply@aura.app>',
     to: config.recipient,
     subject: `AURA bulletin — ${payload.title}`,
-    html: `
-      <p>Your scheduled AURA bulletin is ready:</p>
-      <p><strong>${payload.title}</strong></p>
-      <p><a href="${payload.audioUrl}">Download ${payload.filename}.mp3</a></p>
-    `,
+    html,
   });
 }
 
