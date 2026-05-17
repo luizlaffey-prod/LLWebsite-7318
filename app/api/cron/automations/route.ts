@@ -4,6 +4,7 @@ import { db } from '@/lib/db/client';
 import {
   automationSchedule,
   automationExecution,
+  generatedAudio,
   type ScheduleSlot,
 } from '@/lib/db/schema';
 import { runAutomationSlot, nextRunAt } from '@/lib/automations/execute';
@@ -16,6 +17,13 @@ const LOOKAHEAD_MIN = 10;
 const RETRY_LOOKBACK_MIN = 60;
 const MAX_RETRIES = 3;
 const MIN_RETRY_INTERVAL_MIN = 10;
+// Anything still RUNNING this long after its scheduled instant was
+// almost certainly killed by the platform mid-flight (function
+// timeout, OOM, deploy rollover). The catch block in runAutomationSlot
+// can't fire when the process is hard-killed, so the row stays in
+// 'running' forever. This sweep flips those to 'failed' so the UI
+// stops showing a phantom spinner and the retry pass can pick them up.
+const STALE_RUNNING_MIN = 15;
 
 /**
  * Vercel cron: runs every 10 minutes. For each enabled automation,
@@ -88,6 +96,40 @@ export async function GET(req: Request) {
       }
     }
   }
+
+  // Stale-RUNNING sweep: any execution still 'running' more than
+  // STALE_RUNNING_MIN minutes after its scheduledFor was almost
+  // certainly killed mid-flight by the platform. Flip to 'failed' so
+  // the UI badge resolves and the retry pass below can take a swing
+  // at it. We do the audio-row mirror in the same statement so the
+  // operator's /audios page also clears the stuck "generating" card.
+  const staleCutoff = new Date(now.getTime() - STALE_RUNNING_MIN * 60_000);
+  await db
+    .update(automationExecution)
+    .set({
+      status: 'failed',
+      error: 'timed_out_or_killed',
+      executedAt: now,
+    })
+    .where(
+      and(
+        eq(automationExecution.status, 'running'),
+        lte(automationExecution.scheduledFor, staleCutoff)
+      )
+    );
+  await db
+    .update(generatedAudio)
+    .set({
+      status: 'failed',
+      errorMessage: 'timed_out_or_killed',
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(generatedAudio.status, 'generating'),
+        lte(generatedAudio.updatedAt, staleCutoff)
+      )
+    );
 
   // Auto-retry pass: pick failed executions from the last RETRY_LOOKBACK_MIN
   // minutes whose retryCount is still under MAX_RETRIES and whose scheduled
