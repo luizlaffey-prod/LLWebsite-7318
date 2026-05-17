@@ -10,6 +10,10 @@ import {
   Mail,
   HardDrive,
   Lock,
+  Rss,
+  Copy,
+  RotateCw,
+  Check,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -136,7 +140,9 @@ export function DeliveryClient({ canDeliver, locale }: Props) {
         </div>
       )}
 
-      <div className="mb-6 flex items-center justify-between">
+      <RssFeedCard t={t} />
+
+      <div className="mb-6 mt-8 flex items-center justify-between">
         <p className="text-sm text-text-secondary">{t('listHelp')}</p>
         <Button onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4" /> {t('newCta')}
@@ -508,6 +514,143 @@ function DeliveryEditor({
         </form>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * Pull-based delivery channel: a per-user RSS 2.0 feed that radio
+ * automation systems (Zetta, NexGen, RCS) and podcast catchers can
+ * subscribe to. The token in the URL IS the auth — rotating it
+ * invalidates every external subscriber.
+ */
+function RssFeedCard({ t }: { t: ReturnType<typeof useTranslations> }) {
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [rotating, setRotating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [confirmRotate, setConfirmRotate] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/feed/token');
+        if (!res.ok) return;
+        const data = (await res.json()) as { token: string };
+        if (!cancelled) setToken(data.token);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const feedUrl =
+    typeof window !== 'undefined' && token
+      ? `${window.location.origin}/api/feed/${token}`
+      : '';
+
+  const onCopy = async () => {
+    if (!feedUrl) return;
+    try {
+      await navigator.clipboard.writeText(feedUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked — user can select manually */
+    }
+  };
+
+  const onRotate = async () => {
+    setRotating(true);
+    try {
+      const res = await fetch('/api/feed/token', { method: 'POST' });
+      if (res.ok) {
+        const data = (await res.json()) as { token: string };
+        setToken(data.token);
+      }
+    } finally {
+      setRotating(false);
+      setConfirmRotate(false);
+    }
+  };
+
+  return (
+    <Card className="mb-4 p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-elevated text-teal">
+            <Rss className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold">{t('feedTitle')}</h3>
+            <p className="mt-1 text-xs text-text-muted">{t('feedHint')}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="min-w-0 flex-1 truncate rounded-md border border-border bg-elevated px-3 py-2 font-mono text-xs text-text-secondary">
+          {loading ? '…' : feedUrl || t('feedUnavailable')}
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onCopy}
+            disabled={!feedUrl}
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            {copied ? t('feedCopied') : t('feedCopy')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setConfirmRotate(true)}
+            disabled={!feedUrl}
+            title={t('feedRotateTooltip')}
+          >
+            <RotateCw className="h-3.5 w-3.5" />
+            {t('feedRotate')}
+          </Button>
+        </div>
+      </div>
+
+      <Dialog
+        open={confirmRotate}
+        onOpenChange={(o) => !o && !rotating && setConfirmRotate(false)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('feedConfirmRotateTitle')}</DialogTitle>
+            <DialogDescription>{t('feedConfirmRotateBody')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmRotate(false)}
+              disabled={rotating}
+            >
+              {t('cancel')}
+            </Button>
+            <Button onClick={onRotate} disabled={rotating}>
+              {rotating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCw className="h-4 w-4" />
+              )}
+              {t('feedRotate')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
 
