@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n';
 import { Button } from '@/components/ui/button';
+import { LanguageSwitcher } from './language-switcher';
 
 export async function SiteHeader({ locale }: { locale: Locale }) {
   const tNav = await getTranslations('nav');
@@ -11,11 +12,15 @@ export async function SiteHeader({ locale }: { locale: Locale }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link
           href={`/${locale}`}
-          className="text-2xl font-semibold tracking-tight"
+          className="flex items-baseline gap-2 truncate font-semibold tracking-tight"
         >
-          <span className="aura-gradient-text">AURA</span>
+          <span className="aura-gradient-text text-2xl">AURA</span>
+          <span className="hidden truncate text-sm font-medium text-text-secondary sm:inline">
+            — Automated Urban Radio Audio
+          </span>
         </Link>
         <nav className="flex items-center gap-2">
+          <LanguageSwitcher current={locale} />
           <Button asChild variant="ghost" size="sm">
             <Link href={`/${locale}/login`}>{tNav('login')}</Link>
           </Button>
