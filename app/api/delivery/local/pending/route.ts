@@ -54,7 +54,15 @@ export async function GET() {
   const pending = rows.map((r) => ({
     logId: r.logId,
     audioId: r.audioId,
-    audioUrl: r.audioUrl,
+    // Route through our own /api/audios/[id]/download proxy instead of
+    // returning the raw R2 URL. Browsers refuse cross-origin fetch()
+    // without explicit CORS headers, and R2 buckets ship locked down
+    // by default, so a direct fetch from the local-sync worker would
+    // CORS-fail silently and the operator would see "files never
+    // arrive" with no error in the UI. The proxy is same-origin and
+    // carries the session cookie, so this also doubles as an auth
+    // check on the audio bytes.
+    audioUrl: `/api/audios/${r.audioId}/download`,
     title: r.title,
     filename: renderName(r.namingPattern, {
       name: r.title,
