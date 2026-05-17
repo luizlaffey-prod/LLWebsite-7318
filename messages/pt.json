@@ -165,7 +165,8 @@
       "culture": "Cultura"
     },
     "errorGeneric": "Não conseguimos buscar agora. Tente novamente.",
-    "errorQuota": "Você atingiu o limite diário de boletins. Faça upgrade ou aguarde até amanhã."
+    "errorQuota": "Você atingiu o limite diário de boletins. Faça upgrade ou aguarde até amanhã.",
+    "errorInvalidInput": "Confere o campo {field} — o valor não foi aceito."
   },
   "bulletin": {
     "drawerTitle": "Gerar boletim",
