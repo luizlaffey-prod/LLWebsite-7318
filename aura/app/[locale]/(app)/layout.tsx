@@ -7,6 +7,7 @@ import { isAdminSession } from '@/lib/auth/admin';
 import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { AppSidebar } from '@/components/app/app-sidebar';
+import { AppBrandHeader } from '@/components/app/app-brand-header';
 import { MobileTopBar } from '@/components/app/mobile-top-bar';
 import { LocalFolderSyncWorker } from '@/components/app/local-folder-sync-worker';
 import { effectiveTier } from '@/lib/billing/quota';
@@ -94,6 +95,7 @@ export default async function AppLayout({
       <AppSidebar {...navProps} />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopBar {...navProps} />
+        <AppBrandHeader locale={preferred ?? locale} />
         <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
       </div>
       <LocalFolderSyncWorker />

@@ -13,9 +13,12 @@
     --teal-soft: #00BFA8;
     --violet: #8B5CF6;
 
-    --text-primary: #E8EAF0;
-    --text-secondary: #9CA3AF;
-    --text-muted: #4B5263;
+    /* Lightened from the previous values so dim text on the near-black
+       base stays legible: secondary moved up one step and muted moved up
+       two — the old #4B5263 was below WCAG AA against #06080F. */
+    --text-primary: #F1F3F8;
+    --text-secondary: #B6BCC8;
+    --text-muted: #7D8494;
 
     --success: #10B981;
     --warning: #F59E0B;
