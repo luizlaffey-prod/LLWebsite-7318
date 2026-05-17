@@ -7,12 +7,19 @@ import {
   generatedAudio,
   type ScheduleSlot,
 } from '@/lib/db/schema';
-import { runAutomationSlot, nextRunAt } from '@/lib/automations/execute';
+import { runAutomationSlot, slotInstantToday } from '@/lib/automations/execute';
 import { requireCronAuth } from '@/lib/cron/guard';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
+// Cron runs every 10 minutes (*/10) but Vercel can be 30-60s late on
+// any given tick. ±15 min around the slot's local-time instant means
+// every slot gets a fair shot even when scheduling drifts: at the
+// :00, :10, :20 ticks the slot at HH:10 falls within window either at
+// :00 (10 min in future) or :10/:20 (just past). Deduplication makes
+// the overlap safe — the same slot only fires once.
+const SLOT_TOLERANCE_MIN = 15;
 const LOOKAHEAD_MIN = 10;
 const RETRY_LOOKBACK_MIN = 60;
 const MAX_RETRIES = 3;
@@ -36,7 +43,9 @@ export async function GET(req: Request) {
   if (auth) return auth;
 
   const now = new Date();
-  const horizon = new Date(now.getTime() + LOOKAHEAD_MIN * 60_000);
+  // Retained for downstream reasoning; the actual tick decision uses
+  // SLOT_TOLERANCE_MIN below.
+  void LOOKAHEAD_MIN;
 
   const active = await db
     .select()
@@ -48,8 +57,14 @@ export async function GET(req: Request) {
   for (const automation of active) {
     for (const slot of automation.slots as ScheduleSlot[]) {
       try {
-        const due = nextRunAt(slot.time, automation.timezone, now);
-        if (due > horizon) continue; // not in this 10-min window
+        // slotInstantToday returns today's slot instant in the schedule's
+        // timezone — past OR future. Fire if it's within SLOT_TOLERANCE_MIN
+        // of `now` in either direction. This is the fix for the "slot
+        // missed by 30 seconds → bumped to tomorrow → never fired" bug
+        // that nextRunAt + lookahead-only suffered from.
+        const due = slotInstantToday(slot.time, automation.timezone, now);
+        const driftMs = Math.abs(now.getTime() - due.getTime());
+        if (driftMs > SLOT_TOLERANCE_MIN * 60_000) continue;
 
         // Dedup: was this exact slot+instant already executed?
         const existing = await db

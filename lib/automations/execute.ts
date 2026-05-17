@@ -279,11 +279,34 @@ export function nextRunAt(
   timezone: string,
   reference: Date = new Date()
 ): Date {
+  return computeSlotInstant(slotTime, timezone, reference, /* alwaysFuture */ true);
+}
+
+/**
+ * Returns the slot's instant on the current local day in `timezone` —
+ * even when that instant is already in the past relative to `reference`.
+ * Used by the cron tick-window comparison so a slot whose configured time
+ * passed seconds before the cron actually fired still gets picked up.
+ * Pair with a tolerance window (Math.abs(now - due) < window).
+ */
+export function slotInstantToday(
+  slotTime: string,
+  timezone: string,
+  reference: Date = new Date()
+): Date {
+  return computeSlotInstant(slotTime, timezone, reference, /* alwaysFuture */ false);
+}
+
+function computeSlotInstant(
+  slotTime: string,
+  timezone: string,
+  reference: Date,
+  alwaysFuture: boolean
+): Date {
   const [hStr, mStr] = slotTime.split(':');
   const h = Number(hStr);
   const m = Number(mStr);
 
-  // Get current wall-clock time in the target timezone.
   const fmt = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
     year: 'numeric',
@@ -301,19 +324,16 @@ export function nextRunAt(
   const tzHour = get('hour');
   const tzMinute = get('minute');
 
-  // Naive guess: today at HH:mm in tz, interpreted as UTC.
   let candidate = Date.UTC(tzYear, tzMonth - 1, tzDay, h, m);
 
-  // If the slot has already passed in the local tz, jump a day.
-  const tzNowMinutes = tzHour * 60 + tzMinute;
-  const slotMinutes = h * 60 + m;
-  if (slotMinutes <= tzNowMinutes) {
-    candidate += 24 * 60 * 60 * 1000;
+  if (alwaysFuture) {
+    const tzNowMinutes = tzHour * 60 + tzMinute;
+    const slotMinutes = h * 60 + m;
+    if (slotMinutes <= tzNowMinutes) {
+      candidate += 24 * 60 * 60 * 1000;
+    }
   }
 
-  // Adjust for the timezone offset: candidate was built as if HH:mm were UTC,
-  // but it's actually local-tz time. Subtract the tz offset from UTC.
-  // Compute offset by formatting the candidate instant.
   const candidateDate = new Date(candidate);
   const candidateInTz = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
