@@ -19,23 +19,36 @@ const LABELS: Record<Locale, string> = {
 
 interface LanguageSwitcherProps {
   current: Locale;
+  /**
+   * When true, also POST the chosen locale to /api/user/locale so future
+   * logins remember it. Used inside the authenticated app; left off on
+   * the marketing site where there's no user record yet.
+   */
+  persist?: boolean;
 }
 
 /**
- * Picks a UI language by rewriting the current URL's first segment. Used
- * on the marketing site where there's no user record to persist a
- * preference to — the URL itself is the source of truth.
- *
- * Authenticated users hit a separate flow in the (app) layout that
- * mirrors `user.locale` back into the URL; this component doesn't try
- * to touch that state.
+ * Picks a UI language by rewriting the current URL's first segment. The
+ * URL is always the source of truth for what the user sees right now;
+ * the optional persist flag mirrors the choice into user.locale so
+ * future sessions default to the same language.
  */
-export function LanguageSwitcher({ current }: LanguageSwitcherProps) {
+export function LanguageSwitcher({ current, persist = false }: LanguageSwitcherProps) {
   const router = useRouter();
   const pathname = usePathname();
 
   const onChange = (next: string) => {
     if (next === current) return;
+    if (persist) {
+      // Fire-and-forget — navigation happens regardless of the save
+      // outcome so a transient 5xx doesn't strand the user on a stale
+      // language. Worst case the next login uses the old preference.
+      void fetch('/api/user/locale', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale: next }),
+      });
+    }
     // Pathname always starts with `/<locale>` because middleware enforces
     // localePrefix: 'always'. Swap that first segment.
     const swapped = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, `/${next}`);

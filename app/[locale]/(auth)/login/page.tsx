@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 import type { Locale } from '@/i18n';
 import { LoginForm } from './login-form';
+import { LanguageSwitcher } from '@/components/site/language-switcher';
 
 export default async function LoginPage({
   params,
@@ -34,7 +35,10 @@ export default async function LoginPage({
         </div>
       </div>
 
-      <div className="flex items-center justify-center px-6 py-12">
+      <div className="relative flex items-center justify-center px-6 py-12">
+        <div className="absolute right-6 top-6">
+          <LanguageSwitcher current={locale} />
+        </div>
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden">
             <Link href={`/${locale}`} className="text-2xl font-semibold">

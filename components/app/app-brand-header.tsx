@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import type { Locale } from '@/i18n';
+import { LanguageSwitcher } from '@/components/site/language-switcher';
 
 interface AppBrandHeaderProps {
   locale: Locale;
-  /** Hide the tagline on narrow viewports — wordmark alone still reads. */
   className?: string;
 }
 
@@ -12,15 +12,18 @@ interface AppBrandHeaderProps {
  * Matches the mockup: a mint-on-dark-teal broadcast-icon tile beside
  * the AURA wordmark and dimmer tagline. Sits inside the main content
  * area (not the sidebar) so it reads as a page-wide identity bar.
+ * Includes the persistent language switcher on the right so operators
+ * can swap UI language from any page (the choice also writes back to
+ * user.locale so future logins land in the right language).
  */
 export function AppBrandHeader({ locale, className = '' }: AppBrandHeaderProps) {
   return (
     <header
-      className={`flex h-16 items-center border-b border-border bg-base px-4 md:px-8 ${className}`}
+      className={`flex h-16 items-center justify-between gap-3 border-b border-border bg-base px-4 md:px-8 ${className}`}
     >
       <Link
         href={`/${locale}/dashboard`}
-        className="flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-teal/40 rounded-md"
+        className="flex min-w-0 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-teal/40 rounded-md"
         aria-label="AURA — Automated Urban Radio Audio"
       >
         <BroadcastTile />
@@ -33,6 +36,7 @@ export function AppBrandHeader({ locale, className = '' }: AppBrandHeaderProps) 
           </span>
         </span>
       </Link>
+      <LanguageSwitcher current={locale} persist />
     </header>
   );
 }
