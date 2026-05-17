@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { eq, and, or, isNull, sql, not, like } from 'drizzle-orm';
+import { eq, and, or, isNull, not, like, notInArray } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { voice as voiceTable, voicePreference } from '@/lib/db/schema';
@@ -10,22 +10,20 @@ import { VOICE_CATALOG } from '@/lib/tts/voice-catalog';
 export const runtime = 'nodejs';
 
 /**
- * Bootstraps the curated ElevenLabs preset catalog (Adam, Rachel, Antoni,
- * Sarah, Domi, Elli, Josh, Sam, Arnold, Dorothy) on first read. Idempotent:
- * only runs when the voice table is empty.
+ * Reconciles the DB's voice table against the curated VOICE_CATALOG so the
+ * UI always matches the code. Two passes:
+ *
+ *   1. UPSERT every catalog row by slug — picks up new voices, refreshed
+ *      names/descriptions, and corrected elevenLabsVoiceIds.
+ *   2. Disable any global voice rows (ownerUserId IS NULL) whose slug is
+ *      no longer in the catalog. Soft-delete (enabled=false) keeps history
+ *      and lets us re-enable later by re-adding to the catalog.
  *
  * We deliberately do NOT sync the configured ElevenLabs account's personal
  * library here — "Minhas Vozes" surfaces the public preset catalog, not the
  * deployment owner's private voice collection.
  */
-async function bootstrapStaticCatalogIfEmpty(): Promise<void> {
-  const rows = await db.execute<{ count: number }>(
-    sql`SELECT COUNT(*)::int AS count FROM voice`
-  );
-  const count = Number(rows.rows?.[0]?.count ?? 0);
-  if (count > 0) return;
-
-  console.log(`[voices] table is empty — seeding ${VOICE_CATALOG.length} voices`);
+async function reconcileCatalog(): Promise<void> {
   for (const seed of VOICE_CATALOG) {
     await db
       .insert(voiceTable)
@@ -41,8 +39,35 @@ async function bootstrapStaticCatalogIfEmpty(): Promise<void> {
         tierRequired: seed.tierRequired,
         enabled: true,
       })
-      .onConflictDoNothing({ target: voiceTable.slug });
+      .onConflictDoUpdate({
+        target: voiceTable.slug,
+        set: {
+          elevenLabsVoiceId: seed.elevenLabsVoiceId,
+          name: seed.name,
+          description: seed.description,
+          languages: seed.languages,
+          gender: seed.gender,
+          style: seed.style,
+          accent: seed.accent,
+          tierRequired: seed.tierRequired,
+          enabled: true,
+        },
+      });
   }
+
+  // Retire any global rows that are no longer in the catalog. We only
+  // touch ownerUserId IS NULL rows so we never disable a user's cloned
+  // voice.
+  const catalogSlugs = VOICE_CATALOG.map((v) => v.slug);
+  await db
+    .update(voiceTable)
+    .set({ enabled: false })
+    .where(
+      and(
+        isNull(voiceTable.ownerUserId),
+        notInArray(voiceTable.slug, catalogSlugs)
+      )
+    );
 }
 
 export async function GET(req: Request) {
@@ -55,9 +80,9 @@ export async function GET(req: Request) {
   const includeLocked = url.searchParams.get('includeLocked') === '1';
 
   try {
-    await bootstrapStaticCatalogIfEmpty();
+    await reconcileCatalog();
   } catch (err) {
-    console.warn('[voices] bootstrap failed', err);
+    console.warn('[voices] catalog reconcile failed', err);
   }
 
   const quota = await getQuota(session.user.id);
