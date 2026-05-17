@@ -43,6 +43,13 @@
       "when": 1779580000000,
       "tag": "0005_user_feed_token",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1779581000000,
+      "tag": "0006_delivery_local_folder",
+      "breakpoints": false
     }
   ]
 }

@@ -15,6 +15,7 @@ import {
   RotateCw,
   Check,
 } from 'lucide-react';
+import { Folder } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,7 +49,7 @@ import type { Locale } from '@/i18n';
 interface EndpointRow {
   id: string;
   name: string;
-  type: 'ftp' | 'http' | 'email';
+  type: 'ftp' | 'http' | 'email' | 'local_folder';
   slotNamingPattern: string;
   enabled: boolean;
   lastUsedAt: string | null;
@@ -59,6 +60,7 @@ const TYPE_ICON = {
   ftp: HardDrive,
   http: Server,
   email: Mail,
+  local_folder: Folder,
 } as const;
 
 interface Props {
@@ -237,7 +239,7 @@ export function DeliveryClient({ canDeliver, locale }: Props) {
   );
 }
 
-type EndpointType = 'http' | 'email' | 'ftp';
+type EndpointType = 'http' | 'email' | 'ftp' | 'local_folder';
 
 function DeliveryEditor({
   open,
@@ -291,7 +293,15 @@ function DeliveryEditor({
     setError(null);
     try {
       const payload =
-        type === 'http'
+        type === 'local_folder'
+          ? {
+              name,
+              type,
+              slotNamingPattern: pattern,
+              enabled: true,
+              config: { label: 'browser-folder' },
+            }
+          : type === 'http'
           ? {
               name,
               type,
@@ -371,12 +381,19 @@ function DeliveryEditor({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="local_folder">
+                  {t('typeLocalFolder')}
+                </SelectItem>
+                <SelectItem value="ftp">{t('typeFtp')}</SelectItem>
                 <SelectItem value="http">{t('typeHttp')}</SelectItem>
                 <SelectItem value="email">{t('typeEmail')}</SelectItem>
-                <SelectItem value="ftp">{t('typeFtp')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {type === 'local_folder' && (
+            <LocalFolderField t={t} />
+          )}
 
           {type === 'http' && (
             <div className="space-y-4">
@@ -514,6 +531,88 @@ function DeliveryEditor({
         </form>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * Form field for the local_folder destination. Surfaces the File System
+ * Access API status (supported, folder picked, permission active) and
+ * lets the operator choose / re-choose the directory. The actual handle
+ * lives in IndexedDB on this device — the server only stores a label.
+ */
+function LocalFolderField({
+  t,
+}: {
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const [supported, setSupported] = useState<boolean | null>(null);
+  const [hasFolder, setHasFolder] = useState(false);
+  const [picking, setPicking] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { hasFolderConfigured } = await import(
+        '@/lib/storage/local-folder'
+      );
+      if (cancelled) return;
+      setSupported(
+        typeof window !== 'undefined' && !!window.showDirectoryPicker
+      );
+      setHasFolder(await hasFolderConfigured());
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onPick = async () => {
+    setPicking(true);
+    try {
+      const { chooseDownloadFolder } = await import(
+        '@/lib/storage/local-folder'
+      );
+      const ok = await chooseDownloadFolder();
+      if (ok) setHasFolder(true);
+    } finally {
+      setPicking(false);
+    }
+  };
+
+  if (supported === false) {
+    return (
+      <div className="rounded-md border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
+        {t('localFolderUnsupported')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-text-muted">{t('localFolderHelp')}</p>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={onPick}
+          disabled={picking}
+        >
+          {picking ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Folder className="h-3.5 w-3.5" />
+          )}
+          {hasFolder ? t('localFolderChange') : t('localFolderPick')}
+        </Button>
+        {hasFolder && (
+          <span className="text-xs text-success">
+            {t('localFolderReady')}
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-text-muted">{t('localFolderTabHint')}</p>
+    </div>
   );
 }
 
