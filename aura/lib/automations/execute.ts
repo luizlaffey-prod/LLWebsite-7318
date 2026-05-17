@@ -51,8 +51,7 @@ export async function runAutomationSlot(input: {
     .limit(1);
   if (!automation) return { ok: false, error: 'automation_not_found' };
 
-  let execRowId: string;
-  if (existingExecutionId) {
+  let execRowId: string;  if (existingExecutionId) {
     const [prior] = await db
       .select({ id: automationExecution.id, retryCount: automationExecution.retryCount })
       .from(automationExecution)
@@ -80,6 +79,12 @@ export async function runAutomationSlot(input: {
       .returning({ id: automationExecution.id });
     execRowId = execRow.id;
   }
+
+  // Tracked outside the try block so the catch can flip its status
+  // when something later in the chain blows up — otherwise the row
+  // stays at 'generating' forever and shows as a stuck card in
+  // /audios.
+  let audioRowId: string | null = null;
 
   try {
     // 1) Pull news for the slot's categories.
@@ -153,6 +158,7 @@ export async function runAutomationSlot(input: {
         status: 'generating',
       })
       .returning({ id: generatedAudio.id });
+    audioRowId = audio.id;
 
     // 6) Claude script.
     const blocks = await generateScript({
@@ -241,6 +247,20 @@ export async function runAutomationSlot(input: {
       .update(automationExecution)
       .set({ status: 'failed', error: message, executedAt: new Date() })
       .where(eq(automationExecution.id, execRowId));
+    // Mirror the failure onto the audio row when one was already
+    // created. Without this the row sits at status='generating'
+    // forever — the /audios card shows a permanent "generating"
+    // spinner with no way to retry or delete the dead row.
+    if (audioRowId) {
+      await db
+        .update(generatedAudio)
+        .set({
+          status: 'failed',
+          errorMessage: message.slice(0, 500),
+          updatedAt: new Date(),
+        })
+        .where(eq(generatedAudio.id, audioRowId));
+    }
     return { ok: false, error: message };
   }
 }
