@@ -50,6 +50,13 @@
       "when": 1779581000000,
       "tag": "0006_delivery_local_folder",
       "breakpoints": false
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1779582000000,
+      "tag": "0007_signup_attempt",
+      "breakpoints": true
     }
   ]
 }
