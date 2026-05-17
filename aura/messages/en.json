@@ -165,7 +165,8 @@
       "culture": "Culture"
     },
     "errorGeneric": "Couldn't reach the news service. Please try again.",
-    "errorQuota": "You hit today's bulletin limit. Upgrade or wait until tomorrow."
+    "errorQuota": "You hit today's bulletin limit. Upgrade or wait until tomorrow.",
+    "errorInvalidInput": "Check the {field} field — the value isn't accepted."
   },
   "bulletin": {
     "drawerTitle": "Generate bulletin",

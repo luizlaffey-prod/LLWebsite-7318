@@ -91,7 +91,14 @@ export function NewsClient({ locale }: { locale: Locale }) {
   const [selected, setSelected] = useState<Article | null>(null);
 
   const totalSeconds = useMemo(
-    () => Math.max(0, (Number(mins) || 0) * 60 + (Number(secs) || 0)),
+    // Cap matches the server's z.number().max(600) on /api/news/search.
+    // Without this clamp the UI accepted 30 minutes, the request 400'd,
+    // and the user saw a misleading "couldn't reach news service".
+    () =>
+      Math.min(
+        600,
+        Math.max(0, (Number(mins) || 0) * 60 + (Number(secs) || 0))
+      ),
     [mins, secs]
   );
 
@@ -151,7 +158,17 @@ export function NewsClient({ locale }: { locale: Locale }) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error === 'quota_exceeded' ? t('errorQuota') : t('errorGeneric'));
+        if (body.error === 'quota_exceeded') {
+          setError(t('errorQuota'));
+        } else if (body.error === 'invalid_input') {
+          // Surface what the server actually rejected so users aren't
+          // told "couldn't reach news service" for a client-side mistake.
+          const first = body.details?.[0];
+          const field = first?.path?.join('.') ?? 'input';
+          setError(t('errorInvalidInput', { field }));
+        } else {
+          setError(t('errorGeneric'));
+        }
         return;
       }
       const data = (await res.json()) as { searchId: string; articles: Article[] };
@@ -232,7 +249,14 @@ export function NewsClient({ locale }: { locale: Locale }) {
                     min={0}
                     max={9}
                     value={mins}
-                    onChange={(e) => setMins(e.target.value)}
+                    onChange={(e) => {
+                      // Hard-cap at 9 min so total stays ≤ 10 min (the
+                      // server limit). Browser's max attribute is just
+                      // a hint — users can paste any number, so we
+                      // clamp in JS.
+                      const n = Math.max(0, Math.min(9, Number(e.target.value) || 0));
+                      setMins(String(n));
+                    }}
                   />
                   <p className="mt-1 text-xs text-text-muted">{t('minutes')}</p>
                 </div>
@@ -242,7 +266,10 @@ export function NewsClient({ locale }: { locale: Locale }) {
                     min={0}
                     max={59}
                     value={secs}
-                    onChange={(e) => setSecs(e.target.value)}
+                    onChange={(e) => {
+                      const n = Math.max(0, Math.min(59, Number(e.target.value) || 0));
+                      setSecs(String(n));
+                    }}
                   />
                   <p className="mt-1 text-xs text-text-muted">{t('seconds')}</p>
                 </div>
