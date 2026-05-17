@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { AutomationInputType } from '@/lib/automations/schemas';
+import { TIMEZONE_OPTIONS } from '@/lib/constants/timezones';
 import type { Locale } from '@/i18n';
 
 const CATEGORIES = [
@@ -47,18 +48,6 @@ const CATEGORIES = [
   'culture',
 ] as const;
 
-const TIMEZONES = [
-  'UTC',
-  'America/Sao_Paulo',
-  'America/New_York',
-  'America/Los_Angeles',
-  'America/Mexico_City',
-  'America/Bogota',
-  'America/Buenos_Aires',
-  'Europe/London',
-  'Europe/Madrid',
-  'Europe/Lisbon',
-];
 
 interface AutomationLike extends AutomationInputType {
   id: string;
@@ -505,9 +494,9 @@ export function AutomationEditor({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIMEZONES.map((tz) => (
-                  <SelectItem key={tz} value={tz}>
-                    {tz}
+                {TIMEZONE_OPTIONS.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
                   </SelectItem>
                 ))}
               </SelectContent>
