@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { eq, and, or, isNull, sql, inArray } from 'drizzle-orm';
+import { eq, and, or, isNull, sql, not, like } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { voice as voiceTable, voicePreference } from '@/lib/db/schema';
@@ -9,106 +9,14 @@ import { VOICE_CATALOG } from '@/lib/tts/voice-catalog';
 
 export const runtime = 'nodejs';
 
-interface ElevenLabsLibraryVoice {
-  voice_id: string;
-  name: string;
-  preview_url?: string;
-  labels?: Record<string, string>;
-  description?: string;
-  category?: string;
-}
-
 /**
- * Pulls the deployment's ElevenLabs voice library (the voices that actually
- * exist in the configured account) and mirrors each entry into the `voice`
- * table. This replaces the old static catalog as the source of truth: voices
- * that aren't in the live library can't show up here, so we never display
- * dead IDs and never get duplicates from stale seeds.
+ * Bootstraps the curated ElevenLabs preset catalog (Adam, Rachel, Antoni,
+ * Sarah, Domi, Elli, Josh, Sam, Arnold, Dorothy) on first read. Idempotent:
+ * only runs when the voice table is empty.
  *
- * Returns the set of elevenLabsVoiceIds that are currently in the library.
- * Empty array means "no key configured or fetch failed" — caller falls back
- * to the static seeded catalog.
- */
-async function syncElevenLabsLibrary(): Promise<Set<string>> {
-  const key = process.env.ELEVENLABS_API_KEY;
-  if (!key) return new Set();
-
-  let library: ElevenLabsLibraryVoice[];
-  try {
-    const res = await fetch('https://api.elevenlabs.io/v1/voices', {
-      headers: { 'xi-api-key': key, Accept: 'application/json' },
-      cache: 'no-store',
-    });
-    if (!res.ok) {
-      console.warn('[voices] ElevenLabs /v1/voices fetch failed', res.status);
-      return new Set();
-    }
-    const data = (await res.json()) as { voices?: ElevenLabsLibraryVoice[] };
-    library = data.voices ?? [];
-  } catch (err) {
-    console.warn('[voices] ElevenLabs library fetch threw', err);
-    return new Set();
-  }
-
-  const liveIds = new Set<string>();
-  for (const v of library) {
-    if (!v.voice_id || !v.name) continue;
-    const slug = `el-${v.voice_id.slice(0, 12).toLowerCase()}`;
-    const labels = v.labels ?? {};
-    const rawGender = (labels.gender ?? '').toLowerCase();
-    const gender: 'male' | 'female' | 'neutral' =
-      rawGender === 'male' ? 'male' : rawGender === 'female' ? 'female' : 'neutral';
-    const accent = labels.accent ?? undefined;
-    const description =
-      v.description?.trim() ||
-      labels.description?.trim() ||
-      labels['use case']?.trim() ||
-      labels['use_case']?.trim() ||
-      [labels.age, labels.gender, labels.accent].filter(Boolean).join(' · ') ||
-      'ElevenLabs voice.';
-
-    try {
-      await db
-        .insert(voiceTable)
-        .values({
-          slug,
-          elevenLabsVoiceId: v.voice_id,
-          name: v.name,
-          description,
-          // multilingual_v2 covers all three; per-language gating happens
-          // in the script generator, not here.
-          languages: ['en', 'pt', 'es'],
-          gender,
-          accent,
-          tierRequired: 'starter',
-          enabled: true,
-          previewUrl: v.preview_url ?? null,
-          isCloned: v.category === 'cloned',
-        })
-        .onConflictDoUpdate({
-          target: voiceTable.slug,
-          set: {
-            elevenLabsVoiceId: v.voice_id,
-            name: v.name,
-            description,
-            gender,
-            accent,
-            previewUrl: v.preview_url ?? null,
-            enabled: true,
-          },
-        });
-      liveIds.add(v.voice_id);
-    } catch (err) {
-      console.warn('[voices] upsert failed for', v.voice_id, err);
-    }
-  }
-
-  return liveIds;
-}
-
-/**
- * Static-catalog fallback: only runs when no ElevenLabs key is configured.
- * Idempotent: only seeds when the voice table is empty.
+ * We deliberately do NOT sync the configured ElevenLabs account's personal
+ * library here — "Minhas Vozes" surfaces the public preset catalog, not the
+ * deployment owner's private voice collection.
  */
 async function bootstrapStaticCatalogIfEmpty(): Promise<void> {
   const rows = await db.execute<{ count: number }>(
@@ -146,27 +54,20 @@ export async function GET(req: Request) {
   const lang = url.searchParams.get('lang');
   const includeLocked = url.searchParams.get('includeLocked') === '1';
 
-  // Prefer live sync; fall back to the seeded catalog only when ElevenLabs
-  // is not configured or unreachable.
-  let liveIds: Set<string>;
   try {
-    liveIds = await syncElevenLabsLibrary();
+    await bootstrapStaticCatalogIfEmpty();
   } catch (err) {
-    console.warn('[voices] library sync failed', err);
-    liveIds = new Set();
-  }
-  if (liveIds.size === 0) {
-    try {
-      await bootstrapStaticCatalogIfEmpty();
-    } catch (err) {
-      console.warn('[voices] bootstrap failed', err);
-    }
+    console.warn('[voices] bootstrap failed', err);
   }
 
   const quota = await getQuota(session.user.id);
 
+  // Exclude `el-*` rows left over from the brief library-sync experiment —
+  // those are the deployment account's private ElevenLabs voices, not part
+  // of the curated preset catalog this page is meant to surface.
   const baseWhere = and(
     eq(voiceTable.enabled, true),
+    not(like(voiceTable.slug, 'el-%')),
     or(eq(voiceTable.ownerUserId, session.user.id), isNull(voiceTable.ownerUserId))
   );
 
@@ -185,11 +86,7 @@ export async function GET(req: Request) {
       elevenLabsVoiceId: voiceTable.elevenLabsVoiceId,
     })
     .from(voiceTable)
-    .where(
-      liveIds.size > 0
-        ? and(baseWhere, inArray(voiceTable.elevenLabsVoiceId, Array.from(liveIds)))
-        : baseWhere
-    );
+    .where(baseWhere);
 
   // Defense in depth: even though slug is unique, dedupe by
   // elevenLabsVoiceId in case historical rows duplicated an ID under
