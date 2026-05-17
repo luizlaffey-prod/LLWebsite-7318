@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { automationSchedule, automationExecution, user } from '@/lib/db/schema';
+import {
+  automationSchedule,
+  automationExecution,
+  deliveryLog,
+  user,
+} from '@/lib/db/schema';
 import { canSchedule } from '@/lib/billing/feature-gates';
 import { effectiveTier } from '@/lib/billing/quota';
 import { AutomationInput } from '@/lib/automations/schemas';
@@ -68,9 +73,53 @@ export async function GET() {
   ).then((r) => (r.rows ?? []) as { count: number }[]);
   const deliveryEndpoints = Number(deliveryCount?.count ?? 0);
 
+  // Latest delivery_log entry per automation. We join through
+  // automation_execution.audio_id and take the most recent log per
+  // schedule. UI surfaces it so a misconfigured endpoint (no
+  // RESEND_API_KEY, DNS failure, etc.) is visible immediately instead
+  // of buried in the DB. Only one entry per automation is enough — the
+  // operator wants a yes/no signal at this level; full per-endpoint
+  // detail belongs on the runs history page.
+  let lastDeliveryByAutomation: Record<
+    string,
+    { status: string; error: string | null; at: string }
+  > = {};
+  if (rows.length > 0) {
+    const ids = rows.map((r) => r.id);
+    const latestDeliveries = await db
+      .selectDistinctOn([automationExecution.automationScheduleId], {
+        automationScheduleId: automationExecution.automationScheduleId,
+        status: deliveryLog.status,
+        error: deliveryLog.error,
+        createdAt: deliveryLog.createdAt,
+      })
+      .from(deliveryLog)
+      .innerJoin(
+        automationExecution,
+        eq(automationExecution.audioId, deliveryLog.audioId)
+      )
+      .where(inArray(automationExecution.automationScheduleId, ids))
+      .orderBy(
+        automationExecution.automationScheduleId,
+        desc(deliveryLog.createdAt)
+      );
+
+    lastDeliveryByAutomation = Object.fromEntries(
+      latestDeliveries.map((d) => [
+        d.automationScheduleId,
+        {
+          status: d.status,
+          error: d.error,
+          at: d.createdAt.toISOString(),
+        },
+      ])
+    );
+  }
+
   const automations = rows.map((r) => ({
     ...r,
     lastRun: lastByAutomation[r.id] ?? null,
+    lastDelivery: lastDeliveryByAutomation[r.id] ?? null,
   }));
 
   return NextResponse.json({ automations, deliveryEndpoints });

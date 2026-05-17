@@ -307,6 +307,8 @@
     "lastRunRunning": "Em execução",
     "deliveryConfigured": "{n} endpoint(s) de entrega",
     "deliveryNone": "Sem entrega configurada",
+    "deliveryLastSuccess": "Última entrega: enviada",
+    "deliveryLastFailed": "Última entrega falhou",
     "folderReady": "Pasta padrão configurada — download salva direto.",
     "folderNotConfigured": "Sem pasta padrão. Configure pra baixar sem prompt.",
     "choosingFolder": "Escolher pasta",
