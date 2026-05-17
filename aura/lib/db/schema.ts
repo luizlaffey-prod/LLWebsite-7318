@@ -455,3 +455,24 @@ export const deliveryLog = pgTable(
 
 export type DeliveryEndpoint = typeof deliveryEndpoint.$inferSelect;
 export type DeliveryLog = typeof deliveryLog.$inferSelect;
+
+// --- Anti-abuse: trial-stretching prevention ---
+// Each signup attempt records the requester's hashed IP. The signup
+// pre-check route counts entries in the last 30 days for the caller's
+// IP and rejects when the count crosses MAX_SIGNUPS_PER_IP. Hashing
+// keeps personal data off the row (the IP itself is never persisted
+// in plaintext) — only the salted SHA-256 digest, which is enough to
+// detect the same source without ever being able to recover it.
+export const signupAttempt = pgTable(
+  'signup_attempt',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ipHash: text('ip_hash').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    ipIdx: index('signup_attempt_ip_idx').on(t.ipHash, t.createdAt),
+  })
+);

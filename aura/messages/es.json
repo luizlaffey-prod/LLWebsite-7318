@@ -107,7 +107,8 @@
       "radioNameRequired": "El nombre de la emisora es obligatorio.",
       "generic": "Algo salió mal. Inténtalo de nuevo.",
       "invalidCredentials": "Correo o contraseña inválidos.",
-      "emailInUse": "Ya existe una cuenta con este correo."
+      "emailInUse": "Ya existe una cuenta con este correo.",
+      "ipLimit": "Detectamos varias cuentas creadas desde esta red recientemente. Espera unos días o contáctanos para desbloquearla manualmente."
     },
     "submitting": "Procesando..."
   },

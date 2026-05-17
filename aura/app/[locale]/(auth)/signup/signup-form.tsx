@@ -59,6 +59,17 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
 
     setPending(true);
     try {
+      // IP-rate-limit gate: precheck records the attempt and rejects
+      // when the caller's IP already opened 3 accounts in the last 30
+      // days. Done BEFORE better-auth so a tripped limit doesn't
+      // create a half-baked DB row.
+      const precheck = await fetch('/api/signup/precheck', { method: 'POST' });
+      if (precheck.status === 429) {
+        setTopError(t('errors.ipLimit'));
+        setPending(false);
+        return;
+      }
+
       const result = await authClient.signUp.email({
         email: parsed.data.email,
         password: parsed.data.password,

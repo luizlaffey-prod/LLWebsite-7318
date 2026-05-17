@@ -107,7 +107,8 @@
       "radioNameRequired": "Radio name is required.",
       "generic": "Something went wrong. Please try again.",
       "invalidCredentials": "Invalid email or password.",
-      "emailInUse": "An account with this email already exists."
+      "emailInUse": "An account with this email already exists.",
+      "ipLimit": "We've seen several signups from this network recently. Wait a few days or contact us so we can unlock it manually."
     },
     "submitting": "Working..."
   },
