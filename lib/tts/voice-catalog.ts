@@ -18,9 +18,9 @@ export interface VoiceSeed {
 export const VOICE_CATALOG: VoiceSeed[] = [
   // EN
   {
-    slug: 'adam',
-    elevenLabsVoiceId: 'pNInz6obbfDQGcgMyIGD',
-    name: 'Adam',
+    slug: 'brian',
+    elevenLabsVoiceId: 'nPczCjzI2devNBz1zQrb',
+    name: 'Brian',
     description: 'Deep American male, default narrator.',
     languages: ['en', 'pt', 'es'],
     gender: 'male',
@@ -40,9 +40,9 @@ export const VOICE_CATALOG: VoiceSeed[] = [
     tierRequired: 'starter',
   },
   {
-    slug: 'antoni',
-    elevenLabsVoiceId: 'ErXwobaYiN019PkySvjV',
-    name: 'Antoni',
+    slug: 'will',
+    elevenLabsVoiceId: 'bIHbv24MWmeRgasZH58o',
+    name: 'Will',
     description: 'Friendly male, conversational tone.',
     languages: ['en', 'pt', 'es'],
     gender: 'male',
@@ -84,14 +84,14 @@ export const VOICE_CATALOG: VoiceSeed[] = [
     tierRequired: 'pro',
   },
   {
-    slug: 'josh',
-    elevenLabsVoiceId: 'tx3xeil23wQz6dD1rZk1',
-    name: 'Josh',
+    slug: 'charlie',
+    elevenLabsVoiceId: 'IKne3meq5aSn9XLyUdCD',
+    name: 'Charlie',
     description: 'Casual male, podcast feel.',
     languages: ['en', 'pt', 'es'],
     gender: 'male',
     style: 'casual',
-    accent: 'american',
+    accent: 'australian',
     tierRequired: 'pro',
   },
   {
@@ -106,14 +106,14 @@ export const VOICE_CATALOG: VoiceSeed[] = [
     tierRequired: 'pro',
   },
   {
-    slug: 'arnold',
-    elevenLabsVoiceId: 'VR6AewLTigWG4xSOukaG',
-    name: 'Arnold',
+    slug: 'daniel',
+    elevenLabsVoiceId: 'onwK4e9ZLuTAKqWW03F9',
+    name: 'Daniel',
     description: 'Authoritative male, prime-time newscast.',
     languages: ['en', 'pt', 'es'],
     gender: 'male',
     style: 'authoritative',
-    accent: 'american',
+    accent: 'british',
     tierRequired: 'pro',
   },
   {
