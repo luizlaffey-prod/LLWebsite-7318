@@ -3,6 +3,15 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/lib/db/client';
 import * as schema from '@/lib/db/schema';
 
+/**
+ * Returns whether Google OAuth is plumbed in. Used by the auth UI to
+ * conditionally render the "Continue with Google" button — clicking
+ * it would 500 if the env vars aren't set, so we hide it instead.
+ */
+export function isGoogleAuthConfigured(): boolean {
+  return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+}
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -18,6 +27,21 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     autoSignIn: true,
   },
+  // Conditionally register Google so betterAuth doesn't try to bind a
+  // provider with empty credentials on deploys that haven't set them
+  // yet. The auth callback path is /api/auth/callback/google by
+  // convention — register that exact URI in the Google Cloud Console
+  // OAuth consent screen.
+  ...(isGoogleAuthConfigured()
+    ? {
+        socialProviders: {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          },
+        },
+      }
+    : {}),
   session: {
     expiresIn: 60 * 60 * 24 * 30,
     updateAge: 60 * 60 * 24,
