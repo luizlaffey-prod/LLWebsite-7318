@@ -6,6 +6,91 @@ import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
 
 /**
+ * Concatenates N MP3 chunks into a single, properly-muxed MP3 with correct
+ * container metadata (Xing/LAME header, total duration, frame index). Used
+ * instead of raw byte concat to ensure downstream consumers — desktop
+ * players, WhatsApp, mobile share sheets — see a valid file.
+ *
+ * Raw byte concat works for tolerant decoders (browsers play it fine) but
+ * the resulting file's header only describes the first chunk, which is
+ * why players show 6s for a 60s bulletin and WhatsApp refuses to share
+ * it. Re-encoding through libmp3lame guarantees a clean CBR output with
+ * proper duration metadata; the ~300ms cost is invisible next to the
+ * multi-second TTS roundtrip.
+ *
+ * Single-chunk inputs are still remuxed so the stored file is normalized
+ * regardless of how many blocks the script generator produced.
+ */
+export async function concatMp3Bytes(
+  chunks: Uint8Array[]
+): Promise<Uint8Array> {
+  if (chunks.length === 0) return new Uint8Array(0);
+
+  const dir = await mkdtemp(join(tmpdir(), 'aura-concat-'));
+  try {
+    const files: string[] = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const p = join(dir, `chunk-${String(i).padStart(4, '0')}.mp3`);
+      await writeFile(p, chunks[i]);
+      files.push(p);
+    }
+
+    const outPath = join(dir, 'out.mp3');
+
+    if (chunks.length === 1) {
+      await runFfmpeg([
+        '-y',
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-i',
+        files[0],
+        '-c:a',
+        'libmp3lame',
+        '-b:a',
+        '128k',
+        '-ar',
+        '44100',
+        outPath,
+      ]);
+    } else {
+      const listPath = join(dir, 'list.txt');
+      // ffmpeg's concat demuxer accepts a list of "file 'path'" lines.
+      // We escape single quotes by closing the quoted string, inserting
+      // an escaped quote, then reopening — same trick ffmpeg docs use.
+      const body = files
+        .map((f) => `file '${f.replace(/'/g, "'\\''")}'`)
+        .join('\n');
+      await writeFile(listPath, body);
+
+      await runFfmpeg([
+        '-y',
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-f',
+        'concat',
+        '-safe',
+        '0',
+        '-i',
+        listPath,
+        '-c:a',
+        'libmp3lame',
+        '-b:a',
+        '128k',
+        '-ar',
+        '44100',
+        outPath,
+      ]);
+    }
+
+    return new Uint8Array(await readFile(outPath));
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+/**
  * Mixes the synthesized voice MP3 with a looping background track via
  * the bundled ffmpeg binary (@ffmpeg-installer/ffmpeg). Output is MP3.
  *

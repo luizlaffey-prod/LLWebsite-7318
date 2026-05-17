@@ -4,6 +4,7 @@ import {
   ELEVEN_LABS_FAST_MODEL,
   VOICE_SETTINGS,
 } from './voice-catalog';
+import { concatMp3Bytes } from '@/lib/audio/server-mix';
 import type { Emotion } from '@/lib/audio/emotions';
 import type { ScriptBlock } from '@/lib/llm/script-generator';
 
@@ -124,8 +125,12 @@ async function synthesizeBlock(
 
 /**
  * Synthesizes each block separately (so emotion can vary per block) and
- * returns the concatenated MP3 bytes. Browsers and ffmpeg both concat MP3
- * frames without re-encoding, so this is safe for delivery.
+ * returns one properly-muxed MP3. We used to byte-concat the per-block
+ * MP3s — browsers played that fine but desktop players reported wrong
+ * duration and WhatsApp refused the file as malformed, because only the
+ * first chunk's Xing/LAME header was present. concatMp3Bytes routes
+ * everything through ffmpeg to produce a single CBR file with a correct
+ * container.
  */
 export async function synthesizeBulletin(
   blocks: ScriptBlock[],
@@ -144,14 +149,6 @@ export async function synthesizeBulletin(
     durationEstimate += block.duracaoSegundos;
   }
 
-  let totalLen = 0;
-  for (const c of chunks) totalLen += c.length;
-  const merged = new Uint8Array(totalLen);
-  let offset = 0;
-  for (const c of chunks) {
-    merged.set(c, offset);
-    offset += c.length;
-  }
-
+  const merged = await concatMp3Bytes(chunks);
   return { audio: merged, durationEstimateSeconds: durationEstimate };
 }
