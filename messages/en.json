@@ -345,7 +345,14 @@
     "confirmDelete": "Delete forever",
     "errorLoad": "Couldn't load your audios. Please refresh.",
     "errorDelete": "Couldn't delete this audio. Try again.",
-    "errorDownload": "Couldn't download right now. Try again."
+    "errorDownload": "Couldn't download right now. Try again.",
+    "selectAll": "Select all",
+    "selectOne": "Select this audio",
+    "selectedLabel": "{n} selected",
+    "deleteSelected": "Delete {n}",
+    "confirmBulkDeleteTitle": "Delete {n} audios?",
+    "confirmBulkDeleteBody": "The MP3s and scripts will be removed permanently. This cannot be undone.",
+    "errorBulkDelete": "{failed} audio(s) couldn't be deleted. The others were removed."
   },
   "settingsPage": {
     "title": "Settings",

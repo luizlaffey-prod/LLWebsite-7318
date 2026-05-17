@@ -345,7 +345,14 @@
     "confirmDelete": "Excluir agora",
     "errorLoad": "Não conseguimos carregar os áudios. Recarregue a página.",
     "errorDelete": "Não foi possível excluir. Tente novamente.",
-    "errorDownload": "Não conseguimos baixar agora. Tente novamente."
+    "errorDownload": "Não conseguimos baixar agora. Tente novamente.",
+    "selectAll": "Selecionar todos",
+    "selectOne": "Selecionar este áudio",
+    "selectedLabel": "{n} selecionado(s)",
+    "deleteSelected": "Excluir {n}",
+    "confirmBulkDeleteTitle": "Excluir {n} áudios?",
+    "confirmBulkDeleteBody": "Os MP3s e roteiros serão removidos permanentemente. Não dá para desfazer.",
+    "errorBulkDelete": "{failed} áudio(s) não puderam ser excluídos. Os demais foram removidos."
   },
   "settingsPage": {
     "title": "Configurações",
