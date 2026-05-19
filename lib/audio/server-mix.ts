@@ -37,6 +37,31 @@ export async function concatMp3Bytes(
 
     const outPath = join(dir, 'out.mp3');
 
+    // Common encode args:
+    //   -ac 2          force stereo output. ElevenLabs returns mono
+    //                  per voice call; without this every voice-only
+    //                  bulletin shipped as mono, which most playout
+    //                  systems reject or upmix poorly.
+    //   -af loudnorm   single-pass EBU R128 normaliser. I=-16 LUFS is
+    //                  the podcast standard (safer headroom than the
+    //                  streaming -14 LUFS once a station's compressor
+    //                  hits). TP=-1.5 dBTP keeps peaks below clipping.
+    //   -b:a 192k      voice clarity bump over the old 128k. ~25%
+    //                  bigger file, indistinguishable from 256k on
+    //                  speech.
+    const ENCODE_ARGS = [
+      '-c:a',
+      'libmp3lame',
+      '-b:a',
+      '192k',
+      '-ar',
+      '44100',
+      '-ac',
+      '2',
+      '-af',
+      'loudnorm=I=-16:TP=-1.5:LRA=11',
+    ];
+
     if (chunks.length === 1) {
       await runFfmpeg([
         '-y',
@@ -45,12 +70,7 @@ export async function concatMp3Bytes(
         'error',
         '-i',
         files[0],
-        '-c:a',
-        'libmp3lame',
-        '-b:a',
-        '128k',
-        '-ar',
-        '44100',
+        ...ENCODE_ARGS,
         outPath,
       ]);
     } else {
@@ -74,12 +94,7 @@ export async function concatMp3Bytes(
         '0',
         '-i',
         listPath,
-        '-c:a',
-        'libmp3lame',
-        '-b:a',
-        '128k',
-        '-ar',
-        '44100',
+        ...ENCODE_ARGS,
         outPath,
       ]);
     }
@@ -127,6 +142,20 @@ export async function mixVoiceAndBackgroundServerSide(
       writeFile(bgPath, bgBytes),
     ]);
 
+    // Mix chain:
+    //   [1:a]volume=N[bg]            → attenuate the bg track.
+    //   [0:a][bg]amix=...             → blend voice + bg.
+    //   ,aresample=44100              → defensive resample so the
+    //                                   downstream loudnorm sees a
+    //                                   known sample rate.
+    //   ,loudnorm=I=-16:TP=-1.5       → EBU R128 single-pass; brings
+    //                                   the mix to -16 LUFS so faint
+    //                                   bulletins don't ship quiet.
+    //   ,aformat=channel_layouts=stereo
+    //                                 → guarantees 2 channels even if
+    //                                   the bg was mono, so playout
+    //                                   systems get the format they
+    //                                   expect.
     await runFfmpeg([
       '-y',
       '-hide_banner',
@@ -139,11 +168,11 @@ export async function mixVoiceAndBackgroundServerSide(
       '-i',
       bgPath,
       '-filter_complex',
-      `[1:a]volume=${bgGain}[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=0`,
+      `[1:a]volume=${bgGain}[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=0,aresample=44100,loudnorm=I=-16:TP=-1.5:LRA=11,aformat=channel_layouts=stereo`,
       '-c:a',
       'libmp3lame',
       '-b:a',
-      '128k',
+      '192k',
       '-ar',
       '44100',
       outPath,
