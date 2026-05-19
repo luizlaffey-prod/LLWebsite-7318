@@ -71,6 +71,13 @@
       "when": 1779584000000,
       "tag": "0009_automation_weather_city",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1779585000000,
+      "tag": "0010_automation_transition_effects",
+      "breakpoints": true
     }
   ]
 }

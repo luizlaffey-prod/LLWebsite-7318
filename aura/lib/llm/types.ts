@@ -4,6 +4,13 @@ export interface ScriptBlock {
   text: string;
   emotion: Emotion;
   duracaoSegundos: number;
+  /**
+   * Topic the block belongs to (e.g. 'politics', 'sports', 'weather').
+   * Used by the audio pipeline to insert transition stings between
+   * topic changes — when undefined or matching the previous block's
+   * category, no sting is inserted.
+   */
+  category?: string;
 }
 
 export interface ScriptGenerationInput {

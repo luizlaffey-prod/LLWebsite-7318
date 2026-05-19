@@ -299,6 +299,8 @@
     "weatherCityRequired": "Escribe una ciudad — sin esto, el clima no entrará al boletín.",
     "bgTrack": "URL de pista de fondo",
     "duckAudio": "Auto-duck bajo la voz",
+    "transitionEffects": "Efecto sonoro entre temas",
+    "transitionEffectsHint": "Inserta un whoosh corto cuando cambia el tema (política → economía → clima).",
     "enabled": "Activa",
     "enabledHint": "Pausa sin perder la programación.",
     "save": "Guardar automatización",

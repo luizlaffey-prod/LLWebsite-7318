@@ -338,6 +338,7 @@ export const automationSchedule = pgTable(
     // (which scopes the news search) so global automations can still
     // ship local weather. Falls back to `location` when null.
     weatherCity: text('weather_city'),
+    transitionEffects: boolean('transition_effects').notNull().default(true),
     bias: biasEnum('bias').notNull().default('center'),
     timezone: text('timezone').notNull().default('UTC'),
     enabled: boolean('enabled').notNull().default(true),
