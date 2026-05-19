@@ -146,19 +146,31 @@ export async function mixVoiceAndBackgroundServerSide(
     ]);
 
     // Mix chain:
+    //   [1:a]aloop=loop=-1:size=...   → in-filter loop of the bg
+    //                                   stream. Replaces the input-
+    //                                   level -stream_loop -1 flag,
+    //                                   which choked on short bg
+    //                                   tracks with "frame duplication
+    //                                   too large, skipping" errors
+    //                                   when ffmpeg tried to fill the
+    //                                   gap to match a longer voice.
+    //                                   The filter-side loop operates
+    //                                   on decoded samples and handles
+    //                                   the timestamps cleanly.
     //   [0:a]volume=4dB[v]            → bump voice the same +4dB the
-    //                                   voice-only path applies, so
-    //                                   bulletins with and without bg
-    //                                   sit at the same perceived level.
-    //   [1:a]volume=N[bg]             → attenuate the bg track.
-    //   [v][bg]amix=...                → blend.
-    //   ,alimiter=limit=0.92           → safety against peaks after the
-    //                                   sum.
+    //                                   voice-only path applies.
+    //   [bgLoop]volume=N[bg]          → attenuate the bg.
+    //   [v][bg]amix=duration=first    → blend, truncate to voice
+    //                                   length so a 30-min bg under a
+    //                                   60s voice doesn't produce a
+    //                                   29-min file.
+    //   ,alimiter=limit=0.92          → safety limiter.
     //   ,aformat=channel_layouts=stereo
-    //                                 → guarantees 2 channels even if
-    //                                   the bg was mono.
-    // Loudnorm removed (was flattening expressiveness in voice-only
-    // path; keeping the encode chain consistent across both paths).
+    //                                 → ensure 2 channels out even
+    //                                   if either input was mono.
+    // size=536870912 is the buffer cap for aloop (~3.4h of mono
+    // PCM at 44.1kHz / 1 sample per int32). Comfortably more than
+    // any realistic bulletin length.
     await runFfmpeg([
       '-y',
       '-hide_banner',
@@ -166,12 +178,10 @@ export async function mixVoiceAndBackgroundServerSide(
       'error',
       '-i',
       voicePath,
-      '-stream_loop',
-      '-1',
       '-i',
       bgPath,
       '-filter_complex',
-      `[0:a]volume=4dB[v];[1:a]volume=${bgGain}[bg];[v][bg]amix=inputs=2:duration=first:dropout_transition=0,alimiter=limit=0.92,aformat=channel_layouts=stereo`,
+      `[1:a]aloop=loop=-1:size=536870912[bgLoop];[0:a]volume=4dB[v];[bgLoop]volume=${bgGain}[bg];[v][bg]amix=inputs=2:duration=first:dropout_transition=0,alimiter=limit=0.92,aformat=channel_layouts=stereo`,
       '-c:a',
       'libmp3lame',
       '-b:a',
