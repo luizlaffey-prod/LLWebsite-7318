@@ -31,6 +31,11 @@ const Input = z.object({
   includeWeather: z.boolean().default(false),
   weatherFormat: z.enum(['separate', 'integrated']).default('separate'),
   weatherLocation: z.string().optional(),
+  // Optional topic-transition sting toggle. Defaults to false on
+  // manual gen so the existing "I just want voice" flow doesn't
+  // change behaviour; the news UI surfaces the toggle alongside
+  // weather so users can opt in.
+  transitionEffects: z.boolean().default(false),
   acceptOverage: z.boolean().default(false),
 });
 
@@ -154,6 +159,7 @@ export async function POST(req: Request) {
     const { audio, durationEstimateSeconds } = await synthesizeBulletin(script, {
       elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
       speed: parsed.data.speed,
+      transitionEffects: parsed.data.transitionEffects,
     });
 
     // 4. Upload to R2.

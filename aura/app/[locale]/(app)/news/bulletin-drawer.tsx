@@ -82,6 +82,7 @@ interface Props {
   includeWeather: boolean;
   weatherFormat: 'separate' | 'integrated';
   weatherLocation?: string;
+  transitionEffects?: boolean;
   onClose: () => void;
 }
 
@@ -230,6 +231,7 @@ function DrawerBody(props: Props) {
           includeWeather: props.includeWeather,
           weatherFormat: props.weatherFormat,
           weatherLocation: props.weatherLocation,
+          transitionEffects: props.transitionEffects ?? false,
           acceptOverage,
         }),
       });
@@ -327,7 +329,11 @@ function DrawerBody(props: Props) {
       const res = await fetch('/api/bulletin/regenerate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audioId, blocks }),
+        body: JSON.stringify({
+          audioId,
+          blocks,
+          transitionEffects: props.transitionEffects ?? false,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {

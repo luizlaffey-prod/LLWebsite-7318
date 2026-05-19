@@ -158,6 +158,8 @@
     "weatherCityHint": "Forecast will be for this city.",
     "weatherCityFallback": "Will use “{location}” (from Geographic Scope).",
     "weatherCityRequired": "Type a city — without it, weather won't be included in the bulletin.",
+    "transitionEffects": "Sound effect between topics",
+    "transitionEffectsHint": "Inserts a short whoosh when the topic changes (politics → economy → weather).",
     "search": "Aggregate news",
     "searchHint": "Configure the parameters and click search.",
     "searching": "Searching...",
