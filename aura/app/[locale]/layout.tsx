@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -24,6 +24,22 @@ export const metadata: Metadata = {
   title: 'AURA — Automated Urban Radio Audio',
   description:
     'AI-voiced news bulletins for radio stations. Search global news, generate emotional scripts, and ship broadcast-quality audio in minutes.',
+  // PWA installability hints. Next picks up the manifest from
+  // app/manifest.ts automatically and emits the <link rel="manifest">
+  // tag; these meta entries cover the rest.
+  applicationName: 'AURA',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'AURA',
+  },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#06080F',
+  initialScale: 1,
+  width: 'device-width',
 };
 
 export function generateStaticParams() {
