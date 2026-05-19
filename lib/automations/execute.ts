@@ -103,16 +103,24 @@ export async function runAutomationSlot(input: {
       language: automation.language,
       geographicScope: scope,
       location: automation.location ?? undefined,
-      limit: 6,
+      // Pull a wider pool than we'll actually read so each automation
+      // run lands on different stories — without this, the same
+      // automation firing at 9am every weekday would always pick the
+      // most recent article first, which feels stale on day two.
+      limit: 20,
     });
 
-    const headline = articles[0];
-    if (!headline) {
+    if (articles.length === 0) {
       throw new Error('no_articles_found');
     }
+    // Shuffle so successive runs pick a different rotation. The
+    // aggregator already sorted by recency / source quality; the
+    // shuffle introduces variety without throwing out signal.
+    const shuffled = shuffleInPlace(articles.slice());
+    const headline = shuffled[0]!;
 
-    // 2) Build content (top article + supporting bullets).
-    const newsContent = articles
+    // 2) Build content (4 stories Claude can weave into the bulletin).
+    const newsContent = shuffled
       .slice(0, 4)
       .map((a, i) => `${i + 1}. ${a.title} — ${a.description}`)
       .join('\n\n');
@@ -287,6 +295,31 @@ export async function runAutomationSlot(input: {
 }
 
 /**
+ * Returns the JS Date.getDay() weekday number (0=Sun..6=Sat) for the
+ * given instant evaluated in `timezone`. Used by the cron tick filter
+ * so a slot configured for "only Mon/Wed/Fri" knows what day it is in
+ * the schedule's local time, not UTC.
+ */
+export function weekdayInTimezone(reference: Date, timezone: string): number {
+  // Intl.DateTimeFormat with `weekday: 'short'` returns "Mon", "Tue",
+  // etc. in en-US — stable enough to map to a number cheaply.
+  const wd = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'short',
+  }).format(reference);
+  const map: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  return map[wd] ?? 0;
+}
+
+/**
  * Returns the next UTC Date matching the slot's HH:mm in the schedule's
  * configured timezone. If today's slot has already passed, returns
  * tomorrow's instant.
@@ -371,4 +404,17 @@ function computeSlotInstant(
   const tzMinutesActual = candidateTzHour * 60 + candidateTzMinute;
   const offsetMin = tzMinutesActual - (h * 60 + m);
   return new Date(candidate - offsetMin * 60_000);
+}
+
+/**
+ * Fisher–Yates shuffle. Mutates and returns the array so callers can
+ * chain. Used to randomise article selection inside automations so a
+ * recurring slot doesn't always pick the same most-recent story.
+ */
+function shuffleInPlace<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+  }
+  return arr;
 }

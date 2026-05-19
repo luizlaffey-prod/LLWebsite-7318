@@ -313,6 +313,13 @@ export interface ScheduleSlot {
   /** Local time HH:mm (timezone applied at run time). */
   time: string;
   categories: string[];
+  /**
+   * Days of the week this slot fires on, as JS Date.getDay() values
+   * (0=Sunday, 1=Monday, … 6=Saturday). Undefined or empty array
+   * means "every day" (legacy behavior — rows written before this
+   * field existed). Evaluated in the schedule's timezone, not UTC.
+   */
+  daysOfWeek?: number[];
 }
 
 export const automationSchedule = pgTable(

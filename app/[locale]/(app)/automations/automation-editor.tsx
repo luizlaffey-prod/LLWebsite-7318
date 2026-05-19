@@ -48,6 +48,19 @@ const CATEGORIES = [
   'culture',
 ] as const;
 
+// JS Date.getDay() encoding: 0=Sun, 1=Mon, ..., 6=Sat. UI puts Mon
+// first because that's how every radio program grid is read, but the
+// stored values keep the JS numeric convention to match server code.
+const WEEKDAYS: { value: number; key: string }[] = [
+  { value: 1, key: 'mon' },
+  { value: 2, key: 'tue' },
+  { value: 3, key: 'wed' },
+  { value: 4, key: 'thu' },
+  { value: 5, key: 'fri' },
+  { value: 6, key: 'sat' },
+  { value: 0, key: 'sun' },
+];
+
 
 interface AutomationLike extends AutomationInputType {
   id: string;
@@ -71,6 +84,7 @@ interface Props {
 interface Slot {
   time: string;
   categories: string[];
+  daysOfWeek?: number[];
 }
 
 /**
@@ -383,6 +397,61 @@ export function AutomationEditor({
                         </button>
                       );
                     })}
+                  </div>
+
+                  <div className="mt-3 border-t border-border/60 pt-3">
+                    <div className="mb-1.5 text-xs uppercase tracking-wider text-text-muted">
+                      {t('daysOfWeek')}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {WEEKDAYS.map(({ value, key }) => {
+                        const currentDays = slot.daysOfWeek ?? [];
+                        // Empty array means "every day". Show all chips as
+                        // active when that's the case, but toggle into a
+                        // restricted set the moment the user clicks one.
+                        const everyDay = currentDays.length === 0;
+                        const active =
+                          everyDay || currentDays.includes(value);
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => {
+                              const base = everyDay
+                                ? [0, 1, 2, 3, 4, 5, 6]
+                                : currentDays;
+                              const next = base.includes(value)
+                                ? base.filter((d) => d !== value)
+                                : [...base, value].sort();
+                              // If the user toggled back to "all days",
+                              // collapse to undefined so the wire shape
+                              // stays clean and the cron treats it as
+                              // every day.
+                              const collapsed =
+                                next.length === 7 ? undefined : next;
+                              updateSlot(idx, { ...slot, daysOfWeek: collapsed });
+                            }}
+                            className={
+                              'h-7 w-7 rounded-full border text-[10px] font-medium uppercase tracking-wider transition-colors ' +
+                              (active
+                                ? 'border-teal/40 bg-teal/10 text-teal'
+                                : 'border-border bg-elevated text-text-muted hover:text-text-primary')
+                            }
+                            aria-pressed={active}
+                            aria-label={t(`day_${key}`)}
+                          >
+                            {t(`day_${key}_short`)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1.5 text-xs text-text-muted">
+                      {(slot.daysOfWeek ?? []).length === 0
+                        ? t('daysOfWeekEveryDay')
+                        : t('daysOfWeekCount', {
+                            n: slot.daysOfWeek?.length ?? 0,
+                          })}
+                    </p>
                   </div>
                 </div>
               ))}

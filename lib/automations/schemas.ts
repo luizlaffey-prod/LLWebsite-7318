@@ -5,6 +5,10 @@ export const ScheduleSlotSchema = z.object({
     .string()
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'invalid_time'),
   categories: z.array(z.string()).min(1),
+  // JS Date.getDay() encoding: 0=Sun, 1=Mon, ..., 6=Sat. Empty or
+  // omitted = fire every day (preserves the original behavior for
+  // automations created before this field existed).
+  daysOfWeek: z.array(z.number().int().min(0).max(6)).optional(),
 });
 
 export const AutomationInput = z.object({
