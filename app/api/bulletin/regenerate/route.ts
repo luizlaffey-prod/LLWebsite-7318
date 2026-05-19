@@ -20,6 +20,7 @@ const BlockSchema = z.object({
 const Input = z.object({
   audioId: z.string().uuid(),
   blocks: z.array(BlockSchema).min(1),
+  transitionEffects: z.boolean().default(false),
 });
 
 export async function POST(req: Request) {
@@ -69,6 +70,7 @@ export async function POST(req: Request) {
         elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
         speed: row.speed,
         fast: true, // regenerations use Flash model to keep cost down
+        transitionEffects: parsed.data.transitionEffects,
       }
     );
     const key = audioKey(session.user.id, row.id);

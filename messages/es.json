@@ -158,6 +158,8 @@
     "weatherCityHint": "El pronóstico será de esta ciudad.",
     "weatherCityFallback": "Se usará “{location}” (del Alcance Geográfico).",
     "weatherCityRequired": "Escribe una ciudad — sin esto, el clima no entrará al boletín.",
+    "transitionEffects": "Efecto sonoro entre temas",
+    "transitionEffectsHint": "Inserta un whoosh corto cuando cambia el tema (política → economía → clima).",
     "search": "Agregar noticias",
     "searchHint": "Configura los parámetros y haz clic en buscar.",
     "searching": "Buscando...",

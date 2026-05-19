@@ -72,6 +72,7 @@ export function NewsClient({ locale }: { locale: Locale }) {
   const [location, setLocation] = useState('');
   const [includeWeather, setIncludeWeather] = useState(false);
   const [weatherFormat, setWeatherFormat] = useState<'separate' | 'integrated'>('separate');
+  const [transitionEffects, setTransitionEffects] = useState(true);
   // City for the weather block. Decoupled from the news-search `location`
   // so the operator can pick global news with local weather. Falls back to
   // `location` when this is blank — that's the placeholder hint shown in
@@ -425,6 +426,21 @@ export function NewsClient({ locale }: { locale: Locale }) {
                 </div>
               )}
             </div>
+
+            <div className="md:col-span-2 flex flex-col gap-1 rounded-md border border-border bg-elevated/40 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div>
+                <div className="text-sm font-medium">
+                  {t('transitionEffects')}
+                </div>
+                <div className="mt-0.5 text-xs text-text-muted">
+                  {t('transitionEffectsHint')}
+                </div>
+              </div>
+              <Switch
+                checked={transitionEffects}
+                onCheckedChange={(v) => setTransitionEffects(v)}
+              />
+            </div>
           </div>
 
           <div className="mt-6 flex items-center justify-between gap-4 border-t border-border pt-6">
@@ -580,6 +596,7 @@ export function NewsClient({ locale }: { locale: Locale }) {
         weatherLocation={
           (weatherCity.trim() || location || '').trim() || undefined
         }
+        transitionEffects={transitionEffects}
         onClose={() => setSelected(null)}
       />
     </div>
