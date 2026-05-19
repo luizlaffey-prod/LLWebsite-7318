@@ -26,6 +26,32 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
     autoSignIn: true,
+    // Better Auth calls this when the client invokes
+    // authClient.forgetPassword({ email, redirectTo }). It mints a
+    // single-use token under the hood and hands us the ready-to-use
+    // URL. We render the AURA-branded email and ship via Resend.
+    // When RESEND_API_KEY isn't set, sendResetPasswordEmail throws and
+    // the request 500s — same behaviour as transactional sends today.
+    sendResetPassword: async ({
+      user,
+      url,
+    }: {
+      user: {
+        email: string;
+        name?: string | null;
+        radioName?: string | null;
+        locale?: 'en' | 'pt' | 'es' | null;
+      };
+      url: string;
+    }) => {
+      const { sendResetPasswordEmail } = await import('@/lib/email/send');
+      await sendResetPasswordEmail({
+        to: user.email,
+        radioName: user.radioName ?? user.name ?? '',
+        locale: (user.locale ?? 'en') as 'en' | 'pt' | 'es',
+        resetUrl: url,
+      });
+    },
   },
   // Stamp every new user with a 7-day trial window. trialEndsAt is
   // nullable in the schema and nothing else was setting it on signup,

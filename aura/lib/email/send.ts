@@ -2,7 +2,12 @@ import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import { WelcomeEmail } from './templates/welcome';
 import { TrialEndingEmail } from './templates/trial-ending';
-import { welcomeStrings, trialEndingStrings } from './strings';
+import { ResetPasswordEmail } from './templates/reset-password';
+import {
+  welcomeStrings,
+  trialEndingStrings,
+  resetPasswordStrings,
+} from './strings';
 import type { Locale } from '@/i18n';
 
 function getResend(): Resend {
@@ -58,6 +63,31 @@ export async function sendTrialEndingEmail(input: {
       locale: input.locale,
       upgradeUrl: `${baseUrl}/${input.locale}/settings/billing`,
       manageUrl: `${baseUrl}/${input.locale}/settings/billing`,
+    })
+  );
+
+  return resend.emails.send({
+    from: fromAddress(),
+    to: input.to,
+    subject: s.subject,
+    html,
+  });
+}
+
+export async function sendResetPasswordEmail(input: {
+  to: string;
+  radioName: string;
+  locale: Locale;
+  resetUrl: string;
+}) {
+  const resend = getResend();
+  const s = resetPasswordStrings(input.locale);
+
+  const html = await render(
+    ResetPasswordEmail({
+      radioName: input.radioName,
+      locale: input.locale,
+      resetUrl: input.resetUrl,
     })
   );
 

@@ -101,6 +101,16 @@
     "signupCta": "Regístrate",
     "hasAccount": "¿Ya tienes cuenta?",
     "loginCta": "Inicia sesión",
+    "forgotLink": "Olvidé mi contraseña",
+    "forgotTitle": "Recuperar acceso",
+    "forgotSubtitle": "Ingresa el correo de la cuenta. Te enviaremos un enlace para crear una nueva contraseña.",
+    "forgotSubmit": "Enviar enlace",
+    "forgotSentBody": "Si la cuenta existe, te enviamos un enlace para crear una nueva contraseña. Revisa tu bandeja de entrada — y la carpeta de spam, por las dudas.",
+    "forgotBackToLogin": "Volver al login",
+    "resetTitle": "Nueva contraseña",
+    "resetSubtitle": "Elige una contraseña fuerte. Mínimo 8 caracteres.",
+    "resetSubmit": "Establecer nueva contraseña",
+    "newPassword": "Nueva contraseña",
     "errors": {
       "invalidEmail": "Ingresa un correo válido.",
       "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
@@ -109,7 +119,9 @@
       "generic": "Algo salió mal. Inténtalo de nuevo.",
       "invalidCredentials": "Correo o contraseña inválidos.",
       "emailInUse": "Ya existe una cuenta con este correo.",
-      "ipLimit": "Detectamos varias cuentas creadas desde esta red recientemente. Espera unos días o contáctanos para desbloquearla manualmente."
+      "ipLimit": "Detectamos varias cuentas creadas desde esta red recientemente. Espera unos días o contáctanos para desbloquearla manualmente.",
+      "invalidToken": "El enlace de recuperación es inválido. Solicita uno nuevo.",
+      "expiredToken": "El enlace de recuperación expiró (vale por 1 hora). Solicita uno nuevo."
     },
     "submitting": "Procesando..."
   },

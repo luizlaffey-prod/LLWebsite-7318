@@ -101,6 +101,16 @@
     "signupCta": "Cadastre-se",
     "hasAccount": "Já tem conta?",
     "loginCta": "Entrar",
+    "forgotLink": "Esqueci minha senha",
+    "forgotTitle": "Recuperar acesso",
+    "forgotSubtitle": "Informe o e-mail da conta. Vamos te mandar um link pra criar uma nova senha.",
+    "forgotSubmit": "Enviar link de recuperação",
+    "forgotSentBody": "Se essa conta existir, mandamos um link pra criar uma nova senha. Olha sua caixa de entrada — e a pasta de spam, por garantia.",
+    "forgotBackToLogin": "Voltar pro login",
+    "resetTitle": "Nova senha",
+    "resetSubtitle": "Escolha uma senha forte. Mínimo 8 caracteres.",
+    "resetSubmit": "Definir nova senha",
+    "newPassword": "Nova senha",
     "errors": {
       "invalidEmail": "Informe um email válido.",
       "passwordTooShort": "A senha deve ter no mínimo 8 caracteres.",
@@ -109,7 +119,9 @@
       "generic": "Algo deu errado. Tente novamente.",
       "invalidCredentials": "Email ou senha inválidos.",
       "emailInUse": "Já existe uma conta com este email.",
-      "ipLimit": "Identificamos várias contas criadas dessa rede recentemente. Aguarde alguns dias ou entre em contato pra liberarmos manualmente."
+      "ipLimit": "Identificamos várias contas criadas dessa rede recentemente. Aguarde alguns dias ou entre em contato pra liberarmos manualmente.",
+      "invalidToken": "O link de recuperação é inválido. Peça um novo.",
+      "expiredToken": "O link de recuperação expirou (vale por 1 hora). Peça um novo."
     },
     "submitting": "Processando..."
   },
