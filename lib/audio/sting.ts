@@ -1,33 +1,42 @@
-import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
+import { spawn } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { uploadAudio } from '@/lib/storage/r2';
 
-const SFX_ENDPOINT = 'https://api.elevenlabs.io/v1/sound-generation';
-const R2_KEY = 'system/sting-default.mp3';
-const STING_DURATION_S = 0.8;
-const STING_PROMPT =
-  'a soft, warm radio broadcast whoosh transition sting, 0.8 seconds, gentle airy sweep, no music, no voice, mellow';
+const R2_KEY = 'system/transition-silence.mp3';
+// 1.2s sits in the middle of the user's "1 to 1.5s" suggestion — long
+// enough to land as a clear breath between stories, short enough to
+// not feel like dead air. Stereo 44.1kHz / 192kbps matches the encode
+// pipeline so the concat demuxer sees identical stream params on
+// both sides of the silence and doesn't produce the "scratched
+// record" artifact we were getting when stitching the ElevenLabs SFX
+// sting in.
+const SILENCE_DURATION_S = 1.2;
 
 // Module-level cache so warm Vercel instances reuse the bytes across
-// invocations without re-fetching. Cold starts pay the R2 fetch (or
-// the one-time ElevenLabs generation) once.
+// invocations without re-fetching or re-running ffmpeg.
 let cachedBytes: Uint8Array | null = null;
 
 /**
- * Returns the MP3 bytes of the AURA topic-transition sting. Generation
- * happens at most once across the whole deployment lifetime: first
- * caller hits ElevenLabs Sound Effects, uploads the result to R2 at
- * `system/sting-default.mp3`, and every subsequent caller (across any
- * function instance) pulls from there.
+ * Returns the MP3 bytes of the transition gap that gets stitched
+ * between consecutive blocks whose story (categoria) changes. Was
+ * an ElevenLabs SFX whoosh — that produced audible glitches at the
+ * concat boundary because the sting's stream params differed from
+ * the voice MP3 enough to confuse the demuxer. Now it's just clean
+ * silence at exactly the same sample-rate / channel-layout / bitrate
+ * the rest of the pipeline targets, which makes the concat seamless.
  *
- * Returns null when ELEVENLABS_API_KEY is not set OR when both R2 and
- * ElevenLabs fail — callers should skip transition insertion silently
- * rather than fail the whole bulletin.
+ * Generated once per deployment by ffmpeg's anullsrc + libmp3lame,
+ * uploaded to R2 at `system/transition-silence.mp3`, and reused
+ * forever. Returns null on any failure so the caller falls back to
+ * a plain concat.
  */
 export async function getTransitionStingBytes(): Promise<Uint8Array | null> {
   if (cachedBytes) return cachedBytes;
 
-  // Try R2 first — cheap, no API cost, available across all instances
-  // once any deploy has uploaded the asset.
+  // R2 first — cheapest, available across all function instances.
   const r2Url = guessR2PublicUrl(R2_KEY);
   if (r2Url) {
     try {
@@ -38,54 +47,52 @@ export async function getTransitionStingBytes(): Promise<Uint8Array | null> {
         return buf;
       }
     } catch {
-      // fall through to generation
+      /* fall through to local generation */
     }
   }
 
-  // Fall back to generating via ElevenLabs SFX.
-  const key = process.env.ELEVENLABS_API_KEY;
-  if (!key) {
-    console.warn(
-      '[sting] No cached sting in R2 and ELEVENLABS_API_KEY is not set'
-    );
-    return null;
-  }
-
+  // Local ffmpeg generation — runs once per deploy if R2 doesn't have
+  // it yet. anullsrc emits stereo silence at the chosen sample rate;
+  // libmp3lame encodes to MP3 with the same params as the rest of the
+  // pipeline (192k, 44.1kHz, stereo) so the concat demuxer is happy.
   let bytes: Uint8Array;
+  const dir = await mkdtemp(join(tmpdir(), 'aura-silence-'));
+  const outPath = join(dir, 'silence.mp3');
   try {
-    const res = await fetchWithRetry(
-      SFX_ENDPOINT,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': key,
-          'Content-Type': 'application/json',
-          Accept: 'audio/mpeg',
-        },
-        body: JSON.stringify({
-          text: STING_PROMPT,
-          duration_seconds: STING_DURATION_S,
-          // Slight bias toward "prompt accuracy" over creative variation
-          // so we get a sting that actually sounds like a broadcast sting.
-          prompt_influence: 0.7,
-        }),
-      },
-      { timeoutMs: 60_000 }
-    );
-    bytes = new Uint8Array(await res.arrayBuffer());
+    await runFfmpeg([
+      '-y',
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      `anullsrc=channel_layout=stereo:sample_rate=44100`,
+      '-t',
+      String(SILENCE_DURATION_S),
+      '-c:a',
+      'libmp3lame',
+      '-b:a',
+      '192k',
+      '-ar',
+      '44100',
+      '-ac',
+      '2',
+      outPath,
+    ]);
+    bytes = new Uint8Array(await readFile(outPath));
   } catch (err) {
-    const status = err instanceof FetchError ? err.status : 'unknown';
-    console.warn('[sting] ElevenLabs SFX generation failed', status, err);
+    console.warn('[sting] local silence generation failed', err);
     return null;
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => {});
   }
 
-  // Persist to R2 so the next cold start (and every other deploy
-  // instance) reuses this exact file. Best-effort: if upload fails the
-  // caller still gets the bytes we just generated.
+  // Best-effort R2 upload so the next cold start hits the fast path.
   try {
     await uploadAudio(R2_KEY, bytes, 'audio/mpeg');
   } catch (err) {
-    console.warn('[sting] R2 upload failed; sting will regenerate next call', err);
+    console.warn('[sting] R2 upload failed; will regenerate next call', err);
   }
 
   cachedBytes = bytes;
@@ -97,4 +104,21 @@ function guessR2PublicUrl(key: string): string | null {
   if (!publicHost) return null;
   const base = publicHost.replace(/\/$/, '');
   return `${base}/${key}`;
+}
+
+function runFfmpeg(args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(ffmpegInstaller.path, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stderr = '';
+    proc.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    proc.on('error', (err) => reject(err));
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`ffmpeg exited ${code}: ${stderr.slice(-400)}`));
+    });
+  });
 }
