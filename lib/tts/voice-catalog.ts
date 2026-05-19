@@ -54,8 +54,12 @@ export const VOICE_CATALOG: VoiceSeed[] = [
     slug: 'sarah',
     elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL',
     name: 'Sarah',
-    description: 'Bright female news reader.',
-    languages: ['en', 'pt', 'es'],
+    description: 'Bright female news reader (English only).',
+    // PT/ES dropped on beta-tester feedback: Sarah's multilingual_v2
+    // render picks up a strong "R de interior" caipira accent in
+    // Portuguese that doesn't suit a news anchor. Rachel handles PT
+    // significantly better at the same tier.
+    languages: ['en'],
     gender: 'female',
     style: 'reader',
     accent: 'american',
