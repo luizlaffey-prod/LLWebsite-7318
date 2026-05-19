@@ -73,6 +73,17 @@ export const auth = betterAuth({
       locale: { type: 'string', required: false, input: true, defaultValue: 'en' },
       timezone: { type: 'string', required: false, defaultValue: 'UTC' },
       plan: { type: 'string', required: false, defaultValue: 'trial' },
+      // emailNotifications carries the marketing opt-in choice from
+      // the signup form. Defaults to false so silence is consent:
+      // operators only get product / marketing email when they
+      // explicitly check the box. Transactional sends (reset,
+      // trial-ending) are not gated by this column.
+      emailNotifications: {
+        type: 'boolean',
+        required: false,
+        input: true,
+        defaultValue: false,
+      },
     },
   },
 });
