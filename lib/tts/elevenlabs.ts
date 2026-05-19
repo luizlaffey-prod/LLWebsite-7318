@@ -55,6 +55,12 @@ export interface SynthesizeOptions {
   fast?: boolean;
   /** Emotion for this block — drives voice_settings tweaks. */
   emotion?: Emotion;
+  /**
+   * When true, insert a short transition sting between consecutive
+   * blocks whose `category` differs. Falls back silently to a plain
+   * concat if the sting can't be loaded (no key, network issue).
+   */
+  transitionEffects?: boolean;
 }
 
 async function synthesizeBlock(
@@ -139,14 +145,45 @@ export async function synthesizeBulletin(
   const chunks: Uint8Array[] = [];
   let durationEstimate = 0;
 
+  // Lazy-load the sting once if transition effects are requested.
+  // null when the toggle is off; resolved (or stays null) on first
+  // category change.
+  let stingBytes: Uint8Array | null | undefined = opts.transitionEffects
+    ? undefined
+    : null;
+  let previousCategory: string | undefined;
+
   for (const block of blocks) {
     if (!block.text.trim()) continue;
+
+    // Insert a sting between consecutive blocks whose category
+    // differs (skipping the first block — no transition needed before
+    // it). Same-category blocks remain seamless.
+    if (
+      opts.transitionEffects &&
+      previousCategory &&
+      block.category &&
+      block.category !== previousCategory
+    ) {
+      if (stingBytes === undefined) {
+        const { getTransitionStingBytes } = await import('@/lib/audio/sting');
+        stingBytes = await getTransitionStingBytes();
+      }
+      if (stingBytes) {
+        chunks.push(stingBytes);
+        // Sting is ~0.8s; counted toward total duration so the
+        // self-correcting script loop knows about it.
+        durationEstimate += 1;
+      }
+    }
+
     // Send the script text clean — multilingual_v2 would read inline cues
     // like "[seriousness]" aloud. The voice shaping comes from per-emotion
     // voice_settings instead.
     const audio = await synthesizeBlock(block.text, { ...opts, emotion: block.emotion });
     chunks.push(audio);
     durationEstimate += block.duracaoSegundos;
+    if (block.category) previousCategory = block.category;
   }
 
   const merged = await concatMp3Bytes(chunks);

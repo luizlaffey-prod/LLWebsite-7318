@@ -170,6 +170,7 @@ export async function POST(req: Request) {
       geographicScope: parsed.data.geographicScope,
       location: parsed.data.location ?? null,
       weatherCity: parsed.data.weatherCity ?? null,
+      transitionEffects: parsed.data.transitionEffects,
       bias: parsed.data.bias,
       timezone: parsed.data.timezone,
       enabled: parsed.data.enabled,

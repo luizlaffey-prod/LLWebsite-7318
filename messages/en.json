@@ -299,6 +299,8 @@
     "weatherCityRequired": "Type a city — without it, weather won't be included in the bulletin.",
     "bgTrack": "Background track URL",
     "duckAudio": "Auto-duck under voice",
+    "transitionEffects": "Sound effect between topics",
+    "transitionEffectsHint": "Inserts a short whoosh when the topic changes (politics → economy → weather).",
     "enabled": "Enabled",
     "enabledHint": "Toggle to pause without losing the schedule.",
     "save": "Save automation",

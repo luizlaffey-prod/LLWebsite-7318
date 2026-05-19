@@ -23,6 +23,10 @@ export const AutomationInput = z.object({
   // Optional dedicated city for the weather block. Falls back to
   // `location` when blank.
   weatherCity: z.string().optional().nullable(),
+  // Whether to insert a short transition sting between blocks whose
+  // topic changes. Default ON because the beta tester explicitly
+  // asked for it and the cost is one cached audio file.
+  transitionEffects: z.boolean().default(true),
   bias: z.enum(['left', 'center', 'right']).default('center'),
   timezone: z.string().default('UTC'),
   enabled: z.boolean().default(true),

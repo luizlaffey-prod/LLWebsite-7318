@@ -12,6 +12,11 @@ const ScriptResponse = z.object({
         texto: z.string().min(1),
         emocao: z.enum(['ENTHUSIASM', 'SERIOUSNESS', 'CONCERN', 'NEUTRAL', 'DRAMATIC']),
         duracao_segundos: z.number().min(1).max(20),
+        // Optional topic tag. Free-form short slug ("politics",
+        // "tech", "weather", "sports", etc.). The audio pipeline uses
+        // it to insert a transition sting between consecutive blocks
+        // whose categoria changes.
+        categoria: z.string().min(1).max(40).optional(),
       })
     )
     .min(1),
@@ -32,6 +37,7 @@ function buildSystemPrompt(): string {
     'Each block is 5–10 seconds when spoken at normal pace (~12–18 words). Use emotion tags to coach the voice: ENTHUSIASM for openings/positive, SERIOUSNESS for hard news, CONCERN for risks/warnings, NEUTRAL for facts/transitions, DRAMATIC for sparingly used emphasis.',
     'Never use time-of-day greetings or sign-offs ("good morning", "good evening", "bom dia", "boa noite", "buenos días", "buenas noches", etc.). Bulletins are generated once and may be played at any local time, so a fixed greeting will be wrong for most listeners. Open with the news itself or a neutral lead ("Nas notícias de hoje", "In today\'s headlines", "En los titulares de hoy").',
     'Weather handling depends on format. format=integrated: weave the weather facts into the last 1–2 news blocks naturally, in the same sentence as the story they sit beside. format=separate: produce one or two dedicated trailing blocks AFTER the final news block — these blocks must talk ONLY about weather, must not mention any news topic, must open with a clear transition ("Now, the weather.", "Agora, a previsão.", "Y ahora, el clima."), and must be the last items in the array. Never blend news + weather into the same block when format=separate.',
+    'Tag every block with a short categoria slug ("politics", "sports", "tech", "economy", "health", "weather", etc.) — pick whichever topic best describes the story in that block. Keep the slug stable across consecutive blocks of the same story (no need to vary it). The audio pipeline uses this tag to insert a short transition effect between topic changes; missing or repeated tags suppress the effect, which is fine.',
   ].join(' ');
 }
 
@@ -54,7 +60,7 @@ function buildUserPrompt(
     correctionLine,
     '',
     'Return JSON only, with this exact shape:',
-    `{ "blocos": [{ "texto": "...", "emocao": "ENTHUSIASM|SERIOUSNESS|CONCERN|NEUTRAL|DRAMATIC", "duracao_segundos": <int 5-10> }] }`,
+    `{ "blocos": [{ "texto": "...", "emocao": "ENTHUSIASM|SERIOUSNESS|CONCERN|NEUTRAL|DRAMATIC", "duracao_segundos": <int 5-10>, "categoria": "<topic slug>" }] }`,
   ].join('\n');
 }
 
@@ -72,6 +78,7 @@ function parseResponse(text: string): ScriptBlock[] {
     text: b.texto,
     emotion: b.emocao as Emotion,
     duracaoSegundos: b.duracao_segundos,
+    category: b.categoria,
   }));
 }
 

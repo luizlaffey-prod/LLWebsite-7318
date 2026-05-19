@@ -299,6 +299,8 @@
     "weatherCityRequired": "Digite uma cidade — sem isso o clima não entra no boletim.",
     "bgTrack": "URL da trilha de fundo",
     "duckAudio": "Auto-duck sob a voz",
+    "transitionEffects": "Efeito sonoro entre temas",
+    "transitionEffectsHint": "Insere um whoosh curto quando o tema muda (política → economia → clima).",
     "enabled": "Ativada",
     "enabledHint": "Pause sem perder o agendamento.",
     "save": "Salvar automação",

@@ -184,6 +184,7 @@ export async function runAutomationSlot(input: {
     const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeBulletin(blocks, {
       elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
       speed: automation.speed,
+      transitionEffects: automation.transitionEffects,
     });
 
     // 7b) Optional server-side mix with the automation's background track.
