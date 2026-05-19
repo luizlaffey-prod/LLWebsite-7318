@@ -27,6 +27,13 @@ export const maxDuration = 300;
 //                      six attempts spread across the next hour.
 const FUTURE_TOLERANCE_MIN = 10;
 const PAST_TOLERANCE_MIN = 60;
+// Generate the bulletin LEAD_TIME_MIN minutes before its slot time so
+// the audio is finished, uploaded, and synced to the operator's local
+// folder BEFORE the on-air moment. A 9:00 slot starts cooking at
+// ~8:50 cron tick. The displayed scheduledFor on the execution row
+// stays as the original slot instant so history reads "9:00", not
+// "8:50".
+const LEAD_TIME_MIN = 10;
 // Per-automation throttle. A user with 12 slots that all line up in
 // the same window would otherwise burn the entire cron budget on one
 // automation before the cron's maxDuration kicks in. Two per tick
@@ -83,12 +90,14 @@ export async function GET(req: Request) {
         }
 
         // slotInstantToday returns today's slot instant in the schedule's
-        // timezone — past OR future. Asymmetric tolerance window:
-        // future = FUTURE_TOLERANCE_MIN (head-start one tick),
-        // past = PAST_TOLERANCE_MIN (aggressive backfill so a missed
-        // slot gets multiple cron ticks of recovery attempts).
+        // timezone — past OR future. Asymmetric tolerance window
+        // (FUTURE/PAST_TOLERANCE_MIN) around the LEAD-TIME-shifted
+        // instant: we want generation to START 10 min before the slot
+        // so the file is ready by air time, but the row still records
+        // the original slot instant for clean history.
         const due = slotInstantToday(slot.time, automation.timezone, now);
-        const driftMs = now.getTime() - due.getTime();
+        const effectiveDue = new Date(due.getTime() - LEAD_TIME_MIN * 60_000);
+        const driftMs = now.getTime() - effectiveDue.getTime();
         if (driftMs < 0 && Math.abs(driftMs) > FUTURE_TOLERANCE_MIN * 60_000) {
           continue;
         }
