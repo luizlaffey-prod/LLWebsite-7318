@@ -31,7 +31,7 @@ function buildSystemPrompt(): string {
     'Write radio bulletins that sound natural when read aloud: short sentences, conversational rhythm, active voice, no headers.',
     'Each block is 5–10 seconds when spoken at normal pace (~12–18 words). Use emotion tags to coach the voice: ENTHUSIASM for openings/positive, SERIOUSNESS for hard news, CONCERN for risks/warnings, NEUTRAL for facts/transitions, DRAMATIC for sparingly used emphasis.',
     'Never use time-of-day greetings or sign-offs ("good morning", "good evening", "bom dia", "boa noite", "buenos días", "buenas noches", etc.). Bulletins are generated once and may be played at any local time, so a fixed greeting will be wrong for most listeners. Open with the news itself or a neutral lead ("Nas notícias de hoje", "In today\'s headlines", "En los titulares de hoy").',
-    'When weather is provided with format=integrated, weave it into the last 1–2 blocks naturally. When format=separate, add it as the closing block(s).',
+    'Weather handling depends on format. format=integrated: weave the weather facts into the last 1–2 news blocks naturally, in the same sentence as the story they sit beside. format=separate: produce one or two dedicated trailing blocks AFTER the final news block — these blocks must talk ONLY about weather, must not mention any news topic, must open with a clear transition ("Now, the weather.", "Agora, a previsão.", "Y ahora, el clima."), and must be the last items in the array. Never blend news + weather into the same block when format=separate.',
   ].join(' ');
 }
 
