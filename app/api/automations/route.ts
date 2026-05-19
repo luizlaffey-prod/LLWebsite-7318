@@ -153,29 +153,41 @@ export async function POST(req: Request) {
     );
   }
 
-  const [created] = await db
-    .insert(automationSchedule)
-    .values({
-      userId: session.user.id,
-      name: parsed.data.name,
-      slots: parsed.data.slots,
-      durationSeconds: parsed.data.durationSeconds,
-      language: parsed.data.language,
-      voiceId: parsed.data.voiceId,
-      speed: parsed.data.speed,
-      bgTrackUrl: parsed.data.bgTrackUrl ?? null,
-      duckAudio: parsed.data.duckAudio,
-      includeWeather: parsed.data.includeWeather,
-      weatherFormat: parsed.data.weatherFormat,
-      geographicScope: parsed.data.geographicScope,
-      location: parsed.data.location ?? null,
-      weatherCity: parsed.data.weatherCity ?? null,
-      transitionEffects: parsed.data.transitionEffects,
-      bias: parsed.data.bias,
-      timezone: parsed.data.timezone,
-      enabled: parsed.data.enabled,
-    })
-    .returning({ id: automationSchedule.id });
+  try {
+    const [created] = await db
+      .insert(automationSchedule)
+      .values({
+        userId: session.user.id,
+        name: parsed.data.name,
+        slots: parsed.data.slots,
+        durationSeconds: parsed.data.durationSeconds,
+        language: parsed.data.language,
+        voiceId: parsed.data.voiceId,
+        speed: parsed.data.speed,
+        bgTrackUrl: parsed.data.bgTrackUrl ?? null,
+        duckAudio: parsed.data.duckAudio,
+        includeWeather: parsed.data.includeWeather,
+        weatherFormat: parsed.data.weatherFormat,
+        geographicScope: parsed.data.geographicScope,
+        location: parsed.data.location ?? null,
+        weatherCity: parsed.data.weatherCity ?? null,
+        transitionEffects: parsed.data.transitionEffects,
+        bias: parsed.data.bias,
+        timezone: parsed.data.timezone,
+        enabled: parsed.data.enabled,
+      })
+      .returning({ id: automationSchedule.id });
 
-  return NextResponse.json({ id: created.id });
+    return NextResponse.json({ id: created.id });
+  } catch (err) {
+    // Surface the underlying error so a missing-migration case
+    // (column does not exist, etc.) shows up in the operator's UI
+    // and Vercel logs instead of being swallowed as a generic 500.
+    const message = err instanceof Error ? err.message : 'unknown_error';
+    console.error('[automations] insert failed', message, err);
+    return NextResponse.json(
+      { error: 'insert_failed', message: message.slice(0, 300) },
+      { status: 500 }
+    );
+  }
 }
