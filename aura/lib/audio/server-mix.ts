@@ -38,17 +38,20 @@ export async function concatMp3Bytes(
     const outPath = join(dir, 'out.mp3');
 
     // Common encode args:
-    //   -ac 2          force stereo output. ElevenLabs returns mono
-    //                  per voice call; without this every voice-only
-    //                  bulletin shipped as mono, which most playout
-    //                  systems reject or upmix poorly.
-    //   -af loudnorm   single-pass EBU R128 normaliser. I=-16 LUFS is
-    //                  the podcast standard (safer headroom than the
-    //                  streaming -14 LUFS once a station's compressor
-    //                  hits). TP=-1.5 dBTP keeps peaks below clipping.
-    //   -b:a 192k      voice clarity bump over the old 128k. ~25%
-    //                  bigger file, indistinguishable from 256k on
-    //                  speech.
+    //   -ac 2            stereo output. ElevenLabs returns mono per
+    //                    voice call; libmp3lame upmixes by duplicating.
+    //   -af volume+alimiter
+    //                    +4dB simple gain (raises ElevenLabs' ~-23
+    //                    dBFS peak to ~-19, still no clipping) plus a
+    //                    safety limiter at 0.92 in case any block
+    //                    runs hotter. Earlier we used loudnorm here
+    //                    but single-pass loudnorm processes speech in
+    //                    3s blocks and audibly flattens the voice
+    //                    actor's expressiveness ("interpretação
+    //                    piorou" — beta tester). Simple gain keeps
+    //                    the rendered emotion intact and only fixes
+    //                    the "audio is too quiet" gap.
+    //   -b:a 192k        voice clarity bump.
     const ENCODE_ARGS = [
       '-c:a',
       'libmp3lame',
@@ -59,7 +62,7 @@ export async function concatMp3Bytes(
       '-ac',
       '2',
       '-af',
-      'loudnorm=I=-16:TP=-1.5:LRA=11',
+      'volume=4dB,alimiter=limit=0.92',
     ];
 
     if (chunks.length === 1) {
@@ -143,19 +146,19 @@ export async function mixVoiceAndBackgroundServerSide(
     ]);
 
     // Mix chain:
-    //   [1:a]volume=N[bg]            → attenuate the bg track.
-    //   [0:a][bg]amix=...             → blend voice + bg.
-    //   ,aresample=44100              → defensive resample so the
-    //                                   downstream loudnorm sees a
-    //                                   known sample rate.
-    //   ,loudnorm=I=-16:TP=-1.5       → EBU R128 single-pass; brings
-    //                                   the mix to -16 LUFS so faint
-    //                                   bulletins don't ship quiet.
+    //   [0:a]volume=4dB[v]            → bump voice the same +4dB the
+    //                                   voice-only path applies, so
+    //                                   bulletins with and without bg
+    //                                   sit at the same perceived level.
+    //   [1:a]volume=N[bg]             → attenuate the bg track.
+    //   [v][bg]amix=...                → blend.
+    //   ,alimiter=limit=0.92           → safety against peaks after the
+    //                                   sum.
     //   ,aformat=channel_layouts=stereo
     //                                 → guarantees 2 channels even if
-    //                                   the bg was mono, so playout
-    //                                   systems get the format they
-    //                                   expect.
+    //                                   the bg was mono.
+    // Loudnorm removed (was flattening expressiveness in voice-only
+    // path; keeping the encode chain consistent across both paths).
     await runFfmpeg([
       '-y',
       '-hide_banner',
@@ -168,7 +171,7 @@ export async function mixVoiceAndBackgroundServerSide(
       '-i',
       bgPath,
       '-filter_complex',
-      `[1:a]volume=${bgGain}[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=0,aresample=44100,loudnorm=I=-16:TP=-1.5:LRA=11,aformat=channel_layouts=stereo`,
+      `[0:a]volume=4dB[v];[1:a]volume=${bgGain}[bg];[v][bg]amix=inputs=2:duration=first:dropout_transition=0,alimiter=limit=0.92,aformat=channel_layouts=stereo`,
       '-c:a',
       'libmp3lame',
       '-b:a',

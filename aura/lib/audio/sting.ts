@@ -5,7 +5,12 @@ import { join } from 'node:path';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { uploadAudio } from '@/lib/storage/r2';
 
-const R2_KEY = 'system/transition-silence.mp3';
+// v2 in the key because the v1 file was stereo and caused channel-
+// mismatch artifacts at the concat boundary with the mono voice
+// chunks. The new file is mono so it stitches cleanly. Bumping the
+// key invalidates the old cached copy in R2 without needing a
+// destructive delete.
+const R2_KEY = 'system/transition-silence-v2.mp3';
 // 1.2s sits in the middle of the user's "1 to 1.5s" suggestion — long
 // enough to land as a clear breath between stories, short enough to
 // not feel like dead air. Stereo 44.1kHz / 192kbps matches the encode
@@ -59,6 +64,11 @@ export async function getTransitionStingBytes(): Promise<Uint8Array | null> {
   const dir = await mkdtemp(join(tmpdir(), 'aura-silence-'));
   const outPath = join(dir, 'silence.mp3');
   try {
+    // Mono silence (not stereo) on purpose — voice blocks come back
+    // from ElevenLabs as mono, so matching the channel count is what
+    // lets the concat demuxer stitch them without artifacts. The
+    // final encode in concatMp3Bytes upmixes the whole thing to
+    // stereo via -ac 2.
     await runFfmpeg([
       '-y',
       '-hide_banner',
@@ -67,7 +77,7 @@ export async function getTransitionStingBytes(): Promise<Uint8Array | null> {
       '-f',
       'lavfi',
       '-i',
-      `anullsrc=channel_layout=stereo:sample_rate=44100`,
+      `anullsrc=channel_layout=mono:sample_rate=44100`,
       '-t',
       String(SILENCE_DURATION_S),
       '-c:a',
@@ -77,7 +87,7 @@ export async function getTransitionStingBytes(): Promise<Uint8Array | null> {
       '-ar',
       '44100',
       '-ac',
-      '2',
+      '1',
       outPath,
     ]);
     bytes = new Uint8Array(await readFile(outPath));
