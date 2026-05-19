@@ -30,6 +30,12 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       {
+        src: '/icon2',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
         src: '/icon.svg',
         sizes: 'any',
         type: 'image/svg+xml',
