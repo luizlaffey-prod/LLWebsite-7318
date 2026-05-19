@@ -171,9 +171,9 @@ export async function synthesizeBulletin(
       }
       if (stingBytes) {
         chunks.push(stingBytes);
-        // Sting is ~0.8s; counted toward total duration so the
+        // Silence pad is ~1.2s; counted toward total duration so the
         // self-correcting script loop knows about it.
-        durationEstimate += 1;
+        durationEstimate += 1.2;
       }
     }
 
