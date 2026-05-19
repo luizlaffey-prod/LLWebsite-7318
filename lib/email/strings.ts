@@ -112,3 +112,55 @@ const TRIAL_STRINGS: Record<Locale, TrialEndingStrings> = {
 export function trialEndingStrings(locale: Locale): TrialEndingStrings {
   return TRIAL_STRINGS[locale] ?? TRIAL_STRINGS.en;
 }
+
+export interface ResetPasswordStrings {
+  subject: string;
+  greeting: (radioName: string) => string;
+  body1: string;
+  cta: string;
+  fallbackHint: string;
+  ignoreHint: string;
+}
+
+const resetEn: ResetPasswordStrings = {
+  subject: 'Reset your AURA password',
+  greeting: (r) => `Hi${r ? `, ${r}` : ''},`,
+  body1:
+    'We received a request to reset the password on your AURA account. Click the button below to choose a new one. The link is good for one hour.',
+  cta: 'Choose a new password',
+  fallbackHint: 'Button not working? Paste this URL into your browser:',
+  ignoreHint:
+    "If you didn't request this, you can ignore the email — your password stays the same and nothing is changed.",
+};
+
+const resetPt: ResetPasswordStrings = {
+  subject: 'Redefinir sua senha AURA',
+  greeting: (r) => `Olá${r ? `, ${r}` : ''},`,
+  body1:
+    'Recebemos uma solicitação para redefinir a senha da sua conta AURA. Clique no botão abaixo pra escolher uma nova. O link expira em uma hora.',
+  cta: 'Escolher nova senha',
+  fallbackHint: 'O botão não funciona? Cole esta URL no navegador:',
+  ignoreHint:
+    'Se você não pediu isso, pode ignorar o email — sua senha continua a mesma e nada é alterado.',
+};
+
+const resetEs: ResetPasswordStrings = {
+  subject: 'Restablecer tu contraseña AURA',
+  greeting: (r) => `Hola${r ? `, ${r}` : ''},`,
+  body1:
+    'Recibimos una solicitud para restablecer la contraseña de tu cuenta AURA. Haz clic en el botón abajo para elegir una nueva. El enlace dura una hora.',
+  cta: 'Elegir nueva contraseña',
+  fallbackHint: '¿El botón no funciona? Pega esta URL en tu navegador:',
+  ignoreHint:
+    'Si no solicitaste esto, puedes ignorar el correo — tu contraseña sigue igual y nada cambia.',
+};
+
+const RESET_STRINGS: Record<Locale, ResetPasswordStrings> = {
+  en: resetEn,
+  pt: resetPt,
+  es: resetEs,
+};
+
+export function resetPasswordStrings(locale: Locale): ResetPasswordStrings {
+  return RESET_STRINGS[locale] ?? RESET_STRINGS.en;
+}

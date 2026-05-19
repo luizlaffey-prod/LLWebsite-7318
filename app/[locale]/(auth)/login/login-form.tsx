@@ -119,6 +119,14 @@ export function LoginForm({
           className="mt-1.5"
         />
         <FormError>{fieldErrors.password}</FormError>
+        <div className="mt-2 text-right">
+          <Link
+            href={`/${locale}/forgot-password`}
+            className="text-xs text-text-secondary hover:text-teal"
+          >
+            {t('forgotLink')}
+          </Link>
+        </div>
       </div>
 
       <Button type="submit" size="lg" className="w-full" disabled={pending}>

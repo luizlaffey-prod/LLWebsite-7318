@@ -101,6 +101,16 @@
     "signupCta": "Sign up",
     "hasAccount": "Already have an account?",
     "loginCta": "Log in",
+    "forgotLink": "Forgot password?",
+    "forgotTitle": "Recover access",
+    "forgotSubtitle": "Enter the account email. We'll send a link to set a new password.",
+    "forgotSubmit": "Send reset link",
+    "forgotSentBody": "If that account exists, we just sent a link to set a new password. Check your inbox — and the spam folder, just in case.",
+    "forgotBackToLogin": "Back to login",
+    "resetTitle": "New password",
+    "resetSubtitle": "Pick a strong password. At least 8 characters.",
+    "resetSubmit": "Set new password",
+    "newPassword": "New password",
     "errors": {
       "invalidEmail": "Please enter a valid email.",
       "passwordTooShort": "Password must be at least 8 characters.",
@@ -109,7 +119,9 @@
       "generic": "Something went wrong. Please try again.",
       "invalidCredentials": "Invalid email or password.",
       "emailInUse": "An account with this email already exists.",
-      "ipLimit": "We've seen several signups from this network recently. Wait a few days or contact us so we can unlock it manually."
+      "ipLimit": "We've seen several signups from this network recently. Wait a few days or contact us so we can unlock it manually.",
+      "invalidToken": "The reset link is invalid. Please request a new one.",
+      "expiredToken": "The reset link expired (valid for 1 hour). Please request a new one."
     },
     "submitting": "Working..."
   },
