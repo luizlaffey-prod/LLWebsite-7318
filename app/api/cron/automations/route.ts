@@ -13,14 +13,22 @@ import { requireCronAuth } from '@/lib/cron/guard';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
-// Cron runs every 10 minutes (*/10) but Vercel can be 30-60s late on
-// any given tick. ±15 min around the slot's local-time instant means
-// every slot gets a fair shot even when scheduling drifts: at the
-// :00, :10, :20 ticks the slot at HH:10 falls within window either at
-// :00 (10 min in future) or :10/:20 (just past). Deduplication makes
-// the overlap safe — the same slot only fires once.
-const SLOT_TOLERANCE_MIN = 15;
-const LOOKAHEAD_MIN = 10;
+// Cron runs every 10 minutes (*/10). Slot eligibility is asymmetric on
+// purpose:
+//   FUTURE: ±10 min  — give the upcoming slot one tick of head-start
+//   PAST:  ±60 min   — aggressively backfill slots that didn't get
+//                      executed during their tick (e.g. function
+//                      timeout while iterating a busy multi-slot
+//                      automation). With cron */10, a missed slot gets
+//                      six attempts spread across the next hour.
+const FUTURE_TOLERANCE_MIN = 10;
+const PAST_TOLERANCE_MIN = 60;
+// Per-automation throttle. A user with 12 slots that all line up in
+// the same window would otherwise burn the entire cron budget on one
+// automation before the cron's maxDuration kicks in. Two per tick
+// means 5 ticks (~50 min) to clear a 10-slot bursty schedule, which
+// composes cleanly with the 60-min backfill window above.
+const MAX_SLOTS_PER_AUTOMATION_PER_TICK = 2;
 const RETRY_LOOKBACK_MIN = 60;
 const MAX_RETRIES = 3;
 const MIN_RETRY_INTERVAL_MIN = 10;
@@ -43,9 +51,6 @@ export async function GET(req: Request) {
   if (auth) return auth;
 
   const now = new Date();
-  // Retained for downstream reasoning; the actual tick decision uses
-  // SLOT_TOLERANCE_MIN below.
-  void LOOKAHEAD_MIN;
 
   const active = await db
     .select()
@@ -55,16 +60,25 @@ export async function GET(req: Request) {
   const results: { automationId: string; slot: string; ok: boolean; note: string }[] = [];
 
   for (const automation of active) {
+    let firedThisTick = 0;
     for (const slot of automation.slots as ScheduleSlot[]) {
+      if (firedThisTick >= MAX_SLOTS_PER_AUTOMATION_PER_TICK) {
+        // Defer remaining slots to the next cron tick — they're still
+        // within the 60-min backfill window so nothing is lost.
+        break;
+      }
       try {
         // slotInstantToday returns today's slot instant in the schedule's
-        // timezone — past OR future. Fire if it's within SLOT_TOLERANCE_MIN
-        // of `now` in either direction. This is the fix for the "slot
-        // missed by 30 seconds → bumped to tomorrow → never fired" bug
-        // that nextRunAt + lookahead-only suffered from.
+        // timezone — past OR future. Asymmetric tolerance window:
+        // future = FUTURE_TOLERANCE_MIN (head-start one tick),
+        // past = PAST_TOLERANCE_MIN (aggressive backfill so a missed
+        // slot gets multiple cron ticks of recovery attempts).
         const due = slotInstantToday(slot.time, automation.timezone, now);
-        const driftMs = Math.abs(now.getTime() - due.getTime());
-        if (driftMs > SLOT_TOLERANCE_MIN * 60_000) continue;
+        const driftMs = now.getTime() - due.getTime();
+        if (driftMs < 0 && Math.abs(driftMs) > FUTURE_TOLERANCE_MIN * 60_000) {
+          continue;
+        }
+        if (driftMs > PAST_TOLERANCE_MIN * 60_000) continue;
 
         // Dedup: was this exact slot+instant already executed?
         const existing = await db
@@ -94,6 +108,7 @@ export async function GET(req: Request) {
           scheduledFor: due,
           slot,
         });
+        firedThisTick++;
         results.push({
           automationId: automation.id,
           slot: slot.time,
