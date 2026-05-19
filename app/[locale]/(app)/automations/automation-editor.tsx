@@ -96,6 +96,7 @@ function emptyForm(defaultLanguage: Locale, defaultTimezone: string): Automation
     duckAudio: true,
     includeWeather: false,
     weatherFormat: 'separate',
+    weatherCity: null,
     geographicScope: 'global',
     location: null,
     bias: 'center',
@@ -515,18 +516,42 @@ export function AutomationEditor({
               />
             </div>
             {form.includeWeather && (
-              <Select
-                value={form.weatherFormat ?? 'separate'}
-                onValueChange={(v) => update('weatherFormat', v as 'separate' | 'integrated')}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="separate">{t('weatherSeparate')}</SelectItem>
-                  <SelectItem value="integrated">{t('weatherIntegrated')}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-3">
+                <Select
+                  value={form.weatherFormat ?? 'separate'}
+                  onValueChange={(v) =>
+                    update('weatherFormat', v as 'separate' | 'integrated')
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="separate">{t('weatherSeparate')}</SelectItem>
+                    <SelectItem value="integrated">{t('weatherIntegrated')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="border-t border-border/60 pt-3">
+                  <Label className="text-xs text-text-muted">
+                    {t('weatherCityLabel')}
+                  </Label>
+                  <Input
+                    className="mt-2"
+                    value={form.weatherCity ?? ''}
+                    onChange={(e) =>
+                      update('weatherCity', e.target.value || null)
+                    }
+                    placeholder={form.location || t('weatherCityPlaceholder')}
+                  />
+                  <p className="mt-1 text-xs text-text-muted">
+                    {form.weatherCity?.trim()
+                      ? t('weatherCityHint')
+                      : form.location?.trim()
+                        ? t('weatherCityFallback', { location: form.location })
+                        : t('weatherCityRequired')}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
 

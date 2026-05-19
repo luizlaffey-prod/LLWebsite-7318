@@ -64,6 +64,13 @@
       "when": 1779583000000,
       "tag": "0008_backfill_trial_ends_at",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1779584000000,
+      "tag": "0009_automation_weather_city",
+      "breakpoints": true
     }
   ]
 }

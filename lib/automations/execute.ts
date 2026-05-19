@@ -121,8 +121,15 @@ export async function runAutomationSlot(input: {
     let weatherForPrompt:
       | { location: string; summary: string; format: 'separate' | 'integrated' }
       | undefined;
-    if (automation.includeWeather && automation.location) {
-      const w = await fetchWeather(automation.location, automation.language);
+    // Prefer the dedicated weatherCity; fall back to the news-scope
+    // location. Global automations with no news location still ship
+    // weather when the operator typed a city in the dedicated field.
+    const weatherCity =
+      automation.weatherCity?.trim() ||
+      automation.location?.trim() ||
+      null;
+    if (automation.includeWeather && weatherCity) {
+      const w = await fetchWeather(weatherCity, automation.language);
       if (w) {
         weatherForPrompt = {
           location: w.location,

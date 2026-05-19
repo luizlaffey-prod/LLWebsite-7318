@@ -169,6 +169,7 @@ export async function POST(req: Request) {
       weatherFormat: parsed.data.weatherFormat,
       geographicScope: parsed.data.geographicScope,
       location: parsed.data.location ?? null,
+      weatherCity: parsed.data.weatherCity ?? null,
       bias: parsed.data.bias,
       timezone: parsed.data.timezone,
       enabled: parsed.data.enabled,

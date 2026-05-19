@@ -334,6 +334,10 @@ export const automationSchedule = pgTable(
     weatherFormat: weatherFormatEnum('weather_format').default('separate'),
     geographicScope: geoScopeEnum('geographic_scope').notNull().default('global'),
     location: text('location'),
+    // Dedicated city for the weather block — decoupled from `location`
+    // (which scopes the news search) so global automations can still
+    // ship local weather. Falls back to `location` when null.
+    weatherCity: text('weather_city'),
     bias: biasEnum('bias').notNull().default('center'),
     timezone: text('timezone').notNull().default('UTC'),
     enabled: boolean('enabled').notNull().default(true),
