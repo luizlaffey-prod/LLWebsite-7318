@@ -290,7 +290,17 @@ export function AutomationEditor({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? t('errorSave'));
+        // Prefer the explicit upstream message when the API returned
+        // one (validation details, DB column-missing, etc.) so the
+        // operator sees what's actually broken instead of the generic
+        // fallback. data.message is set by the catch in the POST
+        // route; data.error contains the canonical code.
+        const detail =
+          data?.message ||
+          (data?.details?.[0]?.path
+            ? `${data.error}: ${data.details[0].path.join('.')}`
+            : data?.error);
+        setError(detail || t('errorSave'));
         return;
       }
       onSaved();
