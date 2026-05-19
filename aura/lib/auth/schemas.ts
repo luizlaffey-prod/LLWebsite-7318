@@ -7,6 +7,12 @@ export const signupSchema = z
     confirmPassword: z.string().min(8),
     radioName: z.string().min(2).max(120),
     locale: z.enum(['en', 'pt', 'es']).default('en'),
+    // LGPD / CCPA-style explicit opt-in for product updates and
+    // marketing. Defaults to false; transactional emails (password
+    // reset, trial-ending, delivery notifications) are NOT gated by
+    // this — they ship regardless of the user's marketing
+    // preference.
+    marketingOptIn: z.boolean().default(false),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'passwordMismatch',

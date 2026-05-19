@@ -37,6 +37,7 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
       confirmPassword: String(data.get('confirmPassword') ?? ''),
       radioName: String(data.get('radioName') ?? ''),
       locale,
+      marketingOptIn: data.get('marketingOptIn') === 'on',
     };
 
     const parsed = signupSchema.safeParse(payload);
@@ -70,13 +71,21 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
         return;
       }
 
+      // additionalFields are passed through Better Auth's "input" allowlist.
+      // emailNotifications mirrors marketingOptIn so the
+      // user.emailNotifications column reflects the box the operator
+      // actually checked (LGPD-style explicit consent).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const extras: any = {
+        radioName: parsed.data.radioName,
+        locale,
+        emailNotifications: parsed.data.marketingOptIn,
+      };
       const result = await authClient.signUp.email({
         email: parsed.data.email,
         password: parsed.data.password,
         name: parsed.data.radioName,
-        // additionalFields, sent through Better Auth's "input" allowlist:
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(({ radioName: parsed.data.radioName, locale } as any)),
+        ...extras,
       });
 
       if (result.error) {
@@ -175,6 +184,15 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
         />
         <FormError>{fieldErrors.confirmPassword}</FormError>
       </div>
+
+      <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-elevated/30 px-3 py-2.5 text-xs text-text-secondary">
+        <input
+          type="checkbox"
+          name="marketingOptIn"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-border bg-base accent-teal"
+        />
+        <span>{t('marketingOptIn')}</span>
+      </label>
 
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? t('submitting') : t('submitSignup')}
