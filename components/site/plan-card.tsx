@@ -47,7 +47,7 @@ export function PlanCard({ tier, highlighted = false, action }: PlanCardProps) {
         <p className="mt-1 text-sm text-text-secondary">{t('tagline')}</p>
       </div>
       <div className="mt-6 flex items-baseline gap-1">
-        <span className="text-4xl font-semibold tracking-tight">${plan.priceMonthly}</span>
+        <span className="text-4xl font-semibold tracking-tight">${plan.priceMonthly.toFixed(2)}</span>
         <span className="text-sm text-text-secondary">{tPlans('perMonth')}</span>
       </div>
       <ul className="mt-6 flex-1 space-y-3">
