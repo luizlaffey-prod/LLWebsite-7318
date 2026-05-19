@@ -7,7 +7,11 @@ import {
   generatedAudio,
   type ScheduleSlot,
 } from '@/lib/db/schema';
-import { runAutomationSlot, slotInstantToday } from '@/lib/automations/execute';
+import {
+  runAutomationSlot,
+  slotInstantToday,
+  weekdayInTimezone,
+} from '@/lib/automations/execute';
 import { requireCronAuth } from '@/lib/cron/guard';
 
 export const runtime = 'nodejs';
@@ -68,6 +72,16 @@ export async function GET(req: Request) {
         break;
       }
       try {
+        // Day-of-week filter: if the slot is restricted to specific
+        // weekdays AND today isn't one of them (evaluated in the
+        // schedule's timezone, not UTC), skip silently. Slots without
+        // daysOfWeek or with an empty array still fire every day —
+        // legacy behavior preserved.
+        if (slot.daysOfWeek && slot.daysOfWeek.length > 0) {
+          const todayWd = weekdayInTimezone(now, automation.timezone);
+          if (!slot.daysOfWeek.includes(todayWd)) continue;
+        }
+
         // slotInstantToday returns today's slot instant in the schedule's
         // timezone — past OR future. Asymmetric tolerance window:
         // future = FUTURE_TOLERANCE_MIN (head-start one tick),
