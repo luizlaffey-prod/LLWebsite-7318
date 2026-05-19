@@ -78,7 +78,7 @@ export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoi
           <div>
             <div className="text-xs uppercase tracking-wider text-text-muted">{t('currentPlan')}</div>
             <div className="mt-1 flex items-center gap-2">
-              <span className="text-xl font-semibold">{PLANS[currentTier].priceMonthly === 0 ? '—' : `$${PLANS[currentTier].priceMonthly}/mo`}</span>
+              <span className="text-xl font-semibold">{PLANS[currentTier].priceMonthly === 0 ? '—' : `$${PLANS[currentTier].priceMonthly.toFixed(2)}/mo`}</span>
               <Badge>{isTrial ? `TRIAL · ${currentTier.toUpperCase()}` : currentTier.toUpperCase()}</Badge>
             </div>
             {isTrial && trialEndsAt && (
@@ -108,7 +108,7 @@ export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoi
                   <h3 className="text-base font-semibold capitalize">{tier}</h3>
                   {isCurrent && <Badge variant="secondary">{t('currentBadge')}</Badge>}
                 </div>
-                <div className="mt-3 text-2xl font-semibold">${plan.priceMonthly}<span className="text-sm font-normal text-text-secondary">/mo</span></div>
+                <div className="mt-3 text-2xl font-semibold">${plan.priceMonthly.toFixed(2)}<span className="text-sm font-normal text-text-secondary">/mo</span></div>
                 <ul className="mt-4 flex-1 space-y-1.5 text-xs text-text-secondary">
                   <li>· {plan.bulletinsPerDay} bulletins/day</li>
                   <li>· Up to {Math.round(plan.maxDurationSeconds / 60)}-min runtime</li>

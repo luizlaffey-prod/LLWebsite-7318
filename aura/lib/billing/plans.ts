@@ -21,7 +21,7 @@ export interface PlanDefinition {
 export const PLANS: Record<PlanTier, PlanDefinition> = {
   starter: {
     tier: 'starter',
-    priceMonthly: 25,
+    priceMonthly: 19.99,
     bulletinsPerDay: 5,
     maxDurationSeconds: 60,
     voicesPerLanguage: 1,
@@ -37,7 +37,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
   },
   standard: {
     tier: 'standard',
-    priceMonthly: 99,
+    priceMonthly: 39.99,
     bulletinsPerDay: 10,
     maxDurationSeconds: 120,
     voicesPerLanguage: 3,
@@ -53,7 +53,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
   },
   pro: {
     tier: 'pro',
-    priceMonthly: 299,
+    priceMonthly: 69.99,
     bulletinsPerDay: 20,
     maxDurationSeconds: 180,
     voicesPerLanguage: 'unlimited',
