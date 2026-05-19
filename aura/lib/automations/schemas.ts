@@ -20,6 +20,9 @@ export const AutomationInput = z.object({
   weatherFormat: z.enum(['separate', 'integrated']).default('separate'),
   geographicScope: z.enum(['global', 'country']).default('global'),
   location: z.string().optional().nullable(),
+  // Optional dedicated city for the weather block. Falls back to
+  // `location` when blank.
+  weatherCity: z.string().optional().nullable(),
   bias: z.enum(['left', 'center', 'right']).default('center'),
   timezone: z.string().default('UTC'),
   enabled: z.boolean().default(true),
