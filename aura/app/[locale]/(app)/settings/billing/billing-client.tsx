@@ -29,7 +29,6 @@ interface Props {
 
 export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoices }: Props) {
   const t = useTranslations('billing');
-  const tPlans = useTranslations('plans');
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [pendingPortal, setPendingPortal] = useState(false);
@@ -100,69 +99,19 @@ export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoi
         <h2 className="text-lg font-semibold tracking-tight">{t('changePlan')}</h2>
         <p className="mt-1 text-sm text-text-secondary">{t('changePlanSub')}</p>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {PLAN_ORDER.map((tier) => {
-            const isCurrent = tier === currentTier && !isTrial;
-            const plan = PLANS[tier];
-            // Bullet list matches the landing plan-card. Sourcing both
-            // surfaces from the same i18n keys keeps the marketing copy
-            // and the billing modal in sync.
-            const features: string[] = [
-              tPlans('feature_bulletins', { count: plan.bulletinsPerDay }),
-              tPlans('feature_duration', {
-                duration: Math.round(plan.maxDurationSeconds / 60),
-              }),
-              tPlans('feature_voices'),
-              tPlans('feature_formats'),
-            ];
-            if (tier === 'standard' || tier === 'pro') {
-              features.push(tPlans('feature_scheduling'));
-            }
-            if (tier === 'pro') {
-              features.push(tPlans('feature_delivery'));
-              features.push(tPlans('feature_whiteLabel'));
-              features.push(tPlans('feature_dualVoice'));
-            }
-            features.push(tPlans('feature_support'));
-            return (
-              <Card key={tier} className="flex flex-col p-5">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="aura-gradient-text font-serif text-2xl font-semibold capitalize">
-                    {tPlans(`${tier}.name`)}
-                  </h3>
-                  {isCurrent && <Badge variant="secondary">{t('currentBadge')}</Badge>}
-                </div>
-                <p className="mt-1 text-xs uppercase tracking-wider text-text-muted">
-                  {tPlans(`${tier}.tagline`)}
-                </p>
-                <div className="mt-3 text-2xl font-semibold">
-                  ${plan.priceMonthly.toFixed(2)}
-                  <span className="text-sm font-normal text-text-secondary">/mo</span>
-                </div>
-                <ul className="mt-4 flex-1 space-y-1.5 text-xs text-text-secondary">
-                  {features.map((line, i) => (
-                    <li key={i}>· {line}</li>
-                  ))}
-                </ul>
-                <Button
-                  className="mt-4 w-full"
-                  variant={isCurrent ? 'secondary' : tier === 'standard' ? 'default' : 'outline'}
-                  disabled={isCurrent || pendingTier !== null}
-                  onClick={() => handleChange(tier)}
-                >
-                  {pendingTier === tier ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isCurrent ? (
-                    t('currentBadge')
-                  ) : (
-                    <>
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                      {t('switchTo', { tier })}
-                    </>
-                  )}
-                </Button>
-              </Card>
-            );
-          })}
+          {PLAN_ORDER.map((tier) => (
+            <PlanColumn
+              key={tier}
+              tier={tier}
+              isCurrent={tier === currentTier && !isTrial}
+              pending={pendingTier === tier}
+              disabled={
+                (tier === currentTier && !isTrial) || pendingTier !== null
+              }
+              onChange={handleChange}
+              t={t}
+            />
+          ))}
         </div>
       </div>
 
@@ -199,5 +148,94 @@ export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoi
         )}
       </div>
     </div>
+  );
+}
+
+interface PlanColumnProps {
+  tier: PlanTier;
+  isCurrent: boolean;
+  pending: boolean;
+  disabled: boolean;
+  onChange: (tier: PlanTier) => void;
+  t: ReturnType<typeof useTranslations>;
+}
+
+/**
+ * One column in the "Change plan" grid. Lives as its own component
+ * so React's rules-of-hooks allow useTranslations(`plans.${tier}`)
+ * — calling it inside .map would violate the static-call rule.
+ */
+function PlanColumn({
+  tier,
+  isCurrent,
+  pending,
+  disabled,
+  onChange,
+  t,
+}: PlanColumnProps) {
+  const tPlan = useTranslations(`plans.${tier}`);
+  const tPlans = useTranslations('plans');
+  const plan = PLANS[tier];
+
+  const features: string[] = [
+    tPlan('feature_bulletins', { count: plan.bulletinsPerDay }),
+    tPlan('feature_duration', {
+      duration: Math.round(plan.maxDurationSeconds / 60),
+    }),
+    tPlan('feature_voices'),
+    tPlan('feature_formats'),
+  ];
+  if (tier === 'standard' || tier === 'pro') {
+    features.push(tPlan('feature_scheduling'));
+  }
+  if (tier === 'pro') {
+    features.push(tPlan('feature_delivery'));
+    features.push(tPlan('feature_whiteLabel'));
+    features.push(tPlan('feature_dualVoice'));
+  }
+  features.push(tPlan('feature_support'));
+
+  return (
+    <Card className="flex flex-col p-5">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="aura-gradient-text font-serif text-2xl font-semibold capitalize">
+          {tPlan('name')}
+        </h3>
+        {isCurrent && <Badge variant="secondary">{t('currentBadge')}</Badge>}
+      </div>
+      <p className="mt-1 text-xs uppercase tracking-wider text-text-muted">
+        {tPlan('tagline')}
+      </p>
+      <div className="mt-3 text-2xl font-semibold">
+        ${plan.priceMonthly.toFixed(2)}
+        <span className="text-sm font-normal text-text-secondary">
+          {tPlans('perMonth')}
+        </span>
+      </div>
+      <ul className="mt-4 flex-1 space-y-1.5 text-xs text-text-secondary">
+        {features.map((line, i) => (
+          <li key={i}>· {line}</li>
+        ))}
+      </ul>
+      <Button
+        className="mt-4 w-full"
+        variant={
+          isCurrent ? 'secondary' : tier === 'standard' ? 'default' : 'outline'
+        }
+        disabled={disabled}
+        onClick={() => onChange(tier)}
+      >
+        {pending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : isCurrent ? (
+          t('currentBadge')
+        ) : (
+          <>
+            <ArrowUpRight className="h-3.5 w-3.5" />
+            {t('switchTo', { tier })}
+          </>
+        )}
+      </Button>
+    </Card>
   );
 }
