@@ -5,7 +5,10 @@ import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { effectiveTier } from '@/lib/billing/quota';
-import { canSchedule as canScheduleTier } from '@/lib/billing/feature-gates';
+import {
+  canSchedule as canScheduleTier,
+  canUseDaysOfWeek,
+} from '@/lib/billing/feature-gates';
 import { AutomationsClient } from './automations-client';
 import type { Locale } from '@/i18n';
 
@@ -40,6 +43,7 @@ export default async function AutomationsPage({
           <AutomationsClient
             locale={locale}
             canSchedule={canSchedule}
+            allowDaysOfWeek={canUseDaysOfWeek(tier)}
             defaultLanguage={(u?.locale ?? locale) as Locale}
             defaultTimezone={u?.timezone ?? 'UTC'}
           />

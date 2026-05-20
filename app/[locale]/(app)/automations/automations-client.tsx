@@ -58,6 +58,7 @@ interface AutomationRow extends AutomationInputType {
 interface Props {
   locale: Locale;
   canSchedule: boolean;
+  allowDaysOfWeek: boolean;
   defaultLanguage: Locale;
   defaultTimezone: string;
 }
@@ -65,6 +66,7 @@ interface Props {
 export function AutomationsClient({
   locale,
   canSchedule,
+  allowDaysOfWeek,
   defaultLanguage,
   defaultTimezone,
 }: Props) {
@@ -304,6 +306,7 @@ export function AutomationsClient({
         initial={editing === 'new' || editing === null ? null : editing}
         defaultLanguage={defaultLanguage}
         defaultTimezone={defaultTimezone}
+        allowDaysOfWeek={allowDaysOfWeek}
         onClose={() => setEditing(null)}
         onSaved={() => {
           setEditing(null);

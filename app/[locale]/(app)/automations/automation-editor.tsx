@@ -77,6 +77,11 @@ interface Props {
   initial: AutomationLike | null;
   defaultLanguage: Locale;
   defaultTimezone: string;
+  /**
+   * When false, the per-slot days-of-week chips are hidden and every
+   * slot fires every day (Standard tier behavior). Pro receives true.
+   */
+  allowDaysOfWeek: boolean;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -125,6 +130,7 @@ export function AutomationEditor({
   initial,
   defaultLanguage,
   defaultTimezone,
+  allowDaysOfWeek,
   onClose,
   onSaved,
 }: Props) {
@@ -409,6 +415,7 @@ export function AutomationEditor({
                     })}
                   </div>
 
+                  {allowDaysOfWeek && (
                   <div className="mt-3 border-t border-border/60 pt-3">
                     <div className="mb-1.5 text-xs uppercase tracking-wider text-text-muted">
                       {t('daysOfWeek')}
@@ -463,6 +470,7 @@ export function AutomationEditor({
                           })}
                     </p>
                   </div>
+                  )}
                 </div>
               ))}
             </div>

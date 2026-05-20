@@ -60,7 +60,7 @@
       "feature_duration": "Boletins de até {duration} minutos",
       "feature_voices": "5 vozes preset com sotaques regionais",
       "feature_formats": "MP3 + WAV",
-      "feature_scheduling": "Agendamento básico",
+      "feature_scheduling": "Automação simples (todo dia)",
       "feature_support": "Email + chat"
     },
     "pro": {
@@ -70,9 +70,10 @@
       "feature_duration": "Boletins de até {duration} minutos",
       "feature_voices": "Catálogo completo + clonagem de voz custom",
       "feature_formats": "MP3 + WAV + specs de broadcast",
-      "feature_scheduling": "Automação completa + calendário",
-      "feature_delivery": "API + FTP + auto-push",
+      "feature_scheduling": "Automação completa + dias da semana",
+      "feature_delivery": "Destinos ilimitados (FTP, webhook, pasta local, RSS)",
       "feature_whiteLabel": "White label",
+      "feature_dualVoice": "Voz dupla / co-âncora (em breve)",
       "feature_support": "Prioritário + onboarding"
     },
     "perMonth": "/mês",

@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { count, desc, eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { deliveryEndpoint, user } from '@/lib/db/schema';
 import { effectiveTier } from '@/lib/billing/quota';
-import { canAutoDeliver } from '@/lib/billing/feature-gates';
+import {
+  canAutoDeliver,
+  maxDeliveryEndpoints,
+} from '@/lib/billing/feature-gates';
 import { DeliveryInput } from '@/lib/delivery/schemas';
 import { encryptJSON } from '@/lib/crypto/secrets';
 
@@ -47,9 +50,30 @@ export async function POST(req: Request) {
   const tier = effectiveTier(u?.plan);
   if (!canAutoDeliver(tier)) {
     return NextResponse.json(
-      { error: 'feature_not_available', requires: 'pro' },
+      { error: 'feature_not_available', requires: 'standard' },
       { status: 403 }
     );
+  }
+
+  // Per-tier endpoint cap: Standard 1, Pro unlimited. Count current
+  // rows before allowing a new INSERT so the user can't slip past the
+  // UI cap by replaying the POST directly.
+  const cap = maxDeliveryEndpoints(tier);
+  if (Number.isFinite(cap)) {
+    const [{ existing }] = await db
+      .select({ existing: count() })
+      .from(deliveryEndpoint)
+      .where(eq(deliveryEndpoint.userId, session.user.id));
+    if (Number(existing) >= cap) {
+      return NextResponse.json(
+        {
+          error: 'destination_limit_reached',
+          limit: cap,
+          message: `Your plan allows ${cap} destination(s). Upgrade to Pro for unlimited destinations.`,
+        },
+        { status: 403 }
+      );
+    }
   }
 
   const body = await req.json().catch(() => ({}));
