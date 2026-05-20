@@ -49,7 +49,7 @@
       "tagline": "Get on air today",
       "feature_bulletins": "{count} bulletins/day",
       "feature_duration": "Up to {duration}-minute bulletins",
-      "feature_voices": "1 preset voice per language",
+      "feature_voices": "2 preset voices",
       "feature_formats": "MP3",
       "feature_support": "Email support"
     },
@@ -58,7 +58,7 @@
       "tagline": "Scheduled and scaled",
       "feature_bulletins": "{count} bulletins/day",
       "feature_duration": "Up to {duration}-minute bulletins",
-      "feature_voices": "3 voices per language with regional accents",
+      "feature_voices": "5 preset voices with regional accents",
       "feature_formats": "MP3 + WAV",
       "feature_scheduling": "Basic scheduling",
       "feature_support": "Email + chat"
@@ -68,7 +68,7 @@
       "tagline": "Broadcast infrastructure",
       "feature_bulletins": "{count} bulletins/day",
       "feature_duration": "Up to {duration}-minute bulletins",
-      "feature_voices": "Unlimited voices + custom voice clone",
+      "feature_voices": "Full voice catalog + custom voice cloning",
       "feature_formats": "MP3 + WAV + broadcast specs",
       "feature_scheduling": "Full automation + calendar",
       "feature_delivery": "API + FTP + auto-push",

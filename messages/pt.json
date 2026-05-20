@@ -49,7 +49,7 @@
       "tagline": "Coloque no ar hoje",
       "feature_bulletins": "{count} boletins/dia",
       "feature_duration": "Boletins de até {duration} minutos",
-      "feature_voices": "1 voz preset por idioma",
+      "feature_voices": "2 vozes preset",
       "feature_formats": "MP3",
       "feature_support": "Suporte por email"
     },
@@ -58,7 +58,7 @@
       "tagline": "Agendado e escalável",
       "feature_bulletins": "{count} boletins/dia",
       "feature_duration": "Boletins de até {duration} minutos",
-      "feature_voices": "3 vozes por idioma com sotaques regionais",
+      "feature_voices": "5 vozes preset com sotaques regionais",
       "feature_formats": "MP3 + WAV",
       "feature_scheduling": "Agendamento básico",
       "feature_support": "Email + chat"
@@ -68,7 +68,7 @@
       "tagline": "Infraestrutura de transmissão",
       "feature_bulletins": "{count} boletins/dia",
       "feature_duration": "Boletins de até {duration} minutos",
-      "feature_voices": "Vozes ilimitadas + clonagem de voz",
+      "feature_voices": "Catálogo completo + clonagem de voz custom",
       "feature_formats": "MP3 + WAV + specs de broadcast",
       "feature_scheduling": "Automação completa + calendário",
       "feature_delivery": "API + FTP + auto-push",
