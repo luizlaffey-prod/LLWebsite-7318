@@ -25,6 +25,7 @@ export function PlanCard({ tier, highlighted = false, action }: PlanCardProps) {
   if (tier === 'pro') {
     features.push(t('feature_delivery'));
     features.push(t('feature_whiteLabel'));
+    features.push(t('feature_dualVoice'));
   }
   features.push(t('feature_support'));
 

@@ -27,6 +27,8 @@ import {
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BulletinDrawer } from './bulletin-drawer';
+import { maxCategoriesPerBulletin } from '@/lib/billing/feature-gates';
+import type { PlanTier } from '@/lib/billing/plans';
 import type { Locale } from '@/i18n';
 
 interface Article {
@@ -59,7 +61,12 @@ interface SuggestItem {
   label: string;
 }
 
-export function NewsClient({ locale }: { locale: Locale }) {
+interface NewsClientProps {
+  locale: Locale;
+  tier: PlanTier;
+}
+
+export function NewsClient({ locale, tier }: NewsClientProps) {
   const t = useTranslations('newsPage');
   const tCat = useTranslations('newsPage.categoryNames');
 
@@ -124,10 +131,17 @@ export function NewsClient({ locale }: { locale: Locale }) {
     return () => clearTimeout(handle);
   }, [location, scope]);
 
+  const categoryCap = maxCategoriesPerBulletin(tier);
   const toggleCategory = (id: string) =>
-    setCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    );
+    setCategories((prev) => {
+      // Starter is capped at 1 category per bulletin (maxCategoriesPerBulletin
+      // returns 1 for that tier, Infinity for everyone else). When the cap
+      // is 1, replace the selection instead of appending so the chip
+      // group behaves as a radio group for the restricted tier.
+      if (prev.includes(id)) return prev.filter((c) => c !== id);
+      if (categoryCap === 1) return [id];
+      return [...prev, id];
+    });
 
   const useMyLocation = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;

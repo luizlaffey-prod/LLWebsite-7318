@@ -29,6 +29,7 @@ interface Props {
 
 export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoices }: Props) {
   const t = useTranslations('billing');
+  const tPlans = useTranslations('plans');
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [pendingPortal, setPendingPortal] = useState(false);
@@ -102,17 +103,45 @@ export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoi
           {PLAN_ORDER.map((tier) => {
             const isCurrent = tier === currentTier && !isTrial;
             const plan = PLANS[tier];
+            // Bullet list matches the landing plan-card. Sourcing both
+            // surfaces from the same i18n keys keeps the marketing copy
+            // and the billing modal in sync.
+            const features: string[] = [
+              tPlans('feature_bulletins', { count: plan.bulletinsPerDay }),
+              tPlans('feature_duration', {
+                duration: Math.round(plan.maxDurationSeconds / 60),
+              }),
+              tPlans('feature_voices'),
+              tPlans('feature_formats'),
+            ];
+            if (tier === 'standard' || tier === 'pro') {
+              features.push(tPlans('feature_scheduling'));
+            }
+            if (tier === 'pro') {
+              features.push(tPlans('feature_delivery'));
+              features.push(tPlans('feature_whiteLabel'));
+              features.push(tPlans('feature_dualVoice'));
+            }
+            features.push(tPlans('feature_support'));
             return (
               <Card key={tier} className="flex flex-col p-5">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold capitalize">{tier}</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="aura-gradient-text font-serif text-2xl font-semibold capitalize">
+                    {tPlans(`${tier}.name`)}
+                  </h3>
                   {isCurrent && <Badge variant="secondary">{t('currentBadge')}</Badge>}
                 </div>
-                <div className="mt-3 text-2xl font-semibold">${plan.priceMonthly.toFixed(2)}<span className="text-sm font-normal text-text-secondary">/mo</span></div>
+                <p className="mt-1 text-xs uppercase tracking-wider text-text-muted">
+                  {tPlans(`${tier}.tagline`)}
+                </p>
+                <div className="mt-3 text-2xl font-semibold">
+                  ${plan.priceMonthly.toFixed(2)}
+                  <span className="text-sm font-normal text-text-secondary">/mo</span>
+                </div>
                 <ul className="mt-4 flex-1 space-y-1.5 text-xs text-text-secondary">
-                  <li>· {plan.bulletinsPerDay} bulletins/day</li>
-                  <li>· Up to {Math.round(plan.maxDurationSeconds / 60)}-min runtime</li>
-                  <li>· {plan.voicesPerLanguage === 'unlimited' ? 'Unlimited voices' : `${plan.voicesPerLanguage} voice(s)/language`}</li>
+                  {features.map((line, i) => (
+                    <li key={i}>· {line}</li>
+                  ))}
                 </ul>
                 <Button
                   className="mt-4 w-full"

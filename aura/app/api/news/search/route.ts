@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { newsSearch } from '@/lib/db/schema';
+import { newsSearch, user } from '@/lib/db/schema';
 import { searchNews } from '@/lib/news/aggregator';
+import { effectiveTier } from '@/lib/billing/quota';
+import { maxCategoriesPerBulletin } from '@/lib/billing/feature-gates';
 
 export const runtime = 'nodejs';
 // Two parallel news provider calls + a batched LLM translation can run
@@ -31,6 +34,28 @@ export async function POST(req: Request) {
   const parsed = SearchInput.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: 'invalid_input', details: parsed.error.issues }, { status: 400 });
+  }
+
+  // Enforce per-tier category cap server-side too — the UI restricts
+  // the chip group on Starter, but anyone replaying the POST manually
+  // could still send multiple. Refuse with 403 so the operator sees a
+  // clear upgrade nudge.
+  const [u] = await db
+    .select({ plan: user.plan })
+    .from(user)
+    .where(eq(user.id, session.user.id))
+    .limit(1);
+  const tier = effectiveTier(u?.plan);
+  const cap = maxCategoriesPerBulletin(tier);
+  if (parsed.data.categories.length > cap) {
+    return NextResponse.json(
+      {
+        error: 'category_limit_reached',
+        limit: cap,
+        message: `Your plan allows ${cap} category per bulletin. Upgrade to Standard for unlimited categories.`,
+      },
+      { status: 403 }
+    );
   }
 
   const { articles, translationStatus, translatedCount } = await searchNews({

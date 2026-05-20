@@ -8,7 +8,7 @@ import {
   deliveryLog,
   user,
 } from '@/lib/db/schema';
-import { canSchedule } from '@/lib/billing/feature-gates';
+import { canSchedule, canUseDaysOfWeek } from '@/lib/billing/feature-gates';
 import { effectiveTier } from '@/lib/billing/quota';
 import { AutomationInput } from '@/lib/automations/schemas';
 
@@ -153,13 +153,21 @@ export async function POST(req: Request) {
     );
   }
 
+  // Strip per-slot daysOfWeek when the tier isn't entitled — Standard
+  // pays for "automação simples" (every day) and shouldn't be able to
+  // smuggle the field in by hand-crafting the POST.
+  const allowDays = canUseDaysOfWeek(tier);
+  const slots = allowDays
+    ? parsed.data.slots
+    : parsed.data.slots.map((s) => ({ ...s, daysOfWeek: undefined }));
+
   try {
     const [created] = await db
       .insert(automationSchedule)
       .values({
         userId: session.user.id,
         name: parsed.data.name,
-        slots: parsed.data.slots,
+        slots,
         durationSeconds: parsed.data.durationSeconds,
         language: parsed.data.language,
         voiceId: parsed.data.voiceId,
