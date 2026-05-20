@@ -62,7 +62,13 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function AudiosClient({ locale }: { locale: Locale }) {
+interface AudiosClientProps {
+  locale: Locale;
+  /** Pro tier — adds a "WAV" download option per audio card. */
+  canExportWav: boolean;
+}
+
+export function AudiosClient({ locale, canExportWav }: AudiosClientProps) {
   const t = useTranslations('audiosPage');
 
   const [loading, setLoading] = useState(true);
@@ -164,15 +170,16 @@ export function AudiosClient({ locale }: { locale: Locale }) {
     setPlayingId(audio.id);
   };
 
-  const onDownload = async (audio: AudioItem) => {
+  const onDownload = async (audio: AudioItem, format: 'mp3' | 'wav' = 'mp3') => {
     if (!audio.audioUrl) return;
     setDownloading(audio.id);
     setError(null);
     try {
+      const base = defaultFilename({ topic: audio.title }).replace(/\.mp3$/, '');
       await downloadBlob({
-        filename: defaultFilename({ topic: audio.title }),
+        filename: `${base}.${format}`,
         fromUrl: audio.audioUrl,
-        proxyUrl: `/api/audios/${audio.id}/download`,
+        proxyUrl: `/api/audios/${audio.id}/${format === 'wav' ? 'download.wav' : 'download'}`,
       });
     } catch (err) {
       console.error('[audios] download failed', err);
@@ -376,7 +383,7 @@ export function AudiosClient({ locale }: { locale: Locale }) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onDownload(a)}
+                      onClick={() => onDownload(a, 'mp3')}
                       disabled={!isReady || downloading === a.id}
                       title={t('download')}
                     >
@@ -386,6 +393,18 @@ export function AudiosClient({ locale }: { locale: Locale }) {
                         <Download className="h-4 w-4" />
                       )}
                     </Button>
+                    {canExportWav && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDownload(a, 'wav')}
+                        disabled={!isReady || downloading === a.id}
+                        title={t('downloadWav')}
+                        className="text-xs uppercase tracking-wider"
+                      >
+                        WAV
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"

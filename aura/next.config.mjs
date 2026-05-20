@@ -40,6 +40,9 @@ const nextConfig = {
     ],
     '/api/bulletin/generate': ['./node_modules/@ffmpeg-installer/**/*'],
     '/api/bulletin/regenerate': ['./node_modules/@ffmpeg-installer/**/*'],
+    '/api/audios/[id]/download.wav': [
+      './node_modules/@ffmpeg-installer/**/*',
+    ],
   },
   images: {
     remotePatterns: [
