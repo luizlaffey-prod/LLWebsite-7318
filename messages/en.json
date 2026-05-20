@@ -463,6 +463,18 @@
     "errorPreview": "Couldn't play the preview. Check the ElevenLabs row below for the exact error.",
     "explanation": "Probes are read-only and only run when you open this page or hit a retry button. Failure messages include the upstream HTTP status when available — 401 means the key is wrong, 429 means rate-limited, 5xx means upstream is degraded."
   },
+  "chat": {
+    "open": "Open support chat",
+    "close": "Close",
+    "title": "AURA Assistant",
+    "subtitle": "Operator support",
+    "greeting": "Hi! I'm AURA's in-app assistant. I can help with automations, voices, destinations, plans, and general app questions. What do you need?",
+    "placeholder": "Ask anything...",
+    "send": "Send",
+    "reset": "Clear",
+    "thinking": "Thinking...",
+    "errorGeneric": "I couldn't reply just now. Try again in a moment."
+  },
   "deliveryPage": {
     "title": "Bulletin destinations",
     "subtitle": "Choose where AURA drops each generated bulletin so it lands inside your station's infrastructure.",

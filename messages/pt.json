@@ -463,6 +463,18 @@
     "errorPreview": "Não foi possível tocar a amostra. Veja o card do ElevenLabs abaixo para o erro exato.",
     "explanation": "Probes são read-only e só rodam quando você abre a página ou clica em re-testar. Erros incluem o status HTTP do upstream — 401 = chave errada, 429 = rate-limit, 5xx = upstream com problema."
   },
+  "chat": {
+    "open": "Abrir chat de suporte",
+    "close": "Fechar",
+    "title": "AURA Assistant",
+    "subtitle": "Suporte ao operador",
+    "greeting": "Oi! Sou o assistente do AURA. Posso te ajudar com automações, vozes, destinos, planos e dúvidas gerais do app. O que você precisa?",
+    "placeholder": "Pergunte qualquer coisa...",
+    "send": "Enviar",
+    "reset": "Limpar",
+    "thinking": "Pensando...",
+    "errorGeneric": "Não consegui responder agora. Tenta de novo em um instante."
+  },
   "deliveryPage": {
     "title": "Destinos do boletim",
     "subtitle": "Defina onde a AURA coloca cada boletim gerado para que ele entre direto na sua rádio.",

@@ -463,6 +463,18 @@
     "errorPreview": "No se pudo reproducir la muestra. Mira la tarjeta de ElevenLabs para el error exacto.",
     "explanation": "Los probes son de solo lectura y se ejecutan al abrir esta página o al hacer clic en re-probar. Los errores incluyen el status HTTP — 401 = clave incorrecta, 429 = rate-limit, 5xx = upstream con problemas."
   },
+  "chat": {
+    "open": "Abrir chat de soporte",
+    "close": "Cerrar",
+    "title": "AURA Assistant",
+    "subtitle": "Soporte al operador",
+    "greeting": "¡Hola! Soy el asistente de AURA. Puedo ayudarte con automatizaciones, voces, destinos, planes y dudas generales del app. ¿Qué necesitas?",
+    "placeholder": "Pregunta lo que quieras...",
+    "send": "Enviar",
+    "reset": "Limpiar",
+    "thinking": "Pensando...",
+    "errorGeneric": "No pude responder ahora. Inténtalo de nuevo en un momento."
+  },
   "deliveryPage": {
     "title": "Destinos del boletín",
     "subtitle": "Define dónde AURA deja cada boletín generado para que llegue directo a tu radio.",

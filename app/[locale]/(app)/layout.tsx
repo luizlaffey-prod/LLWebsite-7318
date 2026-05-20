@@ -10,6 +10,7 @@ import { AppSidebar } from '@/components/app/app-sidebar';
 import { AppBrandHeader } from '@/components/app/app-brand-header';
 import { MobileTopBar } from '@/components/app/mobile-top-bar';
 import { LocalFolderSyncWorker } from '@/components/app/local-folder-sync-worker';
+import { AuraChat } from '@/components/app/aura-chat';
 import { effectiveTier } from '@/lib/billing/quota';
 import type { Locale } from '@/i18n';
 
@@ -104,6 +105,11 @@ export default async function AppLayout({
         <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
       </div>
       <LocalFolderSyncWorker />
+      {/* AURA Assistant — Standard / Pro only. Starter (and any
+          legacy tier we add later) doesn't see the FAB. */}
+      {(tier === 'standard' || tier === 'pro') && (
+        <AuraChat locale={locale} />
+      )}
     </div>
   );
 }
