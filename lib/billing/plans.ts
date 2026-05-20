@@ -37,7 +37,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
   },
   standard: {
     tier: 'standard',
-    priceMonthly: 39.99,
+    priceMonthly: 59.99,
     bulletinsPerDay: 10,
     maxDurationSeconds: 120,
     voicesPerLanguage: 3,
@@ -53,7 +53,7 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
   },
   pro: {
     tier: 'pro',
-    priceMonthly: 69.99,
+    priceMonthly: 129.99,
     bulletinsPerDay: 20,
     maxDurationSeconds: 180,
     voicesPerLanguage: 'unlimited',
