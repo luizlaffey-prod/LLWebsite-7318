@@ -61,13 +61,10 @@ export function Navigation() {
       <nav className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="group flex items-center gap-3">
+          <Link href="/" className="group">
             <span className="font-heading text-2xl md:text-3xl font-semibold tracking-wide">
               <span className="text-[#d4a843]">Luiz Laffey</span>
               <span className="text-white/90"> Productions</span>
-            </span>
-            <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded border border-[#d4a843]/40 text-[#d4a843] bg-[#d4a843]/5">
-              Early Access
             </span>
           </Link>
 
