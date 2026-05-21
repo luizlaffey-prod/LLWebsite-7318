@@ -101,7 +101,7 @@ export default async function LandingPage({
                 highlighted={tier === 'standard'}
                 action={
                   <Button asChild className="w-full" variant={tier === 'standard' ? 'default' : 'secondary'}>
-                    <Link href={`/${locale}/signup?plan=${tier}`}>
+                    <Link href={`/${locale}/early-access?plan=${tier}`}>
                       {t('cta')}
                     </Link>
                   </Button>
