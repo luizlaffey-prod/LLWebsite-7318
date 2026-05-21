@@ -23,6 +23,8 @@ interface VoiceItem {
   tierRequired: 'starter' | 'standard' | 'pro';
   locked: boolean;
   isDefault: boolean;
+  isCloned: boolean;
+  isMine: boolean;
 }
 
 interface ApiResponse {
@@ -195,6 +197,11 @@ export function VoicesClient() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     {isDefault && <Badge>{t('defaultBadge')}</Badge>}
+                    {v.isCloned && v.isMine && (
+                      <Badge variant="success">
+                        <Sparkles className="h-3 w-3 mr-1" /> {t('clonedBadge')}
+                      </Badge>
+                    )}
                     {v.locked && (
                       <Badge variant="violet">
                         <Lock className="h-3 w-3 mr-1" /> {v.tierRequired.toUpperCase()}
