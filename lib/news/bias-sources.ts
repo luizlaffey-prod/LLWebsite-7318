@@ -11,9 +11,12 @@
  *    coverage is unreliable, and they're the only way to guarantee
  *    bias representation in PT/ES.
  *
- * Bias classifications follow AllSides / Adfontes where they publish a
- * rating, and pragmatic Brazilian / Hispanic press convention
- * otherwise.
+ * Bias classifications follow how the outlet is perceived in its own
+ * market — not a globalized AllSides plot. Brazilian center-left
+ * outlets (Folha, Globo, UOL) live in `left` rather than `center`
+ * because that's where a Brazilian listener locates them; the
+ * `center` bucket is reserved for outlets actually perceived as
+ * neutral / institutional locally. Same logic for ES.
  */
 export type Bias = 'left' | 'center' | 'right';
 export type SearchLang = 'en' | 'pt' | 'es';
@@ -49,23 +52,31 @@ export const NEWSAPI_DOMAINS: Record<SearchLang, Record<Bias, string[]>> = {
   pt: {
     left: [
       'folha.uol.com.br',
+      'uol.com.br',
+      'g1.globo.com',
+      'oglobo.globo.com',
+      'bbc.com',
       'cartacapital.com.br',
       'brasil247.com',
       'redebrasilatual.com.br',
+      'cartamaior.com.br',
+      'diariodocentrodomundo.com.br',
     ],
     center: [
-      'g1.globo.com',
-      'oglobo.globo.com',
-      'uol.com.br',
-      'bbc.com',
-      'r7.com',
+      'poder360.com.br',
+      'nexojornal.com.br',
+      'reuters.com',
+      'apnews.com',
+      'lupa.uol.com.br',
     ],
     right: [
       'estadao.com.br',
+      'oantagonista.com.br',
       'veja.abril.com.br',
       'gazetadopovo.com.br',
       'jovempan.com.br',
-      'oantagonista.com.br',
+      'r7.com',
+      'revistaoeste.com',
     ],
   },
   es: {
@@ -77,17 +88,17 @@ export const NEWSAPI_DOMAINS: Record<SearchLang, Record<Bias, string[]>> = {
     ],
     center: [
       'lavanguardia.com',
-      'elmundo.es',
-      'clarin.com',
       'infobae.com',
       'bbc.com',
+      'eluniverso.com',
+      'eltiempo.com',
     ],
     right: [
+      'elmundo.es',
       'abc.es',
       'larazon.es',
       'lanacion.com.ar',
-      'eluniverso.com',
-      'eltiempo.com',
+      'clarin.com',
     ],
   },
 };
@@ -125,33 +136,39 @@ export const RSS_FEEDS: Record<SearchLang, Record<Bias, RssFeed[]>> = {
   pt: {
     left: [
       { url: 'https://feeds.folha.uol.com.br/poder/rss091.xml', source: 'Folha de S.Paulo' },
+      { url: 'https://g1.globo.com/rss/g1/', source: 'G1' },
+      { url: 'https://rss.uol.com.br/feed/noticias.xml', source: 'UOL' },
+      { url: 'https://www.bbc.com/portuguese/index.xml', source: 'BBC Brasil' },
       { url: 'https://www.cartacapital.com.br/feed/', source: 'CartaCapital' },
     ],
     center: [
-      { url: 'https://g1.globo.com/rss/g1/', source: 'G1' },
-      { url: 'https://www.bbc.com/portuguese/index.xml', source: 'BBC Brasil' },
-      { url: 'https://rss.uol.com.br/feed/noticias.xml', source: 'UOL' },
+      { url: 'https://www.poder360.com.br/feed/', source: 'Poder360' },
+      { url: 'https://www.nexojornal.com.br/rss', source: 'Nexo' },
     ],
     right: [
       { url: 'https://www.estadao.com.br/rss/ultimas.xml', source: 'Estadão' },
       { url: 'https://veja.abril.com.br/feed', source: 'Veja' },
       { url: 'https://www.gazetadopovo.com.br/feed/', source: 'Gazeta do Povo' },
+      { url: 'https://jovempan.com.br/feed', source: 'Jovem Pan' },
     ],
   },
   es: {
     left: [
       { url: 'https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada', source: 'El País' },
       { url: 'https://www.eldiario.es/rss/', source: 'elDiario.es' },
+      { url: 'https://www.publico.es/rss/', source: 'Público' },
     ],
     center: [
+      { url: 'https://www.lavanguardia.com/mvc/feed/rss/home', source: 'La Vanguardia' },
       { url: 'https://www.bbc.com/mundo/index.xml', source: 'BBC Mundo' },
-      { url: 'https://www.clarin.com/rss/lo-ultimo/', source: 'Clarín' },
       { url: 'https://www.infobae.com/feeds/rss/', source: 'Infobae' },
     ],
     right: [
+      { url: 'https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml', source: 'El Mundo' },
       { url: 'https://www.abc.es/rss/feeds/abcPortada.xml', source: 'ABC' },
       { url: 'https://www.larazon.es/rss/portada.xml', source: 'La Razón' },
       { url: 'https://www.lanacion.com.ar/arc/outboundfeeds/rss/?outputType=xml', source: 'La Nación' },
+      { url: 'https://www.clarin.com/rss/lo-ultimo/', source: 'Clarín' },
     ],
   },
 };
