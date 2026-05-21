@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Download, Search, ChevronLeft, ChevronRight, Loader2, Pencil } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EditUserDialog, type EditableUser } from './edit-user-dialog';
 import type { Locale } from '@/i18n';
 
 interface UserRow {
@@ -68,6 +69,9 @@ export function AdminUsersClient({ locale }: { locale: Locale }) {
   const [newsletter, setNewsletter] = useState<string>('all');
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
+  const [editing, setEditing] = useState<EditableUser | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Debounce search box so each keystroke doesn't hammer the API.
   useEffect(() => {
@@ -101,7 +105,7 @@ export function AdminUsersClient({ locale }: { locale: Locale }) {
     return () => {
       cancelled = true;
     };
-  }, [page, planFilter, statusFilter, newsletter, debouncedQ]);
+  }, [page, planFilter, statusFilter, newsletter, debouncedQ, reloadKey]);
 
   // Reset to first page when a filter changes.
   useEffect(() => {
@@ -229,13 +233,14 @@ export function AdminUsersClient({ locale }: { locale: Locale }) {
                 <th className="px-4 py-3">Locale</th>
                 <th className="px-4 py-3">Newsletter</th>
                 <th className="px-4 py-3">Signed up</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i}>
-                    <td className="px-4 py-3" colSpan={7}>
+                    <td className="px-4 py-3" colSpan={8}>
                       <Skeleton className="h-4 w-full" />
                     </td>
                   </tr>
@@ -244,7 +249,7 @@ export function AdminUsersClient({ locale }: { locale: Locale }) {
                 <tr>
                   <td
                     className="px-4 py-12 text-center text-sm text-text-muted"
-                    colSpan={7}
+                    colSpan={8}
                   >
                     No users match these filters.
                   </td>
@@ -286,6 +291,27 @@ export function AdminUsersClient({ locale }: { locale: Locale }) {
                     <td className="px-4 py-3 text-xs text-text-secondary">
                       {new Date(u.createdAt).toLocaleDateString(locale)}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditing({
+                            id: u.id,
+                            email: u.email,
+                            radioName: u.radioName,
+                            name: u.name,
+                            plan: u.plan,
+                            subscriptionStatus: u.subscriptionStatus,
+                            trialEndsAt: u.trialEndsAt,
+                          });
+                          setEditOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -320,6 +346,13 @@ export function AdminUsersClient({ locale }: { locale: Locale }) {
           </div>
         )}
       </Card>
+
+      <EditUserDialog
+        user={editing}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={() => setReloadKey((k) => k + 1)}
+      />
     </div>
   );
 }
