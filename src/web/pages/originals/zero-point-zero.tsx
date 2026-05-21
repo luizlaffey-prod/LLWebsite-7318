@@ -124,13 +124,13 @@ function HeroSection() {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <Link
-                href="/plans"
+              <a
+                href="mailto:contact@aurapress.app?subject=Early%20Access%20Request%20%E2%80%94%20Zero%20Point%20Zero"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-[#e67e22] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#f39c12] hover:shadow-xl hover:shadow-[#e67e22]/25"
               >
-                {t("zero.hero.ctaSubscribe")}
+                Request Early Access
                 <ArrowRight size={18} />
-              </Link>
+              </a>
               <a
                 href="#samples"
                 className="inline-flex items-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#e67e22] hover:text-[#e67e22]"
@@ -300,13 +300,13 @@ function MemberLibraryPreview() {
         </div>
 
         <div className="text-center">
-          <Link
-            href="/plans"
+          <a
+            href="mailto:contact@aurapress.app?subject=Early%20Access%20Request%20%E2%80%94%20Zero%20Point%20Zero"
             className="inline-flex items-center gap-3 px-8 py-4 bg-[#e67e22] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#f39c12] hover:shadow-xl hover:shadow-[#e67e22]/25"
           >
-            Get Broadcast License
+            Request Early Access
             <ArrowRight size={18} />
-          </Link>
+          </a>
         </div>
       </div>
     </section>

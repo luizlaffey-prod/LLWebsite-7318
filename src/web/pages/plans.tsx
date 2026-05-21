@@ -1,10 +1,16 @@
 import { Layout } from "../components/shared";
 import { Link } from "wouter";
-import { ArrowRight, Check, Radio, Download, Sparkles, Clock, Shield, HelpCircle } from "lucide-react";
+import { ArrowRight, Check, Radio, Download, Sparkles, Clock, Shield, HelpCircle, Mail } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../hooks/useAuth";
-import { useSubscription } from "../hooks/useSubscription";
+
+const EARLY_ACCESS_EMAIL = "contact@aurapress.app";
+const earlyAccessMailto = (programName: string, planName: string) =>
+  `mailto:${EARLY_ACCESS_EMAIL}?subject=${encodeURIComponent(
+    `Early Access Request — ${programName} (${planName})`
+  )}&body=${encodeURIComponent(
+    `Hi,\n\nI'm interested in early access to ${programName} on the ${planName} plan.\n\nMy station / context:\n\n`
+  )}`;
 
 type ProgramType = 'ZERO_POINT_ZERO' | 'LUIZ_LAFFEY_COLLECTION';
 
@@ -66,8 +72,6 @@ function HeroSection({ selectedProgram }: { selectedProgram: ProgramType }) {
 
 function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram: ProgramType; onProgramSelect: (program: ProgramType) => void }) {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const { subscribe } = useSubscription();
 
   const plans = [
     {
@@ -173,34 +177,20 @@ function PricingSection({ selectedProgram, onProgramSelect }: { selectedProgram:
                 ))}
               </ul>
 
-              {/* CTA - Subscribe or Login */}
-              {user ? (
-                <Link
-                  href={`/checkout?plan=${plan.planId}&program=${selectedProgram}`}
-                  className={`block w-full text-center py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
-                    plan.popular
-                      ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
-                      : plan.isDual
-                      ? "bg-[#0047ab] text-white hover:bg-[#005ce6]"
-                      : "border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843]/10"
-                  }`}
-                >
-                  {t(plan.ctaKey)}
-                </Link>
-              ) : (
-                <Link
-                  href={`/login?program=${selectedProgram}&plan=${plan.planId}`}
-                  className={`block w-full text-center py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
-                    plan.popular
-                      ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
-                      : plan.isDual
-                      ? "bg-[#0047ab] text-white hover:bg-[#005ce6]"
-                      : "border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843]/10"
-                  }`}
-                >
-                  {t(plan.ctaKey)}
-                </Link>
-              )}
+              {/* CTA - Request Early Access (beta) */}
+              <a
+                href={earlyAccessMailto(programNames[selectedProgram], t(plan.nameKey))}
+                className={`flex items-center justify-center gap-2 w-full text-center py-4 font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 ${
+                  plan.popular
+                    ? "bg-[#d4a843] text-[#0a0a0a] hover:bg-[#e8c574]"
+                    : plan.isDual
+                    ? "bg-[#0047ab] text-white hover:bg-[#005ce6]"
+                    : "border border-[#d4a843] text-[#d4a843] hover:bg-[#d4a843]/10"
+                }`}
+              >
+                <Mail size={16} />
+                Request Early Access
+              </a>
             </div>
           ))}
         </div>
@@ -344,13 +334,14 @@ function CTASection() {
           {t("plans.cta.subtitle")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/login"
+          <a
+            href={`mailto:${EARLY_ACCESS_EMAIL}?subject=${encodeURIComponent("Early Access Request")}`}
             className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574] hover:shadow-xl hover:shadow-[#d4a843]/25"
           >
-            {t("plans.cta.getStarted")}
+            <Mail size={18} />
+            Request Early Access
             <ArrowRight size={18} />
-          </Link>
+          </a>
           <Link
             href="/contact"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
