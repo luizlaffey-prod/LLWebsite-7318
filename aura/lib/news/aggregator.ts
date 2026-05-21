@@ -7,6 +7,7 @@ import {
   type SearchLang,
 } from './bias-sources';
 import { fetchRssArticles } from './rss';
+import { searchGuardian } from './guardian';
 
 export interface NewsArticle {
   title: string;
@@ -234,15 +235,17 @@ export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResu
       ? ['en', 'pt', 'es']
       : [effectiveSearchLang(input)];
 
-  // Per-language: NewsAPI + GNews + RSS in parallel. Global multiplies
-  // request count by 3 — on free tiers (NewsAPI: 100/day) plan
-  // accordingly, but each lang's RSS fan-out is free and each
-  // provider call still streams in parallel so wall-clock latency is
-  // dominated by the slowest single feed/API, not the total count.
+  // Per-language: NewsAPI + GNews + RSS + Guardian in parallel.
+  // Global multiplies request count proportionally — on free tiers
+  // (NewsAPI: 100/day) plan accordingly, but each lang's RSS fan-out
+  // is free, the Guardian's own quota is generous, and every provider
+  // call streams in parallel so wall-clock latency is dominated by
+  // the slowest single feed/API, not the total count.
   const calls = langs.flatMap((lang) => [
     searchNewsApi(input, lang),
     searchGNews(input, lang),
     searchRss(input, lang),
+    searchGuardian(input, lang),
   ]);
   const results = await Promise.all(calls);
 

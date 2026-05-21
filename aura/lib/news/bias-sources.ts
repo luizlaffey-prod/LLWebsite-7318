@@ -39,6 +39,11 @@ export const NEWSAPI_DOMAINS: Record<SearchLang, Record<Bias, string[]>> = {
       'economist.com',
       'ft.com',
       'thehill.com',
+      'techcrunch.com',
+      'arstechnica.com',
+      'theverge.com',
+      'cnbc.com',
+      'espn.com',
     ],
     right: [
       'foxnews.com',
@@ -55,6 +60,8 @@ export const NEWSAPI_DOMAINS: Record<SearchLang, Record<Bias, string[]>> = {
       'uol.com.br',
       'g1.globo.com',
       'oglobo.globo.com',
+      'ge.globo.com',
+      'tilt.uol.com.br',
       'bbc.com',
       'cartacapital.com.br',
       'brasil247.com',
@@ -69,6 +76,10 @@ export const NEWSAPI_DOMAINS: Record<SearchLang, Record<Bias, string[]>> = {
       'apnews.com',
       'lupa.uol.com.br',
       'olhardigital.com.br',
+      'tecmundo.com.br',
+      'canaltech.com.br',
+      'infomoney.com.br',
+      'lance.com.br',
     ],
     right: [
       'estadao.com.br',
@@ -93,6 +104,8 @@ export const NEWSAPI_DOMAINS: Record<SearchLang, Record<Bias, string[]>> = {
       'bbc.com',
       'eluniverso.com',
       'eltiempo.com',
+      'xataka.com',
+      'marca.com',
     ],
     right: [
       'elmundo.es',
@@ -179,6 +192,10 @@ export const RSS_FEEDS: Record<SearchLang, Record<Bias, RssFeed[]>> = {
     center: [
       { url: 'http://feeds.bbci.co.uk/news/rss.xml', source: 'BBC News' },
       { url: 'https://thehill.com/feed/', source: 'The Hill' },
+      { url: 'https://techcrunch.com/feed/', source: 'TechCrunch' },
+      { url: 'https://feeds.arstechnica.com/arstechnica/index', source: 'Ars Technica' },
+      { url: 'https://www.theverge.com/rss/index.xml', source: 'The Verge' },
+      { url: 'http://feeds.bbci.co.uk/sport/rss.xml', source: 'BBC Sport' },
     ],
     right: [
       { url: 'https://moxie.foxnews.com/google-publisher/latest.xml', source: 'Fox News' },
@@ -189,7 +206,9 @@ export const RSS_FEEDS: Record<SearchLang, Record<Bias, RssFeed[]>> = {
     left: [
       { url: 'https://feeds.folha.uol.com.br/poder/rss091.xml', source: 'Folha de S.Paulo' },
       { url: 'https://g1.globo.com/rss/g1/', source: 'G1' },
+      { url: 'https://ge.globo.com/rss/ge/', source: 'Globo Esporte' },
       { url: 'https://rss.uol.com.br/feed/noticias.xml', source: 'UOL' },
+      { url: 'https://rss.uol.com.br/feed/tilt.xml', source: 'Tilt (UOL)' },
       { url: 'https://www.bbc.com/portuguese/index.xml', source: 'BBC Brasil' },
       { url: 'https://www.cartacapital.com.br/feed/', source: 'CartaCapital' },
     ],
@@ -197,6 +216,10 @@ export const RSS_FEEDS: Record<SearchLang, Record<Bias, RssFeed[]>> = {
       { url: 'https://www.poder360.com.br/feed/', source: 'Poder360' },
       { url: 'https://www.nexojornal.com.br/rss', source: 'Nexo' },
       { url: 'https://olhardigital.com.br/feed/', source: 'Olhar Digital' },
+      { url: 'https://www.tecmundo.com.br/rss', source: 'TecMundo' },
+      { url: 'https://canaltech.com.br/rss/', source: 'Canaltech' },
+      { url: 'https://www.infomoney.com.br/feed/', source: 'InfoMoney' },
+      { url: 'https://www.lance.com.br/feed.xml', source: 'Lance' },
     ],
     right: [
       { url: 'https://www.estadao.com.br/rss/ultimas.xml', source: 'Estadão' },
@@ -215,6 +238,8 @@ export const RSS_FEEDS: Record<SearchLang, Record<Bias, RssFeed[]>> = {
       { url: 'https://www.lavanguardia.com/mvc/feed/rss/home', source: 'La Vanguardia' },
       { url: 'https://www.bbc.com/mundo/index.xml', source: 'BBC Mundo' },
       { url: 'https://www.infobae.com/feeds/rss/', source: 'Infobae' },
+      { url: 'https://www.xataka.com/feedburner.xml', source: 'Xataka' },
+      { url: 'https://e00-marca.uecdn.es/rss/portada.xml', source: 'Marca' },
     ],
     right: [
       { url: 'https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml', source: 'El Mundo' },
