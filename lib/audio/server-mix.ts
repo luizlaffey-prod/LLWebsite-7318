@@ -117,8 +117,13 @@ export async function concatMp3Bytes(
  * it, ffmpeg runs once, and the mixed bytes are returned. Temp files
  * are cleaned up even on error.
  *
- * When `duck` is true the bg sits lower under the voice — closer to a
- * proper sidechain feel without the cost of running asidechain filter.
+ * When `duck` is true the bg lives at a low base level under the
+ * voice but rises during sustained silences (>= 1s) and dips back
+ * down ~0.5s before the voice resumes — the breathing/lookahead
+ * envelope that makes radio bgs feel alive. Implemented by
+ * detecting silences offline and synthesizing a piecewise volume
+ * expression evaluated per-frame, not by a real-time sidechain
+ * (which has no native lookahead in ffmpeg).
  */
 export interface ServerMixInput {
   voiceBytes: Uint8Array;
@@ -126,10 +131,16 @@ export interface ServerMixInput {
   duck?: boolean;
 }
 
+const BG_GAIN_LOW = 0.18;
+const BG_GAIN_HIGH = 0.4;
+const SILENCE_MIN_SEC = 1.0;
+const SILENCE_THRESHOLD_DB = -32;
+/** How many seconds before voice resumes the bg starts ducking back. */
+const LOOKAHEAD_SEC = 0.5;
+
 export async function mixVoiceAndBackgroundServerSide(
   input: ServerMixInput
 ): Promise<Uint8Array> {
-  const bgGain = input.duck === false ? 0.3 : 0.18;
   const bgBytes = await fetchBg(input.bgUrl);
 
   const dir = await mkdtemp(join(tmpdir(), 'aura-mix-'));
@@ -145,32 +156,52 @@ export async function mixVoiceAndBackgroundServerSide(
       writeFile(bgPath, bgBytes),
     ]);
 
+    // Detect silences in the voice track so we can build an explicit
+    // gain envelope for the bg. Failures here fall back to a flat
+    // static gain — the bulletin still ships, just without the
+    // interactive ducking.
+    let bgVolumeExpr: string = String(
+      input.duck === false ? 0.3 : BG_GAIN_LOW
+    );
+    if (input.duck !== false) {
+      try {
+        const silences = await detectSilences(voicePath);
+        bgVolumeExpr = buildBgVolumeExpression(silences);
+      } catch (err) {
+        console.warn(
+          '[mix] silencedetect failed, falling back to static duck',
+          err instanceof Error ? err.message : err
+        );
+      }
+    }
+
     // Mix chain:
     //   [1:a]aloop=loop=-1:size=...   → in-filter loop of the bg
-    //                                   stream. Replaces the input-
-    //                                   level -stream_loop -1 flag,
+    //                                   stream. Replaces -stream_loop
     //                                   which choked on short bg
-    //                                   tracks with "frame duplication
-    //                                   too large, skipping" errors
-    //                                   when ffmpeg tried to fill the
-    //                                   gap to match a longer voice.
-    //                                   The filter-side loop operates
-    //                                   on decoded samples and handles
-    //                                   the timestamps cleanly.
+    //                                   tracks. The filter-side loop
+    //                                   operates on decoded samples
+    //                                   and handles timestamps cleanly.
     //   [0:a]volume=4dB[v]            → bump voice the same +4dB the
     //                                   voice-only path applies.
-    //   [bgLoop]volume=N[bg]          → attenuate the bg.
-    //   [v][bg]amix=duration=first    → blend, truncate to voice
-    //                                   length so a 30-min bg under a
-    //                                   60s voice doesn't produce a
-    //                                   29-min file.
+    //   [bgLoop]volume=<expr>:eval=frame[bg]
+    //                                 → piecewise time-varying gain.
+    //                                   `eval=frame` re-evaluates the
+    //                                   expression every frame so the
+    //                                   silence-detected envelope
+    //                                   actually animates the level.
+    //   [v][bg]amix=duration=first    → blend, truncate to voice length.
     //   ,alimiter=limit=0.92          → safety limiter.
     //   ,aformat=channel_layouts=stereo
-    //                                 → ensure 2 channels out even
-    //                                   if either input was mono.
-    // size=536870912 is the buffer cap for aloop (~3.4h of mono
-    // PCM at 44.1kHz / 1 sample per int32). Comfortably more than
-    // any realistic bulletin length.
+    //                                 → ensure 2 channels out.
+    // size=536870912 is the buffer cap for aloop (~3.4h of mono PCM).
+    const filterComplex =
+      `[1:a]aloop=loop=-1:size=536870912[bgLoop];` +
+      `[0:a]volume=4dB[v];` +
+      `[bgLoop]volume='${bgVolumeExpr}':eval=frame[bg];` +
+      `[v][bg]amix=inputs=2:duration=first:dropout_transition=0,` +
+      `alimiter=limit=0.92,aformat=channel_layouts=stereo`;
+
     await runFfmpeg([
       '-y',
       '-hide_banner',
@@ -181,7 +212,7 @@ export async function mixVoiceAndBackgroundServerSide(
       '-i',
       bgPath,
       '-filter_complex',
-      `[1:a]aloop=loop=-1:size=536870912[bgLoop];[0:a]volume=4dB[v];[bgLoop]volume=${bgGain}[bg];[v][bg]amix=inputs=2:duration=first:dropout_transition=0,alimiter=limit=0.92,aformat=channel_layouts=stereo`,
+      filterComplex,
       '-c:a',
       'libmp3lame',
       '-b:a',
@@ -195,6 +226,98 @@ export async function mixVoiceAndBackgroundServerSide(
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
   }
+}
+
+interface SilenceSegment {
+  start: number;
+  end: number;
+}
+
+/**
+ * Runs ffmpeg's silencedetect filter over the voice track to find
+ * pauses longer than SILENCE_MIN_SEC. Returns the list of silence
+ * intervals (in seconds from the file start).
+ *
+ * silencedetect logs to stderr in pairs:
+ *   silence_start: <t>
+ *   silence_end:   <t> | silence_duration: <d>
+ * The match-all here is intentionally generous — if a trailing silence
+ * runs to EOF, ffmpeg may omit silence_end, in which case we just
+ * skip that orphaned start.
+ */
+async function detectSilences(voicePath: string): Promise<SilenceSegment[]> {
+  const stderr = await runFfmpegCaptureStderr([
+    '-hide_banner',
+    '-i',
+    voicePath,
+    '-af',
+    `silencedetect=n=${SILENCE_THRESHOLD_DB}dB:d=${SILENCE_MIN_SEC}`,
+    '-f',
+    'null',
+    '-',
+  ]);
+
+  const starts: number[] = [];
+  for (const m of stderr.matchAll(/silence_start:\s*([0-9.]+)/g)) {
+    starts.push(parseFloat(m[1]));
+  }
+  const ends: number[] = [];
+  for (const m of stderr.matchAll(/silence_end:\s*([0-9.]+)/g)) {
+    ends.push(parseFloat(m[1]));
+  }
+
+  const out: SilenceSegment[] = [];
+  for (let i = 0; i < Math.min(starts.length, ends.length); i++) {
+    if (ends[i] > starts[i]) out.push({ start: starts[i], end: ends[i] });
+  }
+  return out;
+}
+
+/**
+ * Builds a ffmpeg `volume` filter expression that produces the
+ * breathing-bg envelope: low under voice, high during sustained
+ * silences, ducking back down LOOKAHEAD_SEC seconds before voice
+ * resumes. Falls back to a flat low gain when no qualifying
+ * silences are found.
+ *
+ * The expression is a chain of nested `if(between(t, a, b), HIGH, ...)`
+ * clauses — one per silence window. For each silence, we open the
+ * window at silence_start and close it `LOOKAHEAD_SEC` before
+ * silence_end so the bg starts ducking back before the voice
+ * actually returns. Silences shorter than that lookahead (rare,
+ * since SILENCE_MIN_SEC >= 1.0) produce a degenerate empty window
+ * and are skipped.
+ */
+function buildBgVolumeExpression(silences: SilenceSegment[]): string {
+  const windows: SilenceSegment[] = [];
+  for (const s of silences) {
+    const closeAt = s.end - LOOKAHEAD_SEC;
+    if (closeAt > s.start) windows.push({ start: s.start, end: closeAt });
+  }
+  if (windows.length === 0) return String(BG_GAIN_LOW);
+
+  // Nest from innermost out so the final string reads
+  // `if(between, HIGH, if(between, HIGH, ...LOW))`.
+  let expr = String(BG_GAIN_LOW);
+  for (const w of windows) {
+    expr = `if(between(t,${w.start.toFixed(3)},${w.end.toFixed(3)}),${BG_GAIN_HIGH},${expr})`;
+  }
+  return expr;
+}
+
+/** Runs ffmpeg and returns stderr (silencedetect logs there). */
+function runFfmpegCaptureStderr(args: string[]): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(ffmpegInstaller.path, args, {
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    let stderr = '';
+    proc.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    proc.on('error', reject);
+    proc.on('close', () => resolve(stderr));
+  });
 }
 
 async function fetchBg(url: string): Promise<Uint8Array> {
