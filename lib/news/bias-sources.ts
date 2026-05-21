@@ -120,12 +120,20 @@ export const OUTLETS: Record<SearchLang, Outlet[]> = {
       verticals: ['sports'],
       rssUrl: 'https://ge.globo.com/rss/ge/' },
 
-    // --- center, generalist
+    // --- center, politics/economy-focused (vertical, not true generalists)
+    // These outlets brand themselves as policy / political analysis;
+    // they don't cover sports, cinema or tech. Tagging them as verticals
+    // both reflects reality and stops them from showing up in
+    // "center + sports" or "center + culture" queries where they have
+    // nothing to offer.
     { domain: 'poder360.com.br', source: 'Poder360', bias: 'center',
+      verticals: ['politics', 'economy'],
       rssUrl: 'https://www.poder360.com.br/feed/' },
     { domain: 'nexojornal.com.br', source: 'Nexo', bias: 'center',
+      verticals: ['politics', 'economy', 'culture'],
       rssUrl: 'https://www.nexojornal.com.br/rss' },
-    { domain: 'lupa.uol.com.br', source: 'Agência Lupa', bias: 'center' },
+    { domain: 'lupa.uol.com.br', source: 'Agência Lupa', bias: 'center',
+      verticals: ['politics'] },
 
     // --- bias-neutral verticals
     { domain: 'olhardigital.com.br', source: 'Olhar Digital', bias: null,
@@ -241,6 +249,15 @@ export function newsapiDomainsForRequest(
 export interface RssFeed {
   url: string;
   source: string;
+  /**
+   * Whether this feed comes from a vertical (topic-tagged) outlet.
+   * Verticals don't need a category-keyword filter on their items
+   * because the entire feed is already on-topic for the verticals
+   * we matched. Generalist feeds DO need the keyword filter, since
+   * their feed contains every topic and we only want the slice that
+   * matches the user's selected categories.
+   */
+  isVertical: boolean;
 }
 
 /** RSS feeds belonging to the selected outlets. */
@@ -251,7 +268,11 @@ export function rssFeedsForRequest(
 ): RssFeed[] {
   return selectOutlets(lang, bias, categories)
     .filter((o): o is Outlet & { rssUrl: string } => Boolean(o.rssUrl))
-    .map((o) => ({ url: o.rssUrl, source: o.source }));
+    .map((o) => ({
+      url: o.rssUrl,
+      source: o.source,
+      isVertical: Boolean(o.verticals),
+    }));
 }
 
 /**
