@@ -1,10 +1,5 @@
 import { FetchError, fetchWithRetry } from '@/lib/utils/retry';
-import {
-  RSS_FEEDS,
-  type Bias,
-  type RssFeed,
-  type SearchLang,
-} from './bias-sources';
+import type { RssFeed, SearchLang } from './bias-sources';
 import type { NewsArticle } from './aggregator';
 
 interface RawItem {
@@ -16,8 +11,8 @@ interface RawItem {
 }
 
 interface FetchOpts {
+  feeds: RssFeed[];
   lang: SearchLang;
-  bias: Bias;
   categories: string[];
   categoryKeywords: string[];
   limit: number;
@@ -26,14 +21,16 @@ interface FetchOpts {
 }
 
 /**
- * Pulls articles from curated RSS feeds for the (language, bias)
- * combination. Each feed runs in parallel with its own timeout; a
+ * Fetches articles from the supplied RSS feeds in parallel. The
+ * caller — usually the aggregator — picks which feeds to pass based
+ * on the (language, bias, categories) tuple via
+ * rssFeedsForRequest(). Each feed runs with its own timeout; a
  * single slow or 404ing feed never sinks the whole search.
  */
 export async function fetchRssArticles(
   opts: FetchOpts
 ): Promise<NewsArticle[]> {
-  const feeds: RssFeed[] = RSS_FEEDS[opts.lang]?.[opts.bias] ?? [];
+  const feeds = opts.feeds;
   if (feeds.length === 0) return [];
 
   const timeoutMs = opts.perFeedTimeoutMs ?? 6000;

@@ -1,9 +1,11 @@
 import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
 import { translateArticles } from '@/lib/llm/translate';
 import {
-  biasOfDomain,
-  newsapiDomainsParam,
+  isArticleAllowed,
+  newsapiDomainsForRequest,
+  rssFeedsForRequest,
   type Bias,
+  type Category,
   type SearchLang,
 } from './bias-sources';
 import { fetchRssArticles } from './rss';
@@ -92,6 +94,15 @@ function localizedKeyword(category: string, lang: string): string {
   return CATEGORY_KEYWORD[category]?.[lang] ?? category;
 }
 
+const VALID_CATEGORIES = Object.keys(CATEGORY_KEYWORD) as Category[];
+
+/** Coerce raw input categories to the typed Category enum, dropping unknowns. */
+function asCategories(cats: string[]): Category[] {
+  return cats.filter((c): c is Category =>
+    (VALID_CATEGORIES as readonly string[]).includes(c)
+  );
+}
+
 function buildQuery(input: NewsSearchInput, lang: string): string {
   // Country scope is enforced via the provider's native filter; categories
   // contribute the only free-text component — translated to the search
@@ -125,12 +136,20 @@ async function searchNewsApi(
   const key = process.env.NEWSAPI_KEY;
   if (!key) return [];
 
+  // Domains are picked per (language, bias, categories) so that, e.g.,
+  // a "politics + center" search only queries political-news outlets —
+  // not standalone tech sites that happen to live in the same bias
+  // bucket. If the resulting domain list is empty (no outlet covers
+  // any selected category in that bias bucket), skip NewsAPI entirely
+  // since an empty `domains=` would silently widen the search to all
+  // sources.
+  const cats = asCategories(input.categories);
+  const domains = newsapiDomainsForRequest(lang, input.bias, cats);
+  if (!domains) return [];
+
   const url = new URL(NEWSAPI_BASE);
   url.searchParams.set('q', buildQuery(input, lang));
-  // Curated domains per (language, bias) — the real bias filter. NewsAPI's
-  // source-ID catalog is English-heavy and skips most PT/ES outlets, so we
-  // pass domains instead.
-  url.searchParams.set('domains', newsapiDomainsParam(lang, input.bias));
+  url.searchParams.set('domains', domains);
   url.searchParams.set('language', lang);
   url.searchParams.set('sortBy', 'publishedAt');
   url.searchParams.set('pageSize', String(input.limit ?? 10));
@@ -178,10 +197,12 @@ async function searchGNews(
   try {
     const res = await fetchWithRetry(url.toString());
     const data = (await res.json()) as { articles?: GNewsArticle[] };
-    // GNews has no bias filter on its end — it returns whatever is
-    // trending for the country + language. We post-filter against our
-    // own bias catalog so a "right, Brasil" search doesn't bleed UOL
-    // (which we've classified left) into the results.
+    // GNews has no bias or topical filter on its end — it returns
+    // whatever is trending for the country + language. We post-filter
+    // against the outlet catalog so a "politics + center" search
+    // doesn't bleed in articles from tech-only outlets that happen to
+    // share the center bucket.
+    const cats = asCategories(input.categories);
     return (data.articles ?? [])
       .map((a): NewsArticle => ({
         title: a.title ?? '',
@@ -193,7 +214,7 @@ async function searchGNews(
         originalLanguage: lang,
         image: a.image || undefined,
       }))
-      .filter((a) => a.url && biasOfDomain(a.url, lang) === input.bias);
+      .filter((a) => a.url && isArticleAllowed(a.url, lang, input.bias, cats));
   } catch (err) {
     if (err instanceof FetchError) {
       console.warn('[news] GNews failed', err.status, err.message);
@@ -206,10 +227,13 @@ async function searchRss(
   input: NewsSearchInput,
   lang: SearchLang
 ): Promise<NewsArticle[]> {
+  const cats = asCategories(input.categories);
+  const feeds = rssFeedsForRequest(lang, input.bias, cats);
+  if (feeds.length === 0) return [];
   const categoryKeywords = input.categories.map((c) => localizedKeyword(c, lang));
   return fetchRssArticles({
+    feeds,
     lang,
-    bias: input.bias,
     categories: input.categories,
     categoryKeywords,
     limit: input.limit ?? 10,
