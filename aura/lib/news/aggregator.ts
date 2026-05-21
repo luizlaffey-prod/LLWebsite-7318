@@ -8,6 +8,7 @@ import {
   type Category,
   type SearchLang,
 } from './bias-sources';
+import { resolveLocation, type ResolvedLocation } from './countries';
 import { fetchRssArticles } from './rss';
 import { searchGuardian } from './guardian';
 
@@ -34,50 +35,13 @@ export interface NewsSearchInput {
 const NEWSAPI_BASE = 'https://newsapi.org/v2/everything';
 const GNEWS_BASE = 'https://gnews.io/api/v4/search';
 
-// Common country name → ISO 3166-1 alpha-2 (lowercased for GNews).
-// Accepts PT, EN and ES forms. Extend as needed.
-const COUNTRY_CODE: Record<string, string> = {
-  'united states': 'us', 'usa': 'us', 'estados unidos': 'us', 'eua': 'us',
-  'brazil': 'br', 'brasil': 'br',
-  'mexico': 'mx', 'méxico': 'mx',
-  'argentina': 'ar',
-  'spain': 'es', 'espanha': 'es', 'españa': 'es',
-  'portugal': 'pt',
-  'angola': 'ao',
-  'mozambique': 'mz', 'moçambique': 'mz', 'mozambico': 'mz',
-  'cabo verde': 'cv', 'cape verde': 'cv',
-  'guinea-bissau': 'gw', 'guiné-bissau': 'gw', 'guine-bissau': 'gw',
-  'são tomé e príncipe': 'st', 'sao tome and principe': 'st',
-  'timor-leste': 'tl', 'timor leste': 'tl', 'east timor': 'tl',
-  'united kingdom': 'gb', 'uk': 'gb', 'reino unido': 'gb',
-  'france': 'fr', 'frança': 'fr', 'francia': 'fr',
-  'germany': 'de', 'alemanha': 'de', 'alemania': 'de',
-  'italy': 'it', 'itália': 'it', 'italia': 'it',
-  'canada': 'ca', 'canadá': 'ca',
-  'japan': 'jp', 'japão': 'jp', 'japón': 'jp',
-  'china': 'cn',
-  'india': 'in', 'índia': 'in',
-  'australia': 'au', 'austrália': 'au',
-  'colombia': 'co', 'colômbia': 'co',
-  'chile': 'cl',
-  'peru': 'pe', 'perú': 'pe',
-};
-
-// ISO country code → primary press language used by GNews's `lang` param.
-// The bulletin script generator translates source articles into the user's
-// chosen output language, so the search should pull from the country's
-// native press rather than filter by the output locale.
-const COUNTRY_PRESS_LANG: Record<string, string> = {
-  us: 'en', gb: 'en', ca: 'en', au: 'en', in: 'en',
-  br: 'pt', pt: 'pt', ao: 'pt', mz: 'pt', cv: 'pt', gw: 'pt', st: 'pt', tl: 'pt',
-  es: 'es', mx: 'es', ar: 'es', co: 'es', cl: 'es', pe: 'es',
-  fr: 'fr', de: 'de', it: 'it', jp: 'ja', cn: 'zh',
-};
-
-function countryCodeFor(location?: string): string | undefined {
-  if (!location) return undefined;
-  return COUNTRY_CODE[location.trim().toLowerCase()];
-}
+// Country resolution lives in ./countries.ts — it leans on the
+// Node runtime's ICU country database (Intl.DisplayNames) so any of
+// the ~250 ISO 3166-1 alpha-2 countries can be matched in EN/PT/ES
+// without us maintaining a hand-rolled allowlist. When the user
+// types a sub-country location (city, state, region) it's returned
+// as-is via rawLocation and the aggregator drops it into the search
+// query as a keyword.
 
 // Category keyword translation per search language. GNews and NewsAPI match
 // against the article text in whatever language they're searching, so passing
@@ -109,13 +73,31 @@ function asCategories(cats: string[]): Category[] {
   );
 }
 
-function buildQuery(input: NewsSearchInput, lang: string): string {
-  // Country scope is enforced via the provider's native filter; categories
-  // contribute the only free-text component — translated to the search
-  // language so it actually matches articles.
-  if (input.categories.length === 0) return 'news';
-  const keywords = input.categories.map((c) => localizedKeyword(c, lang));
-  return keywords.join(' OR ');
+function buildQuery(
+  input: NewsSearchInput,
+  lang: string,
+  locationKeyword?: string
+): string {
+  // Two free-text components: the user's selected categories
+  // (translated to the search language) and, when the location
+  // wasn't a recognized country, the raw location string. The
+  // location goes in as a phrase so multi-word names ("São Paulo")
+  // stay together. We deliberately do NOT add the location keyword
+  // when GNews's country filter already scopes the results — press
+  // FROM a country rarely mentions the country name in headlines.
+  const parts: string[] = [];
+  if (input.categories.length > 0) {
+    const keywords = input.categories.map((c) => localizedKeyword(c, lang));
+    parts.push(`(${keywords.join(' OR ')})`);
+  }
+  if (locationKeyword) {
+    const quoted = locationKeyword.includes(' ')
+      ? `"${locationKeyword}"`
+      : locationKeyword;
+    parts.push(quoted);
+  }
+  if (parts.length === 0) return 'news';
+  return parts.join(' AND ');
 }
 
 /**
@@ -123,21 +105,21 @@ function buildQuery(input: NewsSearchInput, lang: string): string {
  * user constrains by country (e.g. "Brasil"), we follow that country's
  * native press language regardless of the bulletin's output language,
  * because the script generator translates source material as it
- * writes. Falls back to the bulletin's output language for global
- * scope.
+ * writes. For sub-country locations or scopes outside our en/pt/es
+ * catalog, falls back to the bulletin's output language.
  */
-function effectiveSearchLang(input: NewsSearchInput): SearchLang {
-  const countryCode =
-    input.geographicScope === 'country' ? countryCodeFor(input.location) : undefined;
-  const candidate =
-    (countryCode && COUNTRY_PRESS_LANG[countryCode]) || input.language;
-  // bias-sources + RSS only cover en/pt/es. Anything else falls back to en.
+function effectiveSearchLang(
+  input: NewsSearchInput,
+  resolved?: ResolvedLocation
+): SearchLang {
+  const candidate = resolved?.pressLang ?? input.language;
   return candidate === 'pt' || candidate === 'es' ? candidate : 'en';
 }
 
 async function searchNewsApi(
   input: NewsSearchInput,
-  lang: SearchLang
+  lang: SearchLang,
+  resolved: ResolvedLocation | null
 ): Promise<NewsArticle[]> {
   const key = process.env.NEWSAPI_KEY;
   if (!key) return [];
@@ -153,8 +135,15 @@ async function searchNewsApi(
   const domains = newsapiDomainsForRequest(lang, input.bias, cats);
   if (!domains) return [];
 
+  // Sub-country locations (cities, states) become a keyword filter
+  // since NewsAPI has no country/region param — only language and
+  // domain. The aggregator already restricts the domain list to the
+  // chosen bias bucket; the keyword narrows further.
+  const locationKeyword =
+    resolved && !resolved.isCountry ? resolved.rawLocation : undefined;
+
   const url = new URL(NEWSAPI_BASE);
-  url.searchParams.set('q', buildQuery(input, lang));
+  url.searchParams.set('q', buildQuery(input, lang, locationKeyword));
   url.searchParams.set('domains', domains);
   url.searchParams.set('language', lang);
   url.searchParams.set('sortBy', 'publishedAt');
@@ -185,20 +174,28 @@ async function searchNewsApi(
 
 async function searchGNews(
   input: NewsSearchInput,
-  lang: SearchLang
+  lang: SearchLang,
+  resolved: ResolvedLocation | null
 ): Promise<NewsArticle[]> {
   const key = process.env.GNEWS_KEY;
   if (!key) return [];
 
-  const countryCode =
-    input.geographicScope === 'country' ? countryCodeFor(input.location) : undefined;
+  // Use the country filter when we resolved to an ISO code; otherwise
+  // drop the location into the query as a keyword (cities / regions /
+  // ambiguous text). For known countries we deliberately DON'T add
+  // the country name as keyword — local press rarely mentions its
+  // own country in headlines and the keyword would cut real results.
+  const locationKeyword =
+    resolved && !resolved.isCountry ? resolved.rawLocation : undefined;
 
   const url = new URL(GNEWS_BASE);
-  url.searchParams.set('q', buildQuery(input, lang));
+  url.searchParams.set('q', buildQuery(input, lang, locationKeyword));
   url.searchParams.set('lang', lang);
   url.searchParams.set('max', String(input.limit ?? 10));
   url.searchParams.set('apikey', key);
-  if (countryCode) url.searchParams.set('country', countryCode);
+  if (resolved?.countryCode) {
+    url.searchParams.set('country', resolved.countryCode);
+  }
 
   try {
     const res = await fetchWithRetry(url.toString());
@@ -253,6 +250,16 @@ export interface SearchNewsResult {
 }
 
 export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResult> {
+  // Resolve location once. For country scope, if the user typed a
+  // recognized ISO country we'll set GNews's `country=` filter and
+  // use that country's press language; if they typed a sub-country
+  // location (city, state, region) we'll use it as a search keyword
+  // and fall back to the bulletin's output language.
+  const resolved =
+    input.geographicScope === 'country'
+      ? resolveLocation(input.location)
+      : null;
+
   // Determine which search languages to fan out across. Country scope
   // picks one (the country's native press language so we read its
   // own press, not what English wires say about it). Global scope
@@ -263,7 +270,7 @@ export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResu
   const langs: SearchLang[] =
     input.geographicScope === 'global'
       ? ['en', 'pt', 'es']
-      : [effectiveSearchLang(input)];
+      : [effectiveSearchLang(input, resolved ?? undefined)];
 
   // Per-language: NewsAPI + GNews + RSS + Guardian in parallel.
   // Global multiplies request count proportionally — on free tiers
@@ -272,8 +279,8 @@ export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResu
   // call streams in parallel so wall-clock latency is dominated by
   // the slowest single feed/API, not the total count.
   const calls = langs.flatMap((lang) => [
-    searchNewsApi(input, lang),
-    searchGNews(input, lang),
+    searchNewsApi(input, lang, resolved),
+    searchGNews(input, lang, resolved),
     searchRss(input, lang),
     searchGuardian(input, lang),
   ]);
