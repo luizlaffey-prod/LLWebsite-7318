@@ -566,7 +566,7 @@
     "errorPreview": "No se pudo reproducir la muestra ahora.",
     "errorSave": "No se pudo guardar la preferencia. Inténtalo de nuevo.",
     "cloneSectionTitle": "Clonar una voz",
-    "cloneSectionBody": "Sube 1–5 muestras limpias (30–60s cada una) y AURA crea una voz personalizada vía ElevenLabs.",
+    "cloneSectionBody": "Sube 1–5 muestras limpias (30–60s cada una) y AURA crea una voz personalizada.",
     "cloneCta": "Clonar voz",
     "clone": {
       "title": "Clonar una voz",
