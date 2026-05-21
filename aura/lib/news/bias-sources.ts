@@ -68,6 +68,7 @@ export const NEWSAPI_DOMAINS: Record<SearchLang, Record<Bias, string[]>> = {
       'reuters.com',
       'apnews.com',
       'lupa.uol.com.br',
+      'olhardigital.com.br',
     ],
     right: [
       'estadao.com.br',
@@ -195,6 +196,7 @@ export const RSS_FEEDS: Record<SearchLang, Record<Bias, RssFeed[]>> = {
     center: [
       { url: 'https://www.poder360.com.br/feed/', source: 'Poder360' },
       { url: 'https://www.nexojornal.com.br/rss', source: 'Nexo' },
+      { url: 'https://olhardigital.com.br/feed/', source: 'Olhar Digital' },
     ],
     right: [
       { url: 'https://www.estadao.com.br/rss/ultimas.xml', source: 'Estadão' },
