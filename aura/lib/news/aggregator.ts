@@ -43,6 +43,12 @@ const COUNTRY_CODE: Record<string, string> = {
   'argentina': 'ar',
   'spain': 'es', 'espanha': 'es', 'españa': 'es',
   'portugal': 'pt',
+  'angola': 'ao',
+  'mozambique': 'mz', 'moçambique': 'mz', 'mozambico': 'mz',
+  'cabo verde': 'cv', 'cape verde': 'cv',
+  'guinea-bissau': 'gw', 'guiné-bissau': 'gw', 'guine-bissau': 'gw',
+  'são tomé e príncipe': 'st', 'sao tome and principe': 'st',
+  'timor-leste': 'tl', 'timor leste': 'tl', 'east timor': 'tl',
   'united kingdom': 'gb', 'uk': 'gb', 'reino unido': 'gb',
   'france': 'fr', 'frança': 'fr', 'francia': 'fr',
   'germany': 'de', 'alemanha': 'de', 'alemania': 'de',
@@ -63,7 +69,7 @@ const COUNTRY_CODE: Record<string, string> = {
 // native press rather than filter by the output locale.
 const COUNTRY_PRESS_LANG: Record<string, string> = {
   us: 'en', gb: 'en', ca: 'en', au: 'en', in: 'en',
-  br: 'pt', pt: 'pt',
+  br: 'pt', pt: 'pt', ao: 'pt', mz: 'pt', cv: 'pt', gw: 'pt', st: 'pt', tl: 'pt',
   es: 'es', mx: 'es', ar: 'es', co: 'es', cl: 'es', pe: 'es',
   fr: 'fr', de: 'de', it: 'it', jp: 'ja', cn: 'zh',
 };
