@@ -264,6 +264,11 @@ function DrawerBody(props: Props) {
         } else {
           setGeneratingMusic(true);
           try {
+            // Pass voiceUrl so the server can run the ffmpeg mix
+            // itself and hand back a final mixedUrl. Avoids the
+            // browser decodeAudioData / CORS path entirely, which has
+            // been the source of "Não foi possível mixar a trilha"
+            // errors.
             const musicRes = await fetch('/api/music/generate', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -272,6 +277,7 @@ function DrawerBody(props: Props) {
                 emotions: freshBlocks.map((b) => b.emotion),
                 language: props.language,
                 acceptOverage: false,
+                voiceUrl: data.audioUrl,
               }),
             });
             const musicData = await musicRes.json();
@@ -280,8 +286,15 @@ function DrawerBody(props: Props) {
                 priceCents: musicData.overagePriceCents ?? 75,
               });
             } else if (musicRes.ok) {
-              bgUrlForMix = musicData.musicUrl;
               setAiMusicUrl(musicData.musicUrl);
+              if (musicData.mixedUrl) {
+                // Server already mixed — short-circuit the client mix
+                // and play the result.
+                setAudioUrl(musicData.mixedUrl);
+                setGeneratingMusic(false);
+                return;
+              }
+              bgUrlForMix = musicData.musicUrl;
             } else {
               setMusicError(musicData.message || t('errorGenerate'));
             }
@@ -343,12 +356,34 @@ function DrawerBody(props: Props) {
       const fresh = data.audioUrl + `?t=${Date.now()}`; // bust cache
       const useAiBg = bgMode === 'ai' && aiUnlocked && aiMusicUrl;
       const useUploadBg = bgMode === 'upload' && bgFile;
-      if (useAiBg || useUploadBg) {
+      if (useAiBg) {
+        // Server-side mix: avoids the browser decodeAudioData/CORS
+        // path that's been failing on R2-hosted AI music.
+        try {
+          const mixRes = await fetch('/api/audios/mix-with-bg', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              voiceUrl: data.audioUrl,
+              bgUrl: aiMusicUrl as string,
+            }),
+          });
+          const mixData = await mixRes.json();
+          if (mixRes.ok && mixData.mixedUrl) {
+            setAudioUrl(mixData.mixedUrl);
+          } else {
+            setError(t('errorMix'));
+            setAudioUrl(fresh);
+          }
+        } catch {
+          setError(t('errorMix'));
+          setAudioUrl(fresh);
+        }
+      } else if (useUploadBg) {
         try {
           const mixed = await mixVoiceWithBackground({
             voiceUrl: fresh,
-            bgFile: useUploadBg ? (bgFile as File) : undefined,
-            bgUrl: useAiBg ? (aiMusicUrl as string) : undefined,
+            bgFile: bgFile as File,
           });
           setAudioUrl(URL.createObjectURL(mixed));
         } catch {

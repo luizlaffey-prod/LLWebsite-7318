@@ -562,6 +562,7 @@
     "inUse": "Default",
     "defaultBadge": "Default",
     "clonedBadge": "Cloned",
+    "rename": "Rename",
     "upgradeForMore": "Upgrade to Pro to unlock the full voice catalog and custom voice cloning.",
     "errorLoad": "Couldn't load the voice catalog. Please refresh.",
     "errorPreview": "Couldn't play the preview right now.",
