@@ -1,6 +1,7 @@
 import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
 import { translateArticles } from '@/lib/llm/translate';
-import { newsapiSourcesParam, type Bias } from './bias-sources';
+import { newsapiDomainsParam, type Bias, type SearchLang } from './bias-sources';
+import { fetchRssArticles } from './rss';
 
 export interface NewsArticle {
   title: string;
@@ -94,16 +95,37 @@ function buildQuery(input: NewsSearchInput, lang: string): string {
   return keywords.join(' OR ');
 }
 
-async function searchNewsApi(input: NewsSearchInput): Promise<NewsArticle[]> {
+/**
+ * Picks the actual search language for upstream providers. When the
+ * user constrains by country (e.g. "Brasil"), we follow that country's
+ * native press language regardless of the bulletin's output language,
+ * because the script generator translates source material as it
+ * writes. Falls back to the bulletin's output language for global
+ * scope.
+ */
+function effectiveSearchLang(input: NewsSearchInput): SearchLang {
+  const countryCode =
+    input.geographicScope === 'country' ? countryCodeFor(input.location) : undefined;
+  const candidate =
+    (countryCode && COUNTRY_PRESS_LANG[countryCode]) || input.language;
+  // bias-sources + RSS only cover en/pt/es. Anything else falls back to en.
+  return candidate === 'pt' || candidate === 'es' ? candidate : 'en';
+}
+
+async function searchNewsApi(
+  input: NewsSearchInput,
+  lang: SearchLang
+): Promise<NewsArticle[]> {
   const key = process.env.NEWSAPI_KEY;
   if (!key) return [];
 
   const url = new URL(NEWSAPI_BASE);
-  // NewsAPI's source list is English-press oriented, so we keep the query
-  // in English regardless of the user's output language.
-  url.searchParams.set('q', buildQuery(input, 'en'));
-  url.searchParams.set('sources', newsapiSourcesParam(input.bias));
-  url.searchParams.set('language', 'en');
+  url.searchParams.set('q', buildQuery(input, lang));
+  // Curated domains per (language, bias) — the real bias filter. NewsAPI's
+  // source-ID catalog is English-heavy and skips most PT/ES outlets, so we
+  // pass domains instead.
+  url.searchParams.set('domains', newsapiDomainsParam(lang, input.bias));
+  url.searchParams.set('language', lang);
   url.searchParams.set('sortBy', 'publishedAt');
   url.searchParams.set('pageSize', String(input.limit ?? 10));
 
@@ -119,7 +141,7 @@ async function searchNewsApi(input: NewsSearchInput): Promise<NewsArticle[]> {
       publishedAt: a.publishedAt ?? new Date().toISOString(),
       url: a.url ?? '',
       category: input.categories[0] ?? 'general',
-      originalLanguage: 'en',
+      originalLanguage: lang,
       image: a.urlToImage || undefined,
     }));
   } catch (err) {
@@ -130,20 +152,19 @@ async function searchNewsApi(input: NewsSearchInput): Promise<NewsArticle[]> {
   }
 }
 
-async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
+async function searchGNews(
+  input: NewsSearchInput,
+  lang: SearchLang
+): Promise<NewsArticle[]> {
   const key = process.env.GNEWS_KEY;
   if (!key) return [];
 
-  // Search language follows the country's native press, not the bulletin's
-  // output language — the script generator translates as it writes.
   const countryCode =
     input.geographicScope === 'country' ? countryCodeFor(input.location) : undefined;
-  const searchLang =
-    (countryCode && COUNTRY_PRESS_LANG[countryCode]) || input.language;
 
   const url = new URL(GNEWS_BASE);
-  url.searchParams.set('q', buildQuery(input, searchLang));
-  url.searchParams.set('lang', searchLang);
+  url.searchParams.set('q', buildQuery(input, lang));
+  url.searchParams.set('lang', lang);
   url.searchParams.set('max', String(input.limit ?? 10));
   url.searchParams.set('apikey', key);
   if (countryCode) url.searchParams.set('country', countryCode);
@@ -158,7 +179,7 @@ async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
       publishedAt: a.publishedAt ?? new Date().toISOString(),
       url: a.url ?? '',
       category: input.categories[0] ?? 'general',
-      originalLanguage: searchLang,
+      originalLanguage: lang,
       image: a.image || undefined,
     }));
   } catch (err) {
@@ -169,6 +190,20 @@ async function searchGNews(input: NewsSearchInput): Promise<NewsArticle[]> {
   }
 }
 
+async function searchRss(
+  input: NewsSearchInput,
+  lang: SearchLang
+): Promise<NewsArticle[]> {
+  const categoryKeywords = input.categories.map((c) => localizedKeyword(c, lang));
+  return fetchRssArticles({
+    lang,
+    bias: input.bias,
+    categories: input.categories,
+    categoryKeywords,
+    limit: input.limit ?? 10,
+  });
+}
+
 export interface SearchNewsResult {
   articles: NewsArticle[];
   translationStatus: string;
@@ -176,17 +211,21 @@ export interface SearchNewsResult {
 }
 
 export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResult> {
-  // Run both providers in parallel; merge, dedupe by URL, keep newest first.
-  const [newsapi, gnews] = await Promise.all([
-    searchNewsApi(input),
-    searchGNews(input),
+  const lang = effectiveSearchLang(input);
+
+  // All three providers run in parallel; merge, dedupe by URL, keep newest first.
+  const [newsapi, gnews, rss] = await Promise.all([
+    searchNewsApi(input, lang),
+    searchGNews(input, lang),
+    searchRss(input, lang),
   ]);
 
   const seen = new Set<string>();
   const merged: NewsArticle[] = [];
-  for (const a of [...newsapi, ...gnews]) {
+  for (const a of [...newsapi, ...gnews, ...rss]) {
     const key = a.url || `${a.source}|${a.title}`;
     if (seen.has(key)) continue;
+    if (!a.title) continue;
     seen.add(key);
     merged.push(a);
   }
