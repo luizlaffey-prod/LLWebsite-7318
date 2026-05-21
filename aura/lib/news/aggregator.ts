@@ -211,18 +211,33 @@ export interface SearchNewsResult {
 }
 
 export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResult> {
-  const lang = effectiveSearchLang(input);
+  // Determine which search languages to fan out across. Country scope
+  // picks one (the country's native press language so we read its
+  // own press, not what English wires say about it). Global scope
+  // hits all three buckets — a Brazilian station on "Global, right"
+  // should hear Fox + ABC España + Estadão, not just Estadão.
+  // Per-language results are translated to the bulletin's output
+  // language downstream by translateArticles.
+  const langs: SearchLang[] =
+    input.geographicScope === 'global'
+      ? ['en', 'pt', 'es']
+      : [effectiveSearchLang(input)];
 
-  // All three providers run in parallel; merge, dedupe by URL, keep newest first.
-  const [newsapi, gnews, rss] = await Promise.all([
+  // Per-language: NewsAPI + GNews + RSS in parallel. Global multiplies
+  // request count by 3 — on free tiers (NewsAPI: 100/day) plan
+  // accordingly, but each lang's RSS fan-out is free and each
+  // provider call still streams in parallel so wall-clock latency is
+  // dominated by the slowest single feed/API, not the total count.
+  const calls = langs.flatMap((lang) => [
     searchNewsApi(input, lang),
     searchGNews(input, lang),
     searchRss(input, lang),
   ]);
+  const results = await Promise.all(calls);
 
   const seen = new Set<string>();
   const merged: NewsArticle[] = [];
-  for (const a of [...newsapi, ...gnews, ...rss]) {
+  for (const a of results.flat()) {
     const key = a.url || `${a.source}|${a.title}`;
     if (seen.has(key)) continue;
     if (!a.title) continue;
@@ -233,8 +248,8 @@ export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResu
   const top = merged.slice(0, input.limit ?? 10);
 
   // Translate titles + descriptions into the user's output language when
-  // sources are in a different press language (e.g. global/US scope returns
-  // English articles but the bulletin will be in Portuguese).
+  // sources are in a different press language (e.g. global scope returns
+  // a mix of EN/PT/ES articles but the bulletin will be in one language).
   const translated = await translateArticles(top, input.language);
   return {
     articles: translated.articles,
