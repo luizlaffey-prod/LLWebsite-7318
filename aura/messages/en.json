@@ -593,6 +593,38 @@
       "errorGeneric": "Voice cloning failed. Try again."
     }
   },
+  "earlyAccess": {
+    "badge": "Early Access",
+    "title": "Thanks for your interest",
+    "subtitle": "Secure your spot for the AURA paid plans — we'll reach out before launch with your priority offer.",
+    "body": "Tell us a bit about your station and we'll be in touch. Your 7-day trial keeps running while you wait.",
+    "field": {
+      "plan": "Interested plan",
+      "name": "Your name",
+      "email": "Email",
+      "phone": "Phone / WhatsApp",
+      "phonePlaceholder": "+1 555 0123",
+      "radioStation": "Radio station",
+      "cityState": "City / state",
+      "cityStatePlaceholder": "e.g. Miami, FL",
+      "website": "Website or social",
+      "websitePlaceholder": "https:// or @handle (optional)",
+      "notes": "Anything else?",
+      "notesPlaceholder": "Multi-station, special timezone, formats you need…"
+    },
+    "submit": "Secure my Early Access",
+    "submitting": "Sending…",
+    "error": {
+      "generic": "Couldn't send your request. Please try again in a moment.",
+      "validation": "Please check this field."
+    },
+    "thanks": {
+      "title": "You're on the list",
+      "body": "We received your details. We'll reach out at the email you provided as soon as paid plans go live.",
+      "backHome": "Back to home",
+      "backDashboard": "Back to dashboard"
+    }
+  },
   "billing": {
     "title": "Billing",
     "subtitle": "Plan, invoices and Stripe portal.",

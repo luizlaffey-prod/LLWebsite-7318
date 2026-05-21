@@ -593,6 +593,38 @@
       "errorGeneric": "Falha na clonagem. Tente novamente."
     }
   },
+  "earlyAccess": {
+    "badge": "Early Access",
+    "title": "Obrigado pelo interesse",
+    "subtitle": "Garanta sua vaga nos planos pagos da AURA — vamos te avisar antes do lançamento com sua oferta prioritária.",
+    "body": "Conta um pouco sobre sua emissora que a gente entra em contato. Seu trial de 7 dias continua rodando enquanto isso.",
+    "field": {
+      "plan": "Plano de interesse",
+      "name": "Seu nome",
+      "email": "E-mail",
+      "phone": "Telefone / WhatsApp",
+      "phonePlaceholder": "+55 11 99999-9999",
+      "radioStation": "Emissora",
+      "cityState": "Cidade / estado",
+      "cityStatePlaceholder": "Ex.: São Paulo, SP",
+      "website": "Site ou rede social",
+      "websitePlaceholder": "https:// ou @perfil (opcional)",
+      "notes": "Algo mais?",
+      "notesPlaceholder": "Várias emissoras, fuso especial, formatos que precisa…"
+    },
+    "submit": "Garantir meu Early Access",
+    "submitting": "Enviando…",
+    "error": {
+      "generic": "Não foi possível enviar agora. Tente novamente em instantes.",
+      "validation": "Confira este campo."
+    },
+    "thanks": {
+      "title": "Você está na lista",
+      "body": "Recebemos seus dados. Avisamos no e-mail informado assim que os planos pagos abrirem.",
+      "backHome": "Voltar pro início",
+      "backDashboard": "Voltar pro dashboard"
+    }
+  },
   "billing": {
     "title": "Faturamento",
     "subtitle": "Plano, faturas e portal Stripe.",

@@ -3,11 +3,13 @@ import { render } from '@react-email/render';
 import { WelcomeEmail } from './templates/welcome';
 import { TrialEndingEmail } from './templates/trial-ending';
 import { ResetPasswordEmail } from './templates/reset-password';
+import { EarlyAccessLeadEmail } from './templates/early-access-lead';
 import {
   welcomeStrings,
   trialEndingStrings,
   resetPasswordStrings,
 } from './strings';
+import type { EarlyAccessInput } from '@/lib/early-access/schema';
 import type { Locale } from '@/i18n';
 
 function getResend(): Resend {
@@ -95,6 +97,27 @@ export async function sendResetPasswordEmail(input: {
     from: fromAddress(),
     to: input.to,
     subject: s.subject,
+    html,
+  });
+}
+
+export async function sendEarlyAccessLeadEmail(input: {
+  lead: EarlyAccessInput;
+  submittedAt: string;
+}) {
+  const resend = getResend();
+  const html = await render(
+    EarlyAccessLeadEmail({
+      lead: input.lead,
+      submittedAt: input.submittedAt,
+    })
+  );
+
+  return resend.emails.send({
+    from: fromAddress(),
+    to: 'contact@aurapress.app',
+    replyTo: input.lead.email,
+    subject: `AURA Early Access — ${input.lead.radioStation} (${input.lead.plan})`,
     html,
   });
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { ExternalLink, CreditCard, ArrowUpRight, Loader2 } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PLAN_ORDER, PLANS, type PlanTier } from '@/lib/billing/plans';
-import { openBillingPortal, changePlan } from './actions';
+import { openBillingPortal } from './actions';
 import type { Locale } from '@/i18n';
 
 interface Invoice {
@@ -30,7 +30,6 @@ interface Props {
 export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoices }: Props) {
   const t = useTranslations('billing');
   const router = useRouter();
-  const [, startTransition] = useTransition();
   const [pendingPortal, setPendingPortal] = useState(false);
   const [pendingTier, setPendingTier] = useState<PlanTier | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,19 +49,7 @@ export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoi
   const handleChange = (tier: PlanTier) => {
     setError(null);
     setPendingTier(tier);
-    startTransition(async () => {
-      const res = await changePlan(tier, locale);
-      setPendingTier(null);
-      if ('error' in res) {
-        setError(t('errorChangeFailed'));
-        return;
-      }
-      if ('url' in res) {
-        window.location.href = res.url;
-        return;
-      }
-      router.refresh();
-    });
+    router.push(`/${locale}/early-access?plan=${tier}`);
   };
 
   return (
