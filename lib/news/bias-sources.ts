@@ -135,6 +135,25 @@ export const OUTLETS: Record<SearchLang, Outlet[]> = {
     { domain: 'lupa.uol.com.br', source: 'Agência Lupa', bias: 'center',
       verticals: ['politics'] },
 
+    // --- center, true generalist (BR press that covers every topic
+    // without a strong political lean by Brazilian standards). CNN
+    // Brasil and DW Brasil close the gap left by the
+    // politics-focused verticals above so a "center + health" or
+    // "center + sports" search isn't empty.
+    { domain: 'cnnbrasil.com.br', source: 'CNN Brasil', bias: 'center',
+      rssUrl: 'https://www.cnnbrasil.com.br/feed/' },
+    { domain: 'dw.com', source: 'DW Brasil', bias: 'center',
+      rssUrl: 'https://rss.dw.com/rdf/rss-br-all' },
+
+    // --- center, Lusophone Africa (Angola + Mozambique press).
+    // Editorially closer to institutional/state-aligned than to a
+    // partisan slant in the BR sense — bucketing as center is the
+    // least-wrong choice until/unless we get clearer bias signals
+    // for these markets.
+    { domain: 'jornaldeangola.ao', source: 'Jornal de Angola', bias: 'center' },
+    { domain: 'angop.ao', source: 'ANGOP', bias: 'center' },
+    { domain: 'novojornal.ao', source: 'Novo Jornal', bias: 'center' },
+
     // --- bias-neutral verticals
     { domain: 'olhardigital.com.br', source: 'Olhar Digital', bias: null,
       verticals: ['technology'],
