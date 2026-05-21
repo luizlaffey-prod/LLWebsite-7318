@@ -382,16 +382,18 @@ export function AudiosClient({ locale, canExportWav }: AudiosClientProps) {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="sm"
                       onClick={() => onDownload(a, 'mp3')}
                       disabled={!isReady || downloading === a.id}
                       title={t('download')}
+                      className="gap-1.5 text-xs uppercase tracking-wider"
                     >
                       {downloading === a.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        <Download className="h-4 w-4" />
+                        <Download className="h-3.5 w-3.5" />
                       )}
+                      MP3
                     </Button>
                     {canExportWav && (
                       <Button
@@ -400,8 +402,9 @@ export function AudiosClient({ locale, canExportWav }: AudiosClientProps) {
                         onClick={() => onDownload(a, 'wav')}
                         disabled={!isReady || downloading === a.id}
                         title={t('downloadWav')}
-                        className="text-xs uppercase tracking-wider"
+                        className="gap-1.5 text-xs uppercase tracking-wider"
                       >
+                        <Download className="h-3.5 w-3.5" />
                         WAV
                       </Button>
                     )}

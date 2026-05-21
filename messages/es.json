@@ -561,6 +561,7 @@
     "use": "Usar",
     "inUse": "Por defecto",
     "defaultBadge": "Por defecto",
+    "clonedBadge": "Clonada",
     "upgradeForMore": "Haz upgrade a Pro para desbloquear el catálogo completo + clonación de voz.",
     "errorLoad": "No pudimos cargar el catálogo. Recarga la página.",
     "errorPreview": "No se pudo reproducir la muestra ahora.",

@@ -109,13 +109,18 @@ export async function GET(req: Request) {
       tierRequired: voiceTable.tierRequired,
       previewUrl: voiceTable.previewUrl,
       elevenLabsVoiceId: voiceTable.elevenLabsVoiceId,
+      ownerUserId: voiceTable.ownerUserId,
+      isCloned: voiceTable.isCloned,
     })
     .from(voiceTable)
     .where(baseWhere);
 
-  // Defense in depth: even though slug is unique, dedupe by
-  // elevenLabsVoiceId in case historical rows duplicated an ID under
-  // different slugs. Keep the row with a previewUrl when available.
+  // Dedupe by elevenLabsVoiceId. Priority order:
+  //   1. The user's own row (owned by session.user.id) — never let a
+  //      global catalog row hide a voice the user explicitly cloned.
+  //   2. A row with a populated previewUrl — UI plays nicer when the
+  //      preview is cached.
+  //   3. Otherwise first-seen wins.
   const byElevenId = new Map<string, (typeof allVoices)[number]>();
   for (const v of allVoices) {
     const existing = byElevenId.get(v.elevenLabsVoiceId);
@@ -123,6 +128,13 @@ export async function GET(req: Request) {
       byElevenId.set(v.elevenLabsVoiceId, v);
       continue;
     }
+    const vOwned = v.ownerUserId === session.user.id;
+    const existingOwned = existing.ownerUserId === session.user.id;
+    if (vOwned && !existingOwned) {
+      byElevenId.set(v.elevenLabsVoiceId, v);
+      continue;
+    }
+    if (!vOwned && existingOwned) continue;
     if (!existing.previewUrl && v.previewUrl) {
       byElevenId.set(v.elevenLabsVoiceId, v);
     }
@@ -150,9 +162,15 @@ export async function GET(req: Request) {
       locked: !canUseVoice(quota.tier, v),
       preferred: prefs.some((p) => p.voiceId === v.id),
       isDefault: defaultPref?.voiceId === v.id,
+      isMine: v.ownerUserId === session.user.id,
     }))
     .filter((v) => includeLocked || !v.locked)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    // Pin the user's own (cloned) voices to the top so they don't get
+    // lost in an alphabetic mix with the catalog. Tie-break by name.
+    .sort((a, b) => {
+      if (a.isMine !== b.isMine) return a.isMine ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
 
   return NextResponse.json({
     voices: enriched,
