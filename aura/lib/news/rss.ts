@@ -67,22 +67,25 @@ async function fetchSingleFeed(
     );
     const xml = await res.text();
     const items = parseFeed(xml);
-    return items
-      .filter((item) =>
-        matchesCategory(item, opts.categoryKeywords)
-      )
-      .map(
-        (item): NewsArticle => ({
-          title: item.title,
-          description: item.description,
-          source: feed.source,
-          publishedAt: normalizeDate(item.pubDate),
-          url: item.link,
-          category: opts.categories[0] ?? 'general',
-          originalLanguage: opts.lang,
-          image: item.image,
-        })
-      );
+    // Generalist feeds carry every topic — keyword-filter their items
+    // to the user's selected categories. Vertical feeds are already
+    // on-topic (we picked them BECAUSE they cover the category), so
+    // skip the filter and trust the whole feed.
+    const filtered = feed.isVertical
+      ? items
+      : items.filter((item) => matchesCategory(item, opts.categoryKeywords));
+    return filtered.map(
+      (item): NewsArticle => ({
+        title: item.title,
+        description: item.description,
+        source: feed.source,
+        publishedAt: normalizeDate(item.pubDate),
+        url: item.link,
+        category: opts.categories[0] ?? 'general',
+        originalLanguage: opts.lang,
+        image: item.image,
+      })
+    );
   } catch (err) {
     if (err instanceof FetchError) {
       console.warn('[news] RSS feed failed', feed.source, err.status, err.message);
