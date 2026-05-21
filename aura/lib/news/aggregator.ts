@@ -1,6 +1,11 @@
 import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
 import { translateArticles } from '@/lib/llm/translate';
-import { newsapiDomainsParam, type Bias, type SearchLang } from './bias-sources';
+import {
+  biasOfDomain,
+  newsapiDomainsParam,
+  type Bias,
+  type SearchLang,
+} from './bias-sources';
 import { fetchRssArticles } from './rss';
 
 export interface NewsArticle {
@@ -172,16 +177,22 @@ async function searchGNews(
   try {
     const res = await fetchWithRetry(url.toString());
     const data = (await res.json()) as { articles?: GNewsArticle[] };
-    return (data.articles ?? []).map((a): NewsArticle => ({
-      title: a.title ?? '',
-      description: a.description ?? '',
-      source: a.source?.name ?? '',
-      publishedAt: a.publishedAt ?? new Date().toISOString(),
-      url: a.url ?? '',
-      category: input.categories[0] ?? 'general',
-      originalLanguage: lang,
-      image: a.image || undefined,
-    }));
+    // GNews has no bias filter on its end — it returns whatever is
+    // trending for the country + language. We post-filter against our
+    // own bias catalog so a "right, Brasil" search doesn't bleed UOL
+    // (which we've classified left) into the results.
+    return (data.articles ?? [])
+      .map((a): NewsArticle => ({
+        title: a.title ?? '',
+        description: a.description ?? '',
+        source: a.source?.name ?? '',
+        publishedAt: a.publishedAt ?? new Date().toISOString(),
+        url: a.url ?? '',
+        category: input.categories[0] ?? 'general',
+        originalLanguage: lang,
+        image: a.image || undefined,
+      }))
+      .filter((a) => a.url && biasOfDomain(a.url, lang) === input.bias);
   } catch (err) {
     if (err instanceof FetchError) {
       console.warn('[news] GNews failed', err.status, err.message);

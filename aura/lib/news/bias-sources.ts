@@ -107,6 +107,57 @@ export function newsapiDomainsParam(lang: SearchLang, bias: Bias): string {
   return NEWSAPI_DOMAINS[lang][bias].join(',');
 }
 
+// Reverse index: domain → bias bucket, per language. Built once at module
+// load so per-article classification is O(1) per suffix lookup.
+const DOMAIN_TO_BIAS: Record<SearchLang, Map<string, Bias>> = (() => {
+  const out = {} as Record<SearchLang, Map<string, Bias>>;
+  for (const lang of ['en', 'pt', 'es'] as const) {
+    const m = new Map<string, Bias>();
+    for (const bias of ['left', 'center', 'right'] as const) {
+      for (const domain of NEWSAPI_DOMAINS[lang][bias]) {
+        m.set(domain.toLowerCase(), bias);
+      }
+    }
+    out[lang] = m;
+  }
+  return out;
+})();
+
+/**
+ * Returns the bias bucket an article URL belongs to within a given
+ * search language, or null if the domain is not in our catalog.
+ *
+ * Uses longest-suffix matching so a specific subdomain catalogued
+ * separately (e.g. lupa.uol.com.br in `center`) wins over a more
+ * general parent domain (uol.com.br in `left`). An article from
+ * `m.uol.com.br` would fall back to the `uol.com.br` bucket; an
+ * article from a domain we've never seen returns null and gets
+ * dropped from bias-filtered results.
+ */
+export function biasOfDomain(
+  url: string,
+  lang: SearchLang
+): Bias | null {
+  const map = DOMAIN_TO_BIAS[lang];
+  if (!map) return null;
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+  let candidate = host;
+  // Walk from full host toward TLD, returning the first catalogued match.
+  while (candidate) {
+    const hit = map.get(candidate);
+    if (hit) return hit;
+    const i = candidate.indexOf('.');
+    if (i === -1) return null;
+    candidate = candidate.slice(i + 1);
+  }
+  return null;
+}
+
 export interface RssFeed {
   url: string;
   source: string;
