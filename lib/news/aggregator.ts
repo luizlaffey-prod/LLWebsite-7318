@@ -11,6 +11,7 @@ import {
 import { resolveLocation, type ResolvedLocation } from './countries';
 import { fetchRssArticles } from './rss';
 import { searchGuardian } from './guardian';
+import { searchNewsData } from './newsdata';
 
 export interface NewsArticle {
   title: string;
@@ -272,15 +273,19 @@ export async function searchNews(input: NewsSearchInput): Promise<SearchNewsResu
       ? ['en', 'pt', 'es']
       : [effectiveSearchLang(input, resolved ?? undefined)];
 
-  // Per-language: NewsAPI + GNews + RSS + Guardian in parallel.
-  // Global multiplies request count proportionally — on free tiers
-  // (NewsAPI: 100/day) plan accordingly, but each lang's RSS fan-out
-  // is free, the Guardian's own quota is generous, and every provider
-  // call streams in parallel so wall-clock latency is dominated by
-  // the slowest single feed/API, not the total count.
+  // Per-language: NewsAPI + GNews + NewsData + RSS + Guardian in
+  // parallel. Each provider that needs an API key returns [] silently
+  // when its key is unset, so the pipeline just degrades gracefully —
+  // no need to gate per-deployment. Global multiplies request count
+  // proportionally; budget accordingly on free tiers (NewsAPI 100/day,
+  // NewsData 200/day) but every call still streams in parallel so
+  // wall-clock latency is dominated by the slowest feed/API, not the
+  // total count.
+  const cats = asCategories(input.categories);
   const calls = langs.flatMap((lang) => [
     searchNewsApi(input, lang, resolved),
     searchGNews(input, lang, resolved),
+    searchNewsData(input, lang, resolved, cats, buildQuery),
     searchRss(input, lang),
     searchGuardian(input, lang),
   ]);
