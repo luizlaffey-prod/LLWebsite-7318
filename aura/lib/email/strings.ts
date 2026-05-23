@@ -55,7 +55,7 @@ export function welcomeStrings(locale: Locale): WelcomeStrings {
 export interface TrialEndingStrings {
   subject: string;
   greeting: (radioName: string) => string;
-  body1: string;
+  body1: (days: number) => string;
   body2: string;
   body3: string;
   ctaUpgrade: string;
@@ -67,7 +67,7 @@ export interface TrialEndingStrings {
 const trialEn: TrialEndingStrings = {
   subject: 'Your AURA trial ends tomorrow',
   greeting: (r) => `Hi${r ? `, ${r}` : ''},`,
-  body1: 'Your 7-day Pro trial ends in 24 hours.',
+  body1: (days) => `Your ${days}-day Pro trial ends in 24 hours.`,
   body2:
     "Unless you upgrade, AURA will switch your account to the Starter plan automatically — 5 bulletins a day, 1-minute max, 1 preset voice per language. Nothing breaks; you just get less headroom.",
   body3: 'To keep Pro features (20 bulletins/day, 3-min runtime, full voice catalog, custom voice clone), upgrade in one click.',
@@ -80,7 +80,7 @@ const trialEn: TrialEndingStrings = {
 const trialPt: TrialEndingStrings = {
   subject: 'Seu trial AURA termina amanhã',
   greeting: (r) => `Olá${r ? `, ${r}` : ''},`,
-  body1: 'Seu trial Pro de 7 dias termina em 24 horas.',
+  body1: (days) => `Seu trial Pro de ${days} dias termina em 24 horas.`,
   body2:
     'Se você não fizer upgrade, sua conta será convertida automaticamente para o plano Starter — 5 boletins por dia, máximo 1 minuto, 1 voz preset por idioma. Nada quebra; só fica menos generoso.',
   body3: 'Para manter os recursos Pro (20 boletins/dia, 3 minutos, catálogo de vozes completo, clonagem de voz), faça upgrade em um clique.',
@@ -93,7 +93,7 @@ const trialPt: TrialEndingStrings = {
 const trialEs: TrialEndingStrings = {
   subject: 'Tu prueba AURA termina mañana',
   greeting: (r) => `Hola${r ? `, ${r}` : ''},`,
-  body1: 'Tu prueba Pro de 7 días termina en 24 horas.',
+  body1: (days) => `Tu prueba Pro de ${days} días termina en 24 horas.`,
   body2:
     'Si no haces upgrade, tu cuenta se cambiará automáticamente al plan Starter: 5 boletines por día, máximo 1 minuto, 1 voz preset por idioma. Nada se rompe; solo tienes menos margen.',
   body3: 'Para mantener funciones Pro (20 boletines/día, 3 minutos, catálogo completo de voces, clonación de voz), haz upgrade con un clic.',

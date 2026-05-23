@@ -8,6 +8,7 @@ interface TrialEndingEmailProps {
   locale: Locale;
   upgradeUrl: string;
   manageUrl: string;
+  trialDays: number;
 }
 
 export function TrialEndingEmail({
@@ -15,6 +16,7 @@ export function TrialEndingEmail({
   locale,
   upgradeUrl,
   manageUrl,
+  trialDays,
 }: TrialEndingEmailProps) {
   const s = trialEndingStrings(locale);
 
@@ -40,7 +42,7 @@ export function TrialEndingEmail({
           fontWeight: 500,
         }}
       >
-        {s.body1}
+        {s.body1(trialDays)}
       </Text>
       <Text
         style={{

@@ -13,7 +13,29 @@
     "automations": "Automatizaciones",
     "analytics": "Analytics",
     "settings": "Configuración",
+    "feedback": "Enviar comentarios",
     "logout": "Cerrar sesión"
+  },
+  "feedback": {
+    "title": "Enviar comentarios",
+    "subtitle": "Cuéntanos qué está roto, qué falta o qué funciona. Va directo al equipo.",
+    "categoryLabel": "¿Qué tipo de comentario?",
+    "category": {
+      "bug": "Bug — algo está roto",
+      "suggestion": "Sugerencia — me gustaría que hiciera X",
+      "praise": "Elogio — lo que funciona",
+      "other": "Otro"
+    },
+    "messageLabel": "Tu mensaje",
+    "messagePlaceholder": "Sé específico — qué intentaste, qué esperabas, qué pasó.",
+    "submit": "Enviar comentarios",
+    "sending": "Enviando…",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "thanksTitle": "Recibido, ¡gracias!",
+    "thanksBody": "Leemos cada uno. Si es un bug o pregunta que necesita respuesta, te contactamos al correo de tu cuenta.",
+    "errorTooShort": "Escribe al menos una frase (10 caracteres).",
+    "errorGeneric": "No pudimos enviar tus comentarios. Inténtalo en un momento."
   },
   "landing": {
     "headline": "Boletines de noticias con voz IA, listos para salir al aire.",

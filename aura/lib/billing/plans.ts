@@ -71,7 +71,17 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
 
 export const PLAN_ORDER: PlanTier[] = ['starter', 'standard', 'pro'];
 
-export const TRIAL_DAYS = 7;
+export const TRIAL_DAYS = 14;
 export const TRIAL_TIER: PlanTier = 'pro';
 export const TRIAL_DOWNGRADE_TO: PlanTier = 'starter';
 export const OVERAGE_PRICE_CENTS = 50;
+
+/**
+ * Daily bulletin cap applied during the trial window only. The
+ * effective tier is Pro (so users see every Pro feature: WAV,
+ * cloning, dual-voice catalogs, etc.) but the volume limit is
+ * tightened to guard against runaway ElevenLabs costs over the
+ * 14-day trial. After conversion to a paid plan the cap returns
+ * to whatever the chosen tier's bulletinsPerDay says.
+ */
+export const TRIAL_BULLETINS_PER_DAY = 10;

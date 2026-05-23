@@ -13,7 +13,29 @@
     "automations": "Automações",
     "analytics": "Analytics",
     "settings": "Configurações",
+    "feedback": "Enviar feedback",
     "logout": "Sair"
+  },
+  "feedback": {
+    "title": "Enviar feedback",
+    "subtitle": "Conta o que tá quebrado, o que falta, o que tá funcionando. Vai direto pro time.",
+    "categoryLabel": "Que tipo de feedback?",
+    "category": {
+      "bug": "Bug — algo quebrado",
+      "suggestion": "Sugestão — gostaria que fizesse X",
+      "praise": "Elogio — o que tá funcionando",
+      "other": "Outro"
+    },
+    "messageLabel": "Sua mensagem",
+    "messagePlaceholder": "Seja específico — o que tentou, o que esperava, o que aconteceu.",
+    "submit": "Enviar feedback",
+    "sending": "Enviando…",
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "thanksTitle": "Recebido, obrigado!",
+    "thanksBody": "A gente lê cada um. Se for bug ou pergunta que precisa de resposta, retornamos no email da sua conta.",
+    "errorTooShort": "Escreve pelo menos uma frase (10 caracteres).",
+    "errorGeneric": "Não foi possível enviar agora. Tente em instantes."
   },
   "landing": {
     "headline": "Boletins de notícias com voz IA, prontos para o Ar.",

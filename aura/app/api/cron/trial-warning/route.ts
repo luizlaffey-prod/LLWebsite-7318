@@ -4,6 +4,7 @@ import { db } from '@/lib/db/client';
 import { user } from '@/lib/db/schema';
 import { sendTrialEndingEmail } from '@/lib/email/send';
 import { requireCronAuth } from '@/lib/cron/guard';
+import { TRIAL_DAYS } from '@/lib/billing/plans';
 import type { Locale } from '@/i18n';
 
 export const runtime = 'nodejs';
@@ -45,6 +46,7 @@ export async function GET(req: Request) {
         to: u.email,
         radioName: u.radioName ?? '',
         locale: (u.locale ?? 'en') as Locale,
+        trialDays: TRIAL_DAYS,
       });
       results.push({ userId: u.id, ok: true });
     } catch (err) {
