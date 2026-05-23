@@ -1,7 +1,12 @@
 import { and, eq, gte } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { user, usagePeriod } from '@/lib/db/schema';
-import { PLANS, TRIAL_TIER, type PlanTier } from './plans';
+import {
+  PLANS,
+  TRIAL_BULLETINS_PER_DAY,
+  TRIAL_TIER,
+  type PlanTier,
+} from './plans';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -30,7 +35,14 @@ export async function getQuota(userId: string): Promise<QuotaSnapshot> {
     await db.select().from(user).where(eq(user.id, userId)).limit(1)
   )[0];
   const tier = effectiveTier(dbUser?.plan);
-  const limit = PLANS[tier].bulletinsPerDay;
+  // Trial accounts get every Pro FEATURE (so they can evaluate the
+  // upper tier) but a tighter daily VOLUME cap so a 14-day trial
+  // can't burn through more ElevenLabs cost than a paying month.
+  // After conversion the limit reverts to the chosen tier's value.
+  const limit =
+    dbUser?.plan === 'trial'
+      ? TRIAL_BULLETINS_PER_DAY
+      : PLANS[tier].bulletinsPerDay;
   const today = startOfDay(new Date());
 
   const period = (

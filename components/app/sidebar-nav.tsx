@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -10,10 +11,12 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth/client';
 import { cn } from '@/lib/utils';
+import { FeedbackDialog } from './feedback-dialog';
 import type { Locale } from '@/i18n';
 
 export interface SidebarNavProps {
@@ -52,6 +55,7 @@ export function SidebarNav({
   const t = useTranslations('nav');
   const pathname = usePathname();
   const router = useRouter();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -130,7 +134,20 @@ export function SidebarNav({
         })}
       </nav>
 
-      <div className="border-t border-border px-2 py-3">
+      <div className="border-t border-border px-2 py-3 space-y-1">
+        <button
+          onClick={() => {
+            setFeedbackOpen(true);
+            onNavigate?.();
+          }}
+          className={cn(
+            'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-elevated hover:text-text-primary',
+            collapsed && 'justify-center px-2'
+          )}
+        >
+          <MessageSquare className="h-4 w-4" />
+          {!collapsed && <span>{t('feedback')}</span>}
+        </button>
         <button
           onClick={handleLogout}
           className={cn(
@@ -142,6 +159,8 @@ export function SidebarNav({
           {!collapsed && <span>{t('logout')}</span>}
         </button>
       </div>
+
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </>
   );
 }

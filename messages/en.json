@@ -13,7 +13,29 @@
     "automations": "Automations",
     "analytics": "Analytics",
     "settings": "Settings",
+    "feedback": "Send feedback",
     "logout": "Log out"
+  },
+  "feedback": {
+    "title": "Send feedback",
+    "subtitle": "Tell us what's broken, what's missing, or what just works. Goes straight to the team.",
+    "categoryLabel": "What kind of feedback?",
+    "category": {
+      "bug": "Bug — something's broken",
+      "suggestion": "Suggestion — wish it did X",
+      "praise": "Praise — what's working",
+      "other": "Other"
+    },
+    "messageLabel": "Your message",
+    "messagePlaceholder": "Be specific — what you tried, what you expected, what happened.",
+    "submit": "Send feedback",
+    "sending": "Sending…",
+    "cancel": "Cancel",
+    "close": "Close",
+    "thanksTitle": "Thanks, got it.",
+    "thanksBody": "We read every one. If it's a bug or a question that needs a reply, we'll get back to you at the email on your account.",
+    "errorTooShort": "Please write at least a sentence (10 characters).",
+    "errorGeneric": "Couldn't send your feedback. Please try again in a moment."
   },
   "landing": {
     "headline": "AI-voiced news bulletins, ready for broadcast.",
