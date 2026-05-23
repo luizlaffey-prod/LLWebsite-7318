@@ -16,10 +16,14 @@ export type HealthService =
   | 'gemini'
   | 'newsapi'
   | 'gnews'
+  | 'newsdata'
+  | 'guardian'
   | 'openweather'
   | 'resend'
   | 'r2'
-  | 'stripe';
+  | 'stripe'
+  | 'admin'
+  | 'cron';
 
 export interface HealthResult {
   service: HealthService;
@@ -220,6 +224,71 @@ export async function checkGNews(): Promise<HealthResult> {
   }
 }
 
+export async function checkNewsData(): Promise<HealthResult> {
+  const key = process.env.NEWSDATA_KEY;
+  if (!key) return notConfigured('newsdata', 'NEWSDATA_KEY not set');
+  try {
+    const res = await fetchWithRetry(
+      `https://newsdata.io/api/1/latest?language=en&size=1&apikey=${key}`,
+      {},
+      { timeoutMs: 10_000 }
+    );
+    const data = (await res.json()) as { status?: string; results?: unknown[] };
+    return {
+      service: 'newsdata',
+      configured: true,
+      ok: data.status === 'success',
+      detail:
+        data.status === 'success'
+          ? `${Array.isArray(data.results) ? data.results.length : 0} result(s) fetched`
+          : undefined,
+      error: data.status !== 'success' ? `status=${data.status}` : undefined,
+    };
+  } catch (err) {
+    return {
+      service: 'newsdata',
+      configured: true,
+      ok: false,
+      error: errorMessage(err),
+    };
+  }
+}
+
+export async function checkGuardian(): Promise<HealthResult> {
+  const key = process.env.GUARDIAN_KEY;
+  if (!key) return notConfigured('guardian', 'GUARDIAN_KEY not set');
+  try {
+    const res = await fetchWithRetry(
+      `https://content.guardianapis.com/search?page-size=1&api-key=${key}`,
+      {},
+      { timeoutMs: 10_000 }
+    );
+    const data = (await res.json()) as {
+      response?: { status?: string; results?: unknown[] };
+    };
+    return {
+      service: 'guardian',
+      configured: true,
+      ok: data.response?.status === 'ok',
+      detail:
+        data.response?.status === 'ok'
+          ? `${Array.isArray(data.response?.results) ? data.response.results.length : 0} result(s) fetched`
+          : undefined,
+      error:
+        data.response?.status !== 'ok'
+          ? `status=${data.response?.status}`
+          : undefined,
+    };
+  } catch (err) {
+    return {
+      service: 'guardian',
+      configured: true,
+      ok: false,
+      error: errorMessage(err),
+    };
+  }
+}
+
 export async function checkOpenWeather(): Promise<HealthResult> {
   const key = process.env.OPENWEATHER_API_KEY;
   if (!key) return notConfigured('openweather', 'OPENWEATHER_API_KEY not set');
@@ -328,6 +397,53 @@ export async function checkStripe(): Promise<HealthResult> {
   }
 }
 
+/**
+ * Env-var-only check. ADMIN_EMAILS being unset (or empty) means the
+ * /admin/* surface refuses every login — even yours — so this is one
+ * of the first things to verify on a fresh deploy.
+ */
+export async function checkAdmin(): Promise<HealthResult> {
+  const raw = process.env.ADMIN_EMAILS ?? '';
+  const emails = raw
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (emails.length === 0) {
+    return notConfigured('admin', 'ADMIN_EMAILS not set');
+  }
+  return {
+    service: 'admin',
+    configured: true,
+    ok: true,
+    detail: `${emails.length} admin email${emails.length === 1 ? '' : 's'} configured`,
+  };
+}
+
+/**
+ * Env-var-only check for the cron shared secret. Without it, every
+ * Vercel Cron Trigger hitting /api/cron/* returns 500 immediately —
+ * silent failure that's easy to miss until trial-warning and
+ * automations stop firing.
+ */
+export async function checkCron(): Promise<HealthResult> {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return notConfigured('cron', 'CRON_SECRET not set');
+  if (secret.length < 20) {
+    return {
+      service: 'cron',
+      configured: true,
+      ok: false,
+      error: 'CRON_SECRET should be at least 20 characters (generate with: openssl rand -base64 32)',
+    };
+  }
+  return {
+    service: 'cron',
+    configured: true,
+    ok: true,
+    detail: 'Secret length OK',
+  };
+}
+
 const PROBES: Record<HealthService, () => Promise<HealthResult>> = {
   database: checkDatabase,
   auth: checkAuth,
@@ -336,20 +452,28 @@ const PROBES: Record<HealthService, () => Promise<HealthResult>> = {
   gemini: checkGemini,
   newsapi: checkNewsApi,
   gnews: checkGNews,
+  newsdata: checkNewsData,
+  guardian: checkGuardian,
   openweather: checkOpenWeather,
   resend: checkResend,
   r2: checkR2,
   stripe: checkStripe,
+  admin: checkAdmin,
+  cron: checkCron,
 };
 
 export const SERVICES: HealthService[] = [
   'database',
   'auth',
+  'admin',
+  'cron',
   'elevenlabs',
   'anthropic',
   'gemini',
   'newsapi',
   'gnews',
+  'newsdata',
+  'guardian',
   'openweather',
   'resend',
   'r2',
