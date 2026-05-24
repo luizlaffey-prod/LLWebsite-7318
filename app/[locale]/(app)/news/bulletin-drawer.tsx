@@ -86,6 +86,37 @@ interface Props {
   onClose: () => void;
 }
 
+/**
+ * Server-side mix helper. POSTs to /api/audios/mix-with-bg as
+ * multipart so a local bg File can be sent without first uploading
+ * it to R2. Falls back to JSON when only a bgUrl is needed.
+ *
+ * Returns the mixed URL on success, or null on any failure — the
+ * caller decides whether to retry or just play the voice-only audio.
+ */
+async function serverSideMix(opts: {
+  voiceUrl: string;
+  bgFile?: File | null;
+  bgUrl?: string | null;
+}): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.set('voiceUrl', opts.voiceUrl);
+    if (opts.bgFile) formData.set('bgFile', opts.bgFile);
+    if (opts.bgUrl) formData.set('bgUrl', opts.bgUrl);
+    const res = await fetch('/api/audios/mix-with-bg', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { mixedUrl?: string };
+    return data.mixedUrl ?? null;
+  } catch (err) {
+    console.warn('[mix] server-side mix request failed', err);
+    return null;
+  }
+}
+
 export function BulletinDrawer(props: Props) {
   const open = props.article !== null;
   return (
@@ -315,9 +346,22 @@ function DrawerBody(props: Props) {
             bgUrl: bgUrlForMix ?? undefined,
           });
           setAudioUrl(URL.createObjectURL(mixed));
-        } catch {
-          setError(t('errorMix'));
-          setAudioUrl(data.audioUrl);
+        } catch (clientErr) {
+          // Client-side Web Audio chokes on some WAV codecs / large
+          // files even when <audio> plays them fine. Fall back to
+          // the server-side ffmpeg mix transparently.
+          console.warn('[mix] client failed, retrying server-side', clientErr);
+          const serverMixed = await serverSideMix({
+            voiceUrl: data.audioUrl,
+            bgFile: bgFileForMix,
+            bgUrl: bgUrlForMix,
+          });
+          if (serverMixed) {
+            setAudioUrl(serverMixed);
+          } else {
+            setError(t('errorMix'));
+            setAudioUrl(data.audioUrl);
+          }
         } finally {
           setMixing(false);
         }
@@ -357,25 +401,13 @@ function DrawerBody(props: Props) {
       const useAiBg = bgMode === 'ai' && aiUnlocked && aiMusicUrl;
       const useUploadBg = bgMode === 'upload' && bgFile;
       if (useAiBg) {
-        // Server-side mix: avoids the browser decodeAudioData/CORS
-        // path that's been failing on R2-hosted AI music.
-        try {
-          const mixRes = await fetch('/api/audios/mix-with-bg', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              voiceUrl: data.audioUrl,
-              bgUrl: aiMusicUrl as string,
-            }),
-          });
-          const mixData = await mixRes.json();
-          if (mixRes.ok && mixData.mixedUrl) {
-            setAudioUrl(mixData.mixedUrl);
-          } else {
-            setError(t('errorMix'));
-            setAudioUrl(fresh);
-          }
-        } catch {
+        const serverMixed = await serverSideMix({
+          voiceUrl: data.audioUrl,
+          bgUrl: aiMusicUrl as string,
+        });
+        if (serverMixed) {
+          setAudioUrl(serverMixed);
+        } else {
           setError(t('errorMix'));
           setAudioUrl(fresh);
         }
@@ -386,9 +418,18 @@ function DrawerBody(props: Props) {
             bgFile: bgFile as File,
           });
           setAudioUrl(URL.createObjectURL(mixed));
-        } catch {
-          setError(t('errorMix'));
-          setAudioUrl(fresh);
+        } catch (clientErr) {
+          console.warn('[regen] client mix failed, retrying server-side', clientErr);
+          const serverMixed = await serverSideMix({
+            voiceUrl: data.audioUrl,
+            bgFile: bgFile as File,
+          });
+          if (serverMixed) {
+            setAudioUrl(serverMixed);
+          } else {
+            setError(t('errorMix'));
+            setAudioUrl(fresh);
+          }
         }
       } else {
         setAudioUrl(fresh);
