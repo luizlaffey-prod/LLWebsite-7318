@@ -112,10 +112,14 @@ export async function concatMp3Bytes(
  * Mixes the synthesized voice MP3 with a looping background track via
  * the bundled ffmpeg binary (@ffmpeg-installer/ffmpeg). Output is MP3.
  *
- * The bg track is downloaded to /tmp (Vercel allows up to 512 MB there
- * and clears it per invocation), the voice bytes are written next to
- * it, ffmpeg runs once, and the mixed bytes are returned. Temp files
- * are cleaned up even on error.
+ * Supply EITHER bgUrl (fetched server-side, no CORS) OR bgBytes
+ * directly (when the caller already has them in memory — e.g. from
+ * a multipart upload that came from the browser).
+ *
+ * The bg track is downloaded to /tmp (Vercel allows up to 512 MB
+ * there and clears it per invocation), the voice bytes are written
+ * next to it, ffmpeg runs once, and the mixed bytes are returned.
+ * Temp files are cleaned up even on error.
  *
  * When `duck` is true the bg lives at a low base level under the
  * voice but rises during sustained silences (>= 1s) and dips back
@@ -127,7 +131,13 @@ export async function concatMp3Bytes(
  */
 export interface ServerMixInput {
   voiceBytes: Uint8Array;
-  bgUrl: string;
+  bgUrl?: string;
+  /** Alternative to bgUrl — raw bytes already in memory. */
+  bgBytes?: Uint8Array;
+  /** Original filename when bgBytes is supplied — its extension
+   * helps ffmpeg pick the right demuxer (most formats are detected
+   * from content, but a correct ext never hurts). */
+  bgFilename?: string;
   duck?: boolean;
 }
 
@@ -141,12 +151,18 @@ const LOOKAHEAD_SEC = 0.5;
 export async function mixVoiceAndBackgroundServerSide(
   input: ServerMixInput
 ): Promise<Uint8Array> {
-  const bgBytes = await fetchBg(input.bgUrl);
+  if (!input.bgUrl && !input.bgBytes) {
+    throw new Error('mix: either bgUrl or bgBytes must be provided');
+  }
+  const bgBytes = input.bgBytes ?? (await fetchBg(input.bgUrl!));
 
   const dir = await mkdtemp(join(tmpdir(), 'aura-mix-'));
   const voicePath = join(dir, 'voice.mp3');
   // Preserve the bg's extension so ffmpeg's demuxer picks the right one.
-  const bgExt = guessExt(input.bgUrl) || 'mp3';
+  const bgExt =
+    (input.bgFilename ? guessExtFromName(input.bgFilename) : null) ||
+    (input.bgUrl ? guessExt(input.bgUrl) : null) ||
+    'mp3';
   const bgPath = join(dir, `bg.${bgExt}`);
   const outPath = join(dir, 'mixed.mp3');
 
@@ -334,6 +350,16 @@ async function fetchBg(url: string): Promise<Uint8Array> {
 
 function guessExt(url: string): string | null {
   const m = url.match(/\.([a-zA-Z0-9]{2,5})(?:\?|$)/);
+  if (!m) return null;
+  const ext = m[1].toLowerCase();
+  if (['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac', 'opus'].includes(ext)) {
+    return ext;
+  }
+  return null;
+}
+
+function guessExtFromName(name: string): string | null {
+  const m = name.match(/\.([a-zA-Z0-9]{2,5})$/);
   if (!m) return null;
   const ext = m[1].toLowerCase();
   if (['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac', 'opus'].includes(ext)) {
