@@ -87,9 +87,12 @@ interface Props {
 }
 
 /**
- * Server-side mix helper. POSTs to /api/audios/mix-with-bg as
- * multipart so a local bg File can be sent without first uploading
- * it to R2. Falls back to JSON when only a bgUrl is needed.
+ * Server-side mix helper. When the caller supplies a local `bgFile`,
+ * the file is first uploaded straight to R2 via a presigned URL —
+ * Vercel's 4.5 MB request-body cap kills any meaningful WAV bed if
+ * we proxy the bytes through our function. Once the file is on R2
+ * (or when a bgUrl was passed in directly), the mix endpoint takes
+ * over the same way it does for AI-generated music.
  *
  * Returns the mixed URL on success, or null on any failure — the
  * caller decides whether to retry or just play the voice-only audio.
@@ -100,16 +103,53 @@ async function serverSideMix(opts: {
   bgUrl?: string | null;
 }): Promise<string | null> {
   try {
-    const formData = new FormData();
-    formData.set('voiceUrl', opts.voiceUrl);
-    if (opts.bgFile) formData.set('bgFile', opts.bgFile);
-    if (opts.bgUrl) formData.set('bgUrl', opts.bgUrl);
-    const res = await fetch('/api/audios/mix-with-bg', {
+    let bgUrl = opts.bgUrl ?? null;
+
+    if (opts.bgFile && !bgUrl) {
+      // Step 1: ask the backend for a presigned PUT URL.
+      const presignRes = await fetch('/api/uploads/bg-presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: opts.bgFile.name,
+          contentType: opts.bgFile.type || 'application/octet-stream',
+          sizeBytes: opts.bgFile.size,
+        }),
+      });
+      if (!presignRes.ok) {
+        console.warn('[mix] presign failed', await presignRes.text());
+        return null;
+      }
+      const { uploadUrl, publicUrl } = (await presignRes.json()) as {
+        uploadUrl: string;
+        publicUrl: string;
+      };
+
+      // Step 2: PUT the file directly to R2 — no Vercel in the middle.
+      const putRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: opts.bgFile,
+      });
+      if (!putRes.ok) {
+        console.warn('[mix] R2 PUT failed', putRes.status);
+        return null;
+      }
+      bgUrl = publicUrl;
+    }
+
+    if (!bgUrl) return null;
+
+    // Step 3: ask the mix endpoint to compose voice + bg.
+    const mixRes = await fetch('/api/audios/mix-with-bg', {
       method: 'POST',
-      body: formData,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        voiceUrl: opts.voiceUrl,
+        bgUrl,
+      }),
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { mixedUrl?: string };
+    if (!mixRes.ok) return null;
+    const data = (await mixRes.json()) as { mixedUrl?: string };
     return data.mixedUrl ?? null;
   } catch (err) {
     console.warn('[mix] server-side mix request failed', err);
