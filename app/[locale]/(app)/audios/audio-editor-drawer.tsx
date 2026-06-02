@@ -9,6 +9,7 @@ import {
   Edit3,
   Folder,
   AlertCircle,
+  Trash2,
 } from 'lucide-react';
 import {
   Sheet,
@@ -85,6 +86,11 @@ function Body({ audioId }: { audioId: string }) {
   const [loading, setLoading] = useState(true);
   const [audio, setAudio] = useState<AudioDetail | null>(null);
   const [blocks, setBlocks] = useState<ScriptBlock[]>([]);
+  /** Snapshot of the script as it came back from the API. Compared
+   * against `blocks` to know when the user has unsaved edits — drives
+   * the "edits not in the audio yet" hint next to the Regenerate
+   * button. */
+  const [originalBlocks, setOriginalBlocks] = useState<ScriptBlock[]>([]);
   const [editing, setEditing] = useState<number | null>(null);
   const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +108,9 @@ function Body({ audioId }: { audioId: string }) {
           return;
         }
         setAudio(d.audio);
-        setBlocks(d.audio.editedScript ?? d.audio.originalScript);
+        const fresh = d.audio.editedScript ?? d.audio.originalScript;
+        setBlocks(fresh);
+        setOriginalBlocks(fresh);
         setAudioUrl(d.audio.audioUrl);
       })
       .catch(() => setError(t('errorGenerate')))
@@ -126,6 +134,8 @@ function Body({ audioId }: { audioId: string }) {
         return;
       }
       setAudioUrl(`${data.audioUrl}?t=${Date.now()}`);
+      // Edits are now baked into the audio — sync the baseline.
+      setOriginalBlocks(blocks);
     } catch {
       setError(t('errorGenerate'));
     } finally {
@@ -224,13 +234,31 @@ function Body({ audioId }: { audioId: string }) {
                     >
                       {i + 1} · {b.emotion} · {b.duracaoSegundos}s
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setEditing(i)}
-                      className="text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text-primary"
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(i)}
+                        className="rounded p-1 text-text-muted hover:bg-elevated hover:text-text-primary"
+                        title={t('editBlock')}
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Last block can't be deleted — bulletin needs
+                          // at least one block for the regenerate route
+                          // to accept the payload.
+                          if (blocks.length <= 1) return;
+                          setBlocks((bs) => bs.filter((_, idx) => idx !== i));
+                        }}
+                        disabled={blocks.length <= 1}
+                        className="rounded p-1 text-text-muted hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
+                        title={t('deleteBlock')}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <p className="mt-2 text-sm text-text-primary">{b.text}</p>
                 </li>
@@ -244,9 +272,19 @@ function Body({ audioId }: { audioId: string }) {
             <audio controls className="w-full" src={audioUrl}>
               <track kind="captions" />
             </audio>
+            {hasUnsavedEdits(originalBlocks, blocks) && (
+              <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+                <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" />
+                <span>{t('unsavedEditsHint')}</span>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               <Button
-                variant="secondary"
+                variant={
+                  hasUnsavedEdits(originalBlocks, blocks)
+                    ? 'default'
+                    : 'secondary'
+                }
                 size="sm"
                 onClick={onRegenerate}
                 disabled={regenerating}
@@ -357,4 +395,28 @@ function EditBlockForm({
       </DialogFooter>
     </div>
   );
+}
+
+
+/**
+ * Returns true when the working `current` array differs from the
+ * baseline `original` array — drives the "edits not in the audio
+ * yet" warning. Compares length, then field-by-field. Equality is
+ * cheap enough at bulletin sizes (typically 4-8 blocks) that this
+ * runs on every render without a memo.
+ */
+function hasUnsavedEdits(original: ScriptBlock[], current: ScriptBlock[]): boolean {
+  if (original.length !== current.length) return true;
+  for (let i = 0; i < original.length; i++) {
+    const a = original[i];
+    const b = current[i];
+    if (
+      a.text !== b.text ||
+      a.emotion !== b.emotion ||
+      a.duracaoSegundos !== b.duracaoSegundos
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
