@@ -346,6 +346,14 @@ export const automationSchedule = pgTable(
     // ship local weather. Falls back to `location` when null.
     weatherCity: text('weather_city'),
     transitionEffects: boolean('transition_effects').notNull().default(true),
+    /**
+     * Minutes before the slot's air time when generation should
+     * START. Operator-configurable per automation so a station can
+     * trade "give me the freshest news possible" (low value, ~10 min)
+     * against "make sure the audio is sitting in my local folder
+     * with plenty of buffer" (high value, up to 120 min).
+     */
+    leadTimeMinutes: integer('lead_time_minutes').notNull().default(60),
     bias: biasEnum('bias').notNull().default('center'),
     timezone: text('timezone').notNull().default('UTC'),
     enabled: boolean('enabled').notNull().default(true),

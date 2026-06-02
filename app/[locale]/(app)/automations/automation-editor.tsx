@@ -117,6 +117,7 @@ function emptyForm(defaultLanguage: Locale, defaultTimezone: string): Automation
     weatherFormat: 'separate',
     weatherCity: null,
     transitionEffects: true,
+    leadTimeMinutes: 60,
     geographicScope: 'global',
     location: null,
     bias: 'center',
@@ -831,6 +832,34 @@ export function AutomationEditor({
               checked={form.transitionEffects}
               onCheckedChange={(v) => update('transitionEffects', v)}
             />
+          </div>
+
+          <div className="rounded-md border border-border bg-elevated/40 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">{t('leadTime')}</div>
+                <div className="mt-0.5 text-xs text-text-muted">
+                  {t('leadTimeHint')}
+                </div>
+              </div>
+              <div className="shrink-0 text-sm font-medium tabular-nums">
+                {form.leadTimeMinutes < 60
+                  ? `${form.leadTimeMinutes} min`
+                  : `${(form.leadTimeMinutes / 60).toFixed(form.leadTimeMinutes % 60 === 0 ? 0 : 1)} h`}
+              </div>
+            </div>
+            <Slider
+              className="mt-4"
+              min={5}
+              max={120}
+              step={5}
+              value={[form.leadTimeMinutes]}
+              onValueChange={(v) => update('leadTimeMinutes', v[0])}
+            />
+            <div className="mt-2 flex justify-between text-[10px] uppercase tracking-wider text-text-muted">
+              <span>{t('leadTimeFresh')}</span>
+              <span>{t('leadTimeBuffer')}</span>
+            </div>
           </div>
 
           <div className="flex items-center justify-between rounded-md border border-border bg-elevated/40 p-4">
