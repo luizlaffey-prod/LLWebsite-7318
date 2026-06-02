@@ -180,6 +180,7 @@ export async function POST(req: Request) {
         location: parsed.data.location ?? null,
         weatherCity: parsed.data.weatherCity ?? null,
         transitionEffects: parsed.data.transitionEffects,
+        leadTimeMinutes: parsed.data.leadTimeMinutes,
         bias: parsed.data.bias,
         timezone: parsed.data.timezone,
         enabled: parsed.data.enabled,

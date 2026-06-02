@@ -30,10 +30,18 @@ const PAST_TOLERANCE_MIN = 60;
 // Generate the bulletin LEAD_TIME_MIN minutes before its slot time so
 // the audio is finished, uploaded, and synced to the operator's local
 // folder BEFORE the on-air moment. A 9:00 slot starts cooking at
-// ~8:50 cron tick. The displayed scheduledFor on the execution row
-// stays as the original slot instant so history reads "9:00", not
-// "8:50".
-const LEAD_TIME_MIN = 10;
+// ~8:00 cron tick by default (60 min preroll). The displayed
+// scheduledFor on the execution row stays as the original slot instant
+// so history reads "9:00", not "8:00".
+//
+// Each automation can override this default via its leadTimeMinutes
+// column — operators who want the absolute freshest news can drop it
+// down to 10 min, ones who want buffer can push it up to 120 min.
+// This constant is just the safety fallback when the row's value is
+// missing or invalid.
+const DEFAULT_LEAD_TIME_MIN = 60;
+const MIN_LEAD_TIME_MIN = 5;
+const MAX_LEAD_TIME_MIN = 120;
 // Per-automation throttle. A user with 12 slots that all line up in
 // the same window would otherwise burn the entire cron budget on one
 // automation before the cron's maxDuration kicks in. Two per tick
@@ -72,6 +80,15 @@ export async function GET(req: Request) {
 
   for (const automation of active) {
     let firedThisTick = 0;
+    // Clamp the lead-time to a sane range. Even if a bad value
+    // slipped past validation somewhere, the cron behaves predictably.
+    const leadMin = Math.max(
+      MIN_LEAD_TIME_MIN,
+      Math.min(
+        MAX_LEAD_TIME_MIN,
+        automation.leadTimeMinutes ?? DEFAULT_LEAD_TIME_MIN
+      )
+    );
     for (const slot of automation.slots as ScheduleSlot[]) {
       if (firedThisTick >= MAX_SLOTS_PER_AUTOMATION_PER_TICK) {
         // Defer remaining slots to the next cron tick — they're still
@@ -92,11 +109,11 @@ export async function GET(req: Request) {
         // slotInstantToday returns today's slot instant in the schedule's
         // timezone — past OR future. Asymmetric tolerance window
         // (FUTURE/PAST_TOLERANCE_MIN) around the LEAD-TIME-shifted
-        // instant: we want generation to START 10 min before the slot
-        // so the file is ready by air time, but the row still records
-        // the original slot instant for clean history.
+        // instant: generation starts `leadMin` minutes before air so
+        // the file is ready by the slot's moment; the row still
+        // records the original slot instant for clean history.
         const due = slotInstantToday(slot.time, automation.timezone, now);
-        const effectiveDue = new Date(due.getTime() - LEAD_TIME_MIN * 60_000);
+        const effectiveDue = new Date(due.getTime() - leadMin * 60_000);
         const driftMs = now.getTime() - effectiveDue.getTime();
         if (driftMs < 0 && Math.abs(driftMs) > FUTURE_TOLERANCE_MIN * 60_000) {
           continue;
