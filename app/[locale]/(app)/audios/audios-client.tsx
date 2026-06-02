@@ -57,9 +57,12 @@ interface Page {
 }
 
 function formatDuration(seconds: number): string {
+  // "1m03" instead of "1:03". Tester read the colon form as a
+  // clock time (1 AM / 13:03) and got confused about when the
+  // bulletin actually fired. The "m" tag makes it unambiguous.
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${m}m${s.toString().padStart(2, '0')}`;
 }
 
 interface AudiosClientProps {
@@ -354,7 +357,14 @@ export function AudiosClient({ locale, canExportWav }: AudiosClientProps) {
                         </>
                       )}
                       <span>·</span>
-                      <span>{new Date(a.createdAt).toLocaleDateString(locale)}</span>
+                      <span>
+                        {new Date(a.createdAt).toLocaleDateString(locale)}{' '}
+                        {new Date(a.createdAt).toLocaleTimeString(locale, {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
+                        })}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center justify-end gap-1">

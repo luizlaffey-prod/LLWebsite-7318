@@ -8,8 +8,9 @@ import {
   type ScheduleSlot,
 } from '@/lib/db/schema';
 import { searchNews } from '@/lib/news/aggregator';
-import { fetchWeather } from '@/lib/news/weather';
+import { fetchWeatherCities } from '@/lib/news/weather';
 import { generateScript } from '@/lib/llm/script-generator';
+import { todayForPrompt } from '@/lib/llm/today';
 import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { incrementUsage } from '@/lib/billing/quota';
@@ -137,13 +138,36 @@ export async function runAutomationSlot(input: {
       automation.location?.trim() ||
       null;
     if (automation.includeWeather && weatherCity) {
-      const w = await fetchWeather(weatherCity, automation.language);
-      if (w) {
+      const { snapshots, failed } = await fetchWeatherCities(
+        weatherCity,
+        automation.language
+      );
+      if (snapshots.length > 0) {
+        // Multiple cities? Concatenate with a separator the LLM can
+        // recognize so each city stays distinguishable in the script.
+        const summary = snapshots
+          .map(
+            (w) =>
+              `${w.location}: ${w.tempC}°C, feels like ${w.feelsLikeC}°C, ${w.conditions}, humidity ${w.humidity}%, wind ${w.windKph} km/h`
+          )
+          .join(' | ');
+        const location =
+          snapshots.length === 1
+            ? snapshots[0].location
+            : snapshots.map((w) => w.location).join(', ');
         weatherForPrompt = {
-          location: w.location,
-          summary: `${w.tempC}°C, feels like ${w.feelsLikeC}°C, ${w.conditions}, humidity ${w.humidity}%, wind ${w.windKph} km/h`,
+          location,
+          summary,
           format: automation.weatherFormat ?? 'separate',
         };
+      }
+      if (failed.length > 0) {
+        // Don't crash the run, but log so the operator notices: the
+        // city they typed couldn't be resolved by OpenWeather.
+        console.warn(
+          '[automation] weather lookup failed for',
+          failed.join(', ')
+        );
       }
     }
 
@@ -175,11 +199,15 @@ export async function runAutomationSlot(input: {
       .returning({ id: generatedAudio.id });
     audioRowId = audio.id;
 
-    // 6) Claude script.
+    // 6) Claude script. Pass today's date rendered in the station's
+    //    timezone so the model doesn't hallucinate the date from its
+    //    training cutoff — tester reported a bulletin opened "Today,
+    //    first of July" on June 2nd, classic LLM date drift.
     const blocks = await generateScript({
       newsContent,
       targetDurationSeconds: automation.durationSeconds,
       language: automation.language,
+      today: todayForPrompt(automation.timezone, automation.language),
       weather: weatherForPrompt,
     });
 
