@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1584 396" width="1584" height="396">
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="0%" r="90%">
+      <stop offset="0%" stop-color="#00E5C8" stop-opacity="0.22"/>
+      <stop offset="40%" stop-color="#8B5CF6" stop-opacity="0.13"/>
+      <stop offset="100%" stop-color="#06080F" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wordmark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00E5C8"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00E5C8" stop-opacity="0.0"/>
+      <stop offset="50%" stop-color="#00E5C8" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1584" height="396" fill="#06080F"/>
+  <rect width="1584" height="396" fill="url(#bg)"/>
+
+  <!-- Icon + wordmark left-aligned -->
+  <g transform="translate(96 138)">
+    <rect width="120" height="120" rx="30" fill="#0F2D2A"/>
+    <circle cx="60" cy="60" r="6.6" fill="#00E5C8"/>
+    <path d="M43.5 43.5 A 23.4 23.4 0 0 0 43.5 76.5" stroke="#00E5C8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M34.5 34.5 A 36 36 0 0 0 34.5 85.5" stroke="#00E5C8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M76.5 43.5 A 23.4 23.4 0 0 1 76.5 76.5" stroke="#00E5C8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M85.5 34.5 A 36 36 0 0 1 85.5 85.5" stroke="#00E5C8" stroke-width="5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <text x="260" y="205" font-family="Georgia, 'Times New Roman', serif" font-size="130" font-weight="700" fill="url(#wordmark)" letter-spacing="-0.02em">AURA</text>
+  <text x="264" y="250" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#9CA3AF" letter-spacing="0.16em">AUTOMATED URBAN RADIO AUDIO</text>
+
+  <text x="1488" y="200" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="500" text-anchor="end" fill="#E8EAF0">AI-voiced news bulletins</text>
+  <text x="1488" y="240" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="500" text-anchor="end" fill="#E8EAF0">for radio stations.</text>
+
+  <g transform="translate(0 340)">
+    <path d="M 0 0 Q 99 -20 198 0 T 396 0 Q 495 -32 594 0 T 792 0 Q 891 -20 990 0 T 1188 0 Q 1287 -32 1386 0 T 1584 0" stroke="url(#wave)" stroke-width="2.5" fill="none"/>
+  </g>
+</svg>
