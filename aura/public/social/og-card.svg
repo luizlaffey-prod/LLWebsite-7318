@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="0%" r="90%">
+      <stop offset="0%" stop-color="#00E5C8" stop-opacity="0.22"/>
+      <stop offset="35%" stop-color="#8B5CF6" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#06080F" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wordmark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00E5C8"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00E5C8" stop-opacity="0.0"/>
+      <stop offset="50%" stop-color="#00E5C8" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#06080F"/>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Broadcast icon -->
+  <g transform="translate(72 72)">
+    <rect width="88" height="88" rx="22" fill="#0F2D2A"/>
+    <circle cx="44" cy="44" r="4.8" fill="#00E5C8"/>
+    <path d="M32 32 A 17.2 17.2 0 0 0 32 56" stroke="#00E5C8" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+    <path d="M25 25 A 26.4 26.4 0 0 0 25 63" stroke="#00E5C8" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+    <path d="M56 32 A 17.2 17.2 0 0 1 56 56" stroke="#00E5C8" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+    <path d="M63 25 A 26.4 26.4 0 0 1 63 63" stroke="#00E5C8" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="600" y="320" font-family="Georgia, 'Times New Roman', serif" font-size="220" font-weight="700" text-anchor="middle" fill="url(#wordmark)" letter-spacing="-0.02em">AURA</text>
+
+  <!-- Caps subtitle -->
+  <text x="600" y="365" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" font-weight="600" text-anchor="middle" fill="#9CA3AF" letter-spacing="0.18em">AUTOMATED URBAN RADIO AUDIO</text>
+
+  <!-- Tagline -->
+  <text x="600" y="455" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="32" font-weight="500" text-anchor="middle" fill="#E8EAF0">AI-voiced news bulletins for radio stations.</text>
+
+  <!-- Waveform decoration -->
+  <g transform="translate(0 540)">
+    <path d="M 0 0
+             Q 75 -22 150 0 T 300 0
+             Q 375 -36 450 0 T 600 0
+             Q 675 -22 750 0 T 900 0
+             Q 975 -36 1050 0 T 1200 0"
+          stroke="url(#wave)" stroke-width="2.5" fill="none"/>
+    <path d="M 0 -2
+             Q 75 -10 150 -2 T 300 -2
+             Q 375 -18 450 -2 T 600 -2
+             Q 675 -10 750 -2 T 900 -2
+             Q 975 -18 1050 -2 T 1200 -2"
+          stroke="url(#wave)" stroke-width="1.5" fill="none" opacity="0.5"/>
+  </g>
+
+  <!-- Domain bottom right -->
+  <text x="1128" y="588" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" font-weight="500" text-anchor="end" fill="#9CA3AF" letter-spacing="0.04em">aurapress.app</text>
+</svg>
