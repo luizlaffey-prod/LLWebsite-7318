@@ -17,6 +17,17 @@ export interface ScriptGenerationInput {
   newsContent: string;
   targetDurationSeconds: number;
   language: 'en' | 'pt' | 'es';
+  /**
+   * Today's date, formatted in the station's timezone. Injected
+   * verbatim into the LLM prompt so the script doesn't hallucinate a
+   * date from the model's training cutoff (real bug: bulletin said
+   * "today, first of July" when it was June 2). Pass both an ISO
+   * form and a human-readable one so the model can cite either.
+   */
+  today?: {
+    iso: string;
+    readable: string;
+  };
   weather?: {
     location: string;
     summary: string;

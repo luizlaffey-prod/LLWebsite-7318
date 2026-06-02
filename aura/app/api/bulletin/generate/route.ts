@@ -5,8 +5,9 @@ import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { generatedAudio, voice as voiceTable, user } from '@/lib/db/schema';
 import { generateScript } from '@/lib/llm/script-generator';
+import { todayForPrompt } from '@/lib/llm/today';
 import { synthesizeBulletin, ElevenLabsError } from '@/lib/tts/elevenlabs';
-import { fetchWeather } from '@/lib/news/weather';
+import { fetchWeatherCities } from '@/lib/news/weather';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { getQuota, incrementUsage } from '@/lib/billing/quota';
 import { canRequestDuration, canUseVoice } from '@/lib/billing/feature-gates';
@@ -54,11 +55,12 @@ export async function POST(req: Request) {
   // Quota gate
   const quota = await getQuota(session.user.id);
   const [u] = await db
-    .select({ plan: user.plan })
+    .select({ plan: user.plan, timezone: user.timezone })
     .from(user)
     .where(eq(user.id, session.user.id))
     .limit(1);
   const isTrial = u?.plan === 'trial';
+  const stationTimezone = u?.timezone ?? 'UTC';
   let usingOverage = false;
 
   if (quota.remaining <= 0) {
@@ -110,13 +112,33 @@ export async function POST(req: Request) {
     | { location: string; summary: string; format: 'separate' | 'integrated' }
     | undefined;
   if (parsed.data.includeWeather && parsed.data.weatherLocation) {
-    const w = await fetchWeather(parsed.data.weatherLocation, parsed.data.language);
-    if (w) {
+    const { snapshots, failed } = await fetchWeatherCities(
+      parsed.data.weatherLocation,
+      parsed.data.language
+    );
+    if (snapshots.length > 0) {
+      const summary = snapshots
+        .map(
+          (w) =>
+            `${w.location}: ${w.tempC}°C, feels like ${w.feelsLikeC}°C, ${w.conditions}, humidity ${w.humidity}%, wind ${w.windKph} km/h`
+        )
+        .join(' | ');
+      const location =
+        snapshots.length === 1
+          ? snapshots[0].location
+          : snapshots.map((w) => w.location).join(', ');
       weatherForPrompt = {
-        location: w.location,
-        summary: `${w.tempC}°C, feels like ${w.feelsLikeC}°C, ${w.conditions}, humidity ${w.humidity}%, wind ${w.windKph} km/h`,
+        location,
+        summary,
         format: parsed.data.weatherFormat,
       };
+    }
+    if (failed.length > 0) {
+      console.warn(
+        '[bulletin] weather lookup failed for',
+        failed.join(', '),
+        '— bulletin will ship without weather'
+      );
     }
   }
 
@@ -147,6 +169,7 @@ export async function POST(req: Request) {
       newsContent: `${parsed.data.article.title}\n\n${parsed.data.article.description}`,
       targetDurationSeconds: parsed.data.durationSeconds,
       language: parsed.data.language,
+      today: todayForPrompt(stationTimezone, parsed.data.language),
       weather: weatherForPrompt,
     });
 

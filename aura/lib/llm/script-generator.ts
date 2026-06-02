@@ -46,6 +46,9 @@ function buildUserPrompt(
   correction?: { previousTotal: number }
 ): string {
   const langDisplay = languageName(input.language);
+  const todayLine = input.today
+    ? `\nToday is ${input.today.readable} (${input.today.iso}). Treat this as the current date when interpreting "today", "yesterday", "this week" in the source material. NEVER invent a different date — if a story is dated earlier, refer to it as past news, not as happening today.`
+    : '';
   const weatherLine = input.weather
     ? `\n\nWeather (location=${input.weather.location}, format=${input.weather.format}): ${input.weather.summary}`
     : '';
@@ -54,7 +57,7 @@ function buildUserPrompt(
     : '';
 
   return [
-    `Write a radio news bulletin in ${langDisplay}.`,
+    `Write a radio news bulletin in ${langDisplay}.${todayLine}`,
     `Exact total duration target: ${input.targetDurationSeconds} seconds (±2s tolerance).`,
     `Source material:\n${input.newsContent}${weatherLine}`,
     correctionLine,
