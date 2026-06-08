@@ -88,7 +88,9 @@ export async function runAutomationSlot(input: {
   let audioRowId: string | null = null;
 
   try {
-    // 1) Pull news for the slot's categories.
+    // 1) Pull news for the slot's categories (unless slot is
+    //    weather-only — empty categories array means "skip news,
+    //    just give me the weather block").
     const bias = automation.bias === 'mixed' ? 'center' : automation.bias;
     // The DB enum still includes legacy 'state'/'city' values for rows
     // written before the UI dropped them. Coerce to 'country' at the edge
@@ -98,33 +100,55 @@ export async function runAutomationSlot(input: {
       automation.geographicScope === 'country'
         ? automation.geographicScope
         : ('country' as const);
-    const { articles } = await searchNews({
-      categories: slot.categories,
-      bias,
-      language: automation.language,
-      geographicScope: scope,
-      location: automation.location ?? undefined,
-      // Pull a wider pool than we'll actually read so each automation
-      // run lands on different stories — without this, the same
-      // automation firing at 9am every weekday would always pick the
-      // most recent article first, which feels stale on day two.
-      limit: 20,
-    });
 
-    if (articles.length === 0) {
-      throw new Error('no_articles_found');
+    let shuffled: Awaited<ReturnType<typeof searchNews>>['articles'] = [];
+    let headline: (typeof shuffled)[number] | null = null;
+    let newsContent = '';
+
+    const weatherOnlySlot = slot.categories.length === 0;
+    if (!weatherOnlySlot) {
+      const { articles } = await searchNews({
+        categories: slot.categories,
+        bias,
+        language: automation.language,
+        geographicScope: scope,
+        location: automation.location ?? undefined,
+        // Pull a wider pool than we'll actually read so each automation
+        // run lands on different stories — without this, the same
+        // automation firing at 9am every weekday would always pick the
+        // most recent article first, which feels stale on day two.
+        limit: 20,
+      });
+
+      if (articles.length === 0 && !automation.includeWeather) {
+        // News-only slot with empty results → nothing to read. If
+        // weather is enabled the run can still ship as weather-only
+        // (gentler degradation than 100% failure).
+        throw new Error('no_articles_found');
+      }
+      // Shuffle so successive runs pick a different rotation. The
+      // aggregator already sorted by recency / source quality; the
+      // shuffle introduces variety without throwing out signal.
+      shuffled = shuffleInPlace(articles.slice());
+
+      if (shuffled.length > 0) {
+        // 2) Build content (4 stories Claude can weave into the
+        // bulletin). Include the per-article published date so the
+        // LLM can phrase temporal references ("today", "yesterday",
+        // "earlier this week") accurately rather than guessing.
+        const cats = slot.categories.join(', ');
+        newsContent = [
+          `All articles below should be about: ${cats}. Discard any that are clearly off-topic (e.g. sports in an economy bulletin) instead of forcing them in.`,
+          '',
+          ...shuffled.slice(0, 4).map((a, i) => {
+            const dateTag = a.publishedAt
+              ? ` [published ${a.publishedAt.slice(0, 10)}]`
+              : '';
+            return `${i + 1}. ${a.title}${dateTag} — ${a.description}`;
+          }),
+        ].join('\n');
+      }
     }
-    // Shuffle so successive runs pick a different rotation. The
-    // aggregator already sorted by recency / source quality; the
-    // shuffle introduces variety without throwing out signal.
-    const shuffled = shuffleInPlace(articles.slice());
-    const headline = shuffled[0]!;
-
-    // 2) Build content (4 stories Claude can weave into the bulletin).
-    const newsContent = shuffled
-      .slice(0, 4)
-      .map((a, i) => `${i + 1}. ${a.title} — ${a.description}`)
-      .join('\n\n');
 
     // 3) Optional weather.
     let weatherForPrompt:
@@ -180,14 +204,26 @@ export async function runAutomationSlot(input: {
       .limit(1);
     if (!chosenVoice) throw new Error('voice_not_found');
 
+    // After potentially shuffling, headline is still null for
+    // weather-only slots — that's intentional, the sourceName /
+    // sourceArticleUrl columns are nullable.
+    headline = shuffled[0] ?? null;
+
+    // Bail out before persisting if there's nothing to read AT ALL
+    // (no articles, no weather). The throw lands in the catch below
+    // and the execution row records the reason.
+    if (!headline && !weatherForPrompt) {
+      throw new Error('nothing_to_read');
+    }
+
     // 5) Persist a generatedAudio row immediately so it shows up in /audios.
     const [audio] = await db
       .insert(generatedAudio)
       .values({
         userId: automation.userId,
         title: `${automation.name} — ${slot.time}`,
-        sourceName: headline.source,
-        sourceArticleUrl: headline.url,
+        sourceName: headline?.source ?? null,
+        sourceArticleUrl: headline?.url ?? null,
         originalScript: [],
         voiceId: automation.voiceId,
         speed: automation.speed,
