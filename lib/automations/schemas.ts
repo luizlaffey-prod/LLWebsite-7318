@@ -4,7 +4,10 @@ export const ScheduleSlotSchema = z.object({
   time: z
     .string()
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'invalid_time'),
-  categories: z.array(z.string()).min(1),
+  // Empty array allowed: produces a weather-only bulletin when the
+  // automation has includeWeather=true. The execute pipeline skips
+  // the news fetch entirely in that case.
+  categories: z.array(z.string()),
   // JS Date.getDay() encoding: 0=Sun, 1=Mon, ..., 6=Sat. Empty or
   // omitted = fire every day (preserves the original behavior for
   // automations created before this field existed).

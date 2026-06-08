@@ -69,6 +69,7 @@ interface AutomationLike extends AutomationInputType {
 interface VoiceOpt {
   id: string;
   name: string;
+  gender: 'male' | 'female' | 'neutral' | null;
   accent: string | null;
 }
 
@@ -142,6 +143,12 @@ export function AutomationEditor({
     normalizeScope(initial ?? emptyForm(defaultLanguage, defaultTimezone))
   );
   const [voices, setVoices] = useState<VoiceOpt[]>([]);
+  /** Locks the voice picker until /api/voices resolves so the user
+   * can't manually pick a voice before the default has a chance to
+   * apply. Tester (Marco) reported "voz padrão não foi pré-selecionada"
+   * — root cause was a race where he clicked through faster than the
+   * fetch completed. */
+  const [voicesLoading, setVoicesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -253,6 +260,7 @@ export function AutomationEditor({
 
   useEffect(() => {
     if (!open) return;
+    setVoicesLoading(true);
     fetch(`/api/voices?lang=${form.language}`)
       .then((r) => r.json())
       .then((d: { voices: VoiceOpt[]; defaultVoiceId: string | null }) => {
@@ -261,7 +269,8 @@ export function AutomationEditor({
           setForm((f) => ({ ...f, voiceId: d.defaultVoiceId ?? d.voices[0]?.id ?? '' }));
         }
       })
-      .catch(() => setVoices([]));
+      .catch(() => setVoices([]))
+      .finally(() => setVoicesLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, form.language]);
 
@@ -416,6 +425,21 @@ export function AutomationEditor({
                     })}
                   </div>
 
+                  {slot.categories.length === 0 && (
+                    <div
+                      className={
+                        'mt-3 rounded-md border px-3 py-2 text-xs ' +
+                        (form.includeWeather
+                          ? 'border-teal/30 bg-teal/10 text-teal'
+                          : 'border-warning/30 bg-warning/10 text-warning')
+                      }
+                    >
+                      {form.includeWeather
+                        ? t('weatherOnlySlotHint')
+                        : t('emptySlotWarning')}
+                    </div>
+                  )}
+
                   {allowDaysOfWeek && (
                   <div className="mt-3 border-t border-border/60 pt-3">
                     <div className="mb-1.5 text-xs uppercase tracking-wider text-text-muted">
@@ -493,14 +517,21 @@ export function AutomationEditor({
             </div>
             <div>
               <Label>{t('voice')}</Label>
-              <Select value={form.voiceId} onValueChange={(v) => update('voiceId', v)}>
+              <Select
+                value={form.voiceId}
+                onValueChange={(v) => update('voiceId', v)}
+                disabled={voicesLoading}
+              >
                 <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="—" />
+                  <SelectValue
+                    placeholder={voicesLoading ? t('voicesLoading') : '—'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {voices.map((v) => (
                     <SelectItem key={v.id} value={v.id}>
                       {v.name}
+                      {v.gender ? ` · ${v.gender}` : ''}
                       {v.accent ? ` · ${v.accent}` : ''}
                     </SelectItem>
                   ))}
