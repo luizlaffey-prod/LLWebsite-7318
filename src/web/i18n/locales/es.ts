@@ -53,7 +53,25 @@ const es = {
       title: "Tu guion",
       copy: "Copiar",
       copied: "¡Copiado!",
-      download: "Descargar",
+      export: "Exportar",
+      formats: {
+        pdf: "PDF (.pdf)",
+        docx: "Word (.docx)",
+        fdx: "Final Draft (.fdx)",
+        markdown: "Markdown (.md)",
+      },
+    },
+    gate: {
+      badge: "Área de suscriptores",
+      checking: "Verificando tu acceso...",
+      guestTitle: "Inicia sesión para usar el Guionista IA",
+      guestSubtitle:
+        "El Guionista IA es exclusivo para suscriptores. Inicia sesión o suscríbete a un plan para convertir tus documentos en guiones profesionales.",
+      lockedTitle: "Función exclusiva para suscriptores",
+      lockedSubtitle:
+        "Tu cuenta aún no tiene una suscripción activa. Suscríbete a un plan para desbloquear el Guionista IA y generar guiones completos.",
+      plansCta: "Ver planes",
+      loginCta: "Ingresar",
     },
     errors: {
       unsupported: "Formato de archivo no compatible. Usa PDF, Word, Excel, CSV, TXT o Markdown.",
@@ -61,6 +79,7 @@ const es = {
       parse: "Error al leer el documento. Prueba con otro archivo.",
       noInput: "Sube un documento o pega un texto primero.",
       generic: "Algo salió mal al generar el guion. Inténtalo de nuevo.",
+      export: "Error al exportar el guion. Inténtalo de nuevo.",
     },
     disclaimer: "Los guiones generados por IA pueden contener imprecisiones. Revísalos antes de producir.",
   },

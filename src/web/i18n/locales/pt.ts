@@ -53,7 +53,25 @@ const pt = {
       title: "Seu roteiro",
       copy: "Copiar",
       copied: "Copiado!",
-      download: "Baixar",
+      export: "Exportar",
+      formats: {
+        pdf: "PDF (.pdf)",
+        docx: "Word (.docx)",
+        fdx: "Final Draft (.fdx)",
+        markdown: "Markdown (.md)",
+      },
+    },
+    gate: {
+      badge: "Área de assinantes",
+      checking: "Verificando seu acesso...",
+      guestTitle: "Faça login para usar o Roteirista IA",
+      guestSubtitle:
+        "O Roteirista IA é exclusivo para assinantes. Entre na sua conta ou assine um plano para transformar seus documentos em roteiros profissionais.",
+      lockedTitle: "Recurso exclusivo para assinantes",
+      lockedSubtitle:
+        "Sua conta ainda não tem uma assinatura ativa. Assine um plano para liberar o Roteirista IA e gerar roteiros completos.",
+      plansCta: "Ver planos",
+      loginCta: "Entrar",
     },
     errors: {
       unsupported: "Formato de arquivo não suportado. Use PDF, Word, Excel, CSV, TXT ou Markdown.",
@@ -61,6 +79,7 @@ const pt = {
       parse: "Erro ao ler o documento. Tente outro arquivo.",
       noInput: "Envie um documento ou cole um texto primeiro.",
       generic: "Algo deu errado ao gerar o roteiro. Tente novamente.",
+      export: "Erro ao exportar o roteiro. Tente novamente.",
     },
     disclaimer: "Roteiros gerados por IA podem conter imprecisões. Revise antes de produzir.",
   },

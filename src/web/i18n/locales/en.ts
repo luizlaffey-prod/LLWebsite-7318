@@ -53,7 +53,25 @@ const en = {
       title: "Your screenplay",
       copy: "Copy",
       copied: "Copied!",
-      download: "Download",
+      export: "Export",
+      formats: {
+        pdf: "PDF (.pdf)",
+        docx: "Word (.docx)",
+        fdx: "Final Draft (.fdx)",
+        markdown: "Markdown (.md)",
+      },
+    },
+    gate: {
+      badge: "Members area",
+      checking: "Checking your access...",
+      guestTitle: "Log in to use the AI Screenwriter",
+      guestSubtitle:
+        "The AI Screenwriter is exclusive to subscribers. Sign in to your account or subscribe to a plan to turn your documents into professional screenplays.",
+      lockedTitle: "Subscribers-only feature",
+      lockedSubtitle:
+        "Your account doesn't have an active subscription yet. Subscribe to a plan to unlock the AI Screenwriter and generate complete screenplays.",
+      plansCta: "View plans",
+      loginCta: "Log in",
     },
     errors: {
       unsupported: "Unsupported file format. Use PDF, Word, Excel, CSV, TXT or Markdown.",
@@ -61,6 +79,7 @@ const en = {
       parse: "Error reading the document. Try another file.",
       noInput: "Upload a document or paste some text first.",
       generic: "Something went wrong while generating the screenplay. Please try again.",
+      export: "Error exporting the screenplay. Please try again.",
     },
     disclaimer: "AI-generated screenplays may contain inaccuracies. Review before production.",
   },

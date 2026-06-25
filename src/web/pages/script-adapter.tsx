@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Layout } from "../components/shared";
+import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import {
   Clapperboard,
@@ -15,7 +16,11 @@ import {
   Download,
   Loader2,
   AlertCircle,
+  Lock,
+  ChevronDown,
 } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { useSubscription } from "../hooks/useSubscription";
 import {
   parseDocument,
   SUPPORTED_EXTENSIONS,
@@ -23,6 +28,14 @@ import {
   EmptyDocumentError,
   type ParsedDocument,
 } from "../lib/documentParser";
+import {
+  parseScreenplay,
+  slugify,
+  exportMarkdown,
+  exportFdx,
+  exportPdf,
+  exportDocx,
+} from "../lib/screenplay";
 
 type Format = "film" | "series" | "both";
 
@@ -39,8 +52,9 @@ const formatOptions: FormatOption[] = [
 
 const ACCEPT = SUPPORTED_EXTENSIONS.map((ext) => `.${ext}`).join(",");
 
-function ScriptAdapter() {
+function ScriptAdapterTool() {
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   const [doc, setDoc] = useState<ParsedDocument | null>(null);
   const [pastedText, setPastedText] = useState("");
@@ -54,9 +68,21 @@ function ScriptAdapter() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
 
   const handleFile = async (file: File) => {
     setError(null);
@@ -107,7 +133,10 @@ function ScriptAdapter() {
     try {
       const response = await fetch("/api/screenwriter/adapt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(user ? { Authorization: `Bearer ${user.user_id}` } : {}),
+        },
         body: JSON.stringify({
           text: sourceText,
           format,
@@ -146,20 +175,35 @@ function ScriptAdapter() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([output], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${(title.trim() || "roteiro").replace(/\s+/g, "-").toLowerCase()}.md`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const handleExport = async (kind: "md" | "pdf" | "docx" | "fdx") => {
+    setExportOpen(false);
+    setError(null);
+    const base = slugify(title || "roteiro");
+    try {
+      if (kind === "md") {
+        exportMarkdown(output, base);
+        return;
+      }
+      const elements = parseScreenplay(output);
+      if (kind === "pdf") await exportPdf(elements, base);
+      if (kind === "docx") await exportDocx(elements, base);
+      if (kind === "fdx") exportFdx(elements, base);
+    } catch {
+      setError(t("scriptAdapter.errors.export"));
+    }
   };
 
   const canGenerate = !!sourceText && !generating && !parsing;
 
+  const exportItems: { kind: "md" | "pdf" | "docx" | "fdx"; label: string }[] = [
+    { kind: "pdf", label: t("scriptAdapter.output.formats.pdf") },
+    { kind: "docx", label: t("scriptAdapter.output.formats.docx") },
+    { kind: "fdx", label: t("scriptAdapter.output.formats.fdx") },
+    { kind: "md", label: t("scriptAdapter.output.formats.markdown") },
+  ];
+
   return (
-    <Layout>
+    <>
       {/* Hero */}
       <section className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0d1117] to-[#0a0a0a]" />
@@ -387,7 +431,7 @@ function ScriptAdapter() {
                   {t("scriptAdapter.output.title")}
                 </h2>
                 {output && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     <button
                       onClick={handleCopy}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/70 hover:text-[#d4a843] transition-colors"
@@ -395,13 +439,30 @@ function ScriptAdapter() {
                       {copied ? <Check size={15} /> : <Copy size={15} />}
                       {copied ? t("scriptAdapter.output.copied") : t("scriptAdapter.output.copy")}
                     </button>
-                    <button
-                      onClick={handleDownload}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/70 hover:text-[#d4a843] transition-colors"
-                    >
-                      <Download size={15} />
-                      {t("scriptAdapter.output.download")}
-                    </button>
+                    <div className="relative" ref={exportRef}>
+                      <button
+                        onClick={() => setExportOpen((open) => !open)}
+                        disabled={generating}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/70 hover:text-[#d4a843] transition-colors disabled:opacity-40"
+                      >
+                        <Download size={15} />
+                        {t("scriptAdapter.output.export")}
+                        <ChevronDown size={13} className={exportOpen ? "rotate-180 transition-transform" : "transition-transform"} />
+                      </button>
+                      {exportOpen && (
+                        <div className="absolute right-0 top-full mt-2 z-20 w-48 bg-[#1a1a1a] border border-white/10 rounded-lg overflow-hidden shadow-xl">
+                          {exportItems.map((item) => (
+                            <button
+                              key={item.kind}
+                              onClick={() => handleExport(item.kind)}
+                              className="block w-full px-4 py-2.5 text-left text-sm text-white/80 hover:bg-[#d4a843] hover:text-[#0a0a0a] transition-colors"
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -417,6 +478,75 @@ function ScriptAdapter() {
           <p className="text-white/40 text-xs text-center">{t("scriptAdapter.disclaimer")}</p>
         </div>
       </section>
+    </>
+  );
+}
+
+function LockScreen({ authenticated }: { authenticated: boolean }) {
+  const { t } = useTranslation();
+
+  return (
+    <section className="relative py-28 overflow-hidden min-h-[70vh] flex items-center">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0d1117] to-[#0a0a0a]" />
+      <div className="absolute top-1/3 -left-48 w-96 h-96 bg-[#d4a843]/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-[#0047ab]/5 rounded-full blur-3xl" />
+
+      <div className="relative max-w-xl mx-auto px-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-[#d4a843]/10 flex items-center justify-center mx-auto mb-6">
+          <Lock className="text-[#d4a843]" size={30} />
+        </div>
+        <span className="text-[#d4a843] text-sm uppercase tracking-[0.3em] font-medium mb-4 block">
+          {t("scriptAdapter.gate.badge")}
+        </span>
+        <h1 className="font-heading text-3xl md:text-4xl text-white mb-4">
+          {authenticated ? t("scriptAdapter.gate.lockedTitle") : t("scriptAdapter.gate.guestTitle")}
+        </h1>
+        <p className="font-body text-white/70 leading-relaxed mb-8">
+          {authenticated ? t("scriptAdapter.gate.lockedSubtitle") : t("scriptAdapter.gate.guestSubtitle")}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/plans"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#d4a843] text-[#0a0a0a] font-semibold text-sm uppercase tracking-wider rounded transition-all duration-300 hover:bg-[#e8c574]"
+          >
+            {t("scriptAdapter.gate.plansCta")}
+          </Link>
+          {!authenticated && (
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/20 text-white font-medium text-sm uppercase tracking-wider rounded transition-all duration-300 hover:border-[#d4a843] hover:text-[#d4a843]"
+            >
+              {t("scriptAdapter.gate.loginCta")}
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ScriptAdapter() {
+  const { t } = useTranslation();
+  const { user, loading: authLoading } = useAuth();
+  const { originals, loading: subLoading } = useSubscription();
+
+  const loading = authLoading || subLoading;
+  const isSubscriber = !!user && originals.length > 0;
+
+  return (
+    <Layout>
+      {loading ? (
+        <section className="min-h-[70vh] flex items-center justify-center">
+          <div className="flex items-center gap-3 text-white/60">
+            <Loader2 className="animate-spin text-[#d4a843]" size={22} />
+            {t("scriptAdapter.gate.checking")}
+          </div>
+        </section>
+      ) : isSubscriber ? (
+        <ScriptAdapterTool />
+      ) : (
+        <LockScreen authenticated={!!user} />
+      )}
     </Layout>
   );
 }

@@ -84,6 +84,14 @@ interface AdaptRequest {
 }
 
 app.post("/adapt", async (c) => {
+  // The tool is restricted to subscribers; the frontend gates access via the
+  // site's auth/subscription state and forwards the user token. Require its
+  // presence here as a minimal backend guard against anonymous direct calls.
+  const authorization = c.req.header("Authorization");
+  if (!authorization?.startsWith("Bearer ")) {
+    return c.json({ error: "Subscribers only. Please sign in." }, 401);
+  }
+
   const body = await c.req.json<AdaptRequest>();
   const sourceText = body.text?.trim();
   const format: Format = body.format ?? "film";
