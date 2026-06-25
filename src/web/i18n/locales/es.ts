@@ -52,8 +52,16 @@ const es = {
     options: {
       titleLabel: "Título (opcional)",
       titlePlaceholder: "Ej: El Último Tren",
-      languageLabel: "Idioma del guion (opcional)",
+      languageLabel: "Idioma de salida (traducción)",
       languagePlaceholder: "Ej: Español, Inglés...",
+    },
+    languages: {
+      same: "Mismo idioma del documento",
+      pt: "Portugués",
+      en: "Inglés",
+      es: "Español",
+      fr: "Francés",
+      de: "Alemán",
     },
     generate: "Generar guion",
     generating: "Dirigiendo...",

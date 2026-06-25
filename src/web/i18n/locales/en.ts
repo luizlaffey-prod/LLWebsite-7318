@@ -52,8 +52,16 @@ const en = {
     options: {
       titleLabel: "Title (optional)",
       titlePlaceholder: "e.g. The Last Train",
-      languageLabel: "Screenplay language (optional)",
+      languageLabel: "Output language (translation)",
       languagePlaceholder: "e.g. English, Portuguese...",
+    },
+    languages: {
+      same: "Same as document",
+      pt: "Portuguese",
+      en: "English",
+      es: "Spanish",
+      fr: "French",
+      de: "German",
     },
     generate: "Generate screenplay",
     generating: "Directing...",

@@ -52,8 +52,16 @@ const pt = {
     options: {
       titleLabel: "Título (opcional)",
       titlePlaceholder: "Ex: O Último Trem",
-      languageLabel: "Idioma do roteiro (opcional)",
+      languageLabel: "Idioma de saída (tradução)",
       languagePlaceholder: "Ex: Português, Inglês...",
+    },
+    languages: {
+      same: "Mesmo idioma do documento",
+      pt: "Português",
+      en: "Inglês",
+      es: "Espanhol",
+      fr: "Francês",
+      de: "Alemão",
     },
     generate: "Gerar roteiro",
     generating: "Dirigindo...",

@@ -406,12 +406,18 @@ function ScriptAdapterTool() {
                 <label className="block text-white/60 text-xs uppercase tracking-wider mb-2">
                   {t("scriptAdapter.options.languageLabel")}
                 </label>
-                <input
+                <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  placeholder={t("scriptAdapter.options.languagePlaceholder")}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white/90 text-sm placeholder:text-white/30 focus:outline-none focus:border-[#d4a843]/50"
-                />
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white/90 text-sm focus:outline-none focus:border-[#d4a843]/50"
+                >
+                  <option value="">{t("scriptAdapter.languages.same")}</option>
+                  <option value="Portuguese">{t("scriptAdapter.languages.pt")}</option>
+                  <option value="English">{t("scriptAdapter.languages.en")}</option>
+                  <option value="Spanish">{t("scriptAdapter.languages.es")}</option>
+                  <option value="French">{t("scriptAdapter.languages.fr")}</option>
+                  <option value="German">{t("scriptAdapter.languages.de")}</option>
+                </select>
               </div>
             </div>
           </div>
