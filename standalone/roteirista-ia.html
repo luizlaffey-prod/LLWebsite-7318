@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roteirista IA — Luiz Laffey</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --panel: #111111; --panel2: #1a1a1a;
+    --gold: #d4a843; --gold-bright: #e8c574; --blue: #0047ab;
+    --line: rgba(255,255,255,0.1); --text: rgba(255,255,255,0.9);
+    --muted: rgba(255,255,255,0.55);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  a { color: var(--gold); }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 32px 20px 80px; }
+  .hero { padding: 28px 0 8px; }
+  .overline { color: var(--gold); font-size: 12px; letter-spacing: .3em; text-transform: uppercase; font-weight: 600; }
+  h1 { font-size: clamp(28px, 5vw, 46px); margin: 10px 0 12px; line-height: 1.1; }
+  h1 .hl { color: var(--gold); }
+  .sub { color: var(--muted); max-width: 640px; }
+  .badge-mark { display:inline-flex; align-items:center; gap:8px; background: rgba(212,168,67,.1);
+    border:1px solid rgba(212,168,67,.25); color: var(--gold); padding:4px 10px; border-radius:6px; font-size:12px; margin-bottom:14px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; margin-top: 22px; }
+  .panel h2 { font-size: 18px; margin: 0 0 16px; display:flex; align-items:center; gap:10px; }
+  .num { width: 26px; height: 26px; border-radius: 50%; background: var(--gold); color: #0a0a0a; font-weight: 700; font-size: 13px; display:inline-flex; align-items:center; justify-content:center; }
+  label { display:block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; }
+  input[type=text], input[type=password], textarea, select {
+    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px; font-family: inherit;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(212,168,67,.5); }
+  textarea { resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
+  .tabs { display:inline-flex; gap:4px; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 4px; }
+  .tab { padding: 6px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; border:none; background:none; color: var(--muted); border-radius: 6px; cursor: pointer; }
+  .tab.active { background: var(--gold); color: #0a0a0a; }
+  .head-row { display:flex; align-items:center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .head-row h2 { margin: 0; }
+  .drop { width:100%; border: 2px dashed var(--line); border-radius: 12px; padding: 40px 16px; text-align:center; cursor:pointer; background:none; color: var(--text); }
+  .drop:hover { border-color: rgba(212,168,67,.5); }
+  .drop.drag { border-color: var(--gold); background: rgba(212,168,67,.05); }
+  .drop .big { color: var(--gold); font-size: 30px; }
+  .file-chip { display:flex; align-items:center; justify-content: space-between; gap: 12px; background: rgba(255,255,255,0.05); border:1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .file-chip .x { background:none; border:none; color: var(--muted); cursor:pointer; font-size: 18px; }
+  .formats { display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 640px) { .formats { grid-template-columns: 1fr; } }
+  .fmt { text-align:left; border:1px solid var(--line); background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; cursor:pointer; color: var(--text); }
+  .fmt.active { border-color: var(--gold); background: rgba(212,168,67,.1); }
+  .fmt .ic { font-size: 22px; }
+  .fmt .name { font-weight: 600; margin-top: 8px; }
+  .fmt .d { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font-weight: 600;
+    font-size: 13px; letter-spacing: .06em; text-transform: uppercase; border-radius: 6px; padding: 14px 26px; }
+  .btn-primary { background: var(--gold); color: #0a0a0a; }
+  .btn-primary:hover { background: var(--gold-bright); }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-ghost { background: none; border: 1px solid var(--line); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .actions { display:flex; gap: 14px; flex-wrap: wrap; margin-top: 22px; }
+  .err { display:flex; gap:10px; background: rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#fca5a5; border-radius: 8px; padding: 12px 14px; margin-top: 16px; font-size: 14px; }
+  .out { margin-top: 22px; border:1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel); }
+  .out-head { display:flex; align-items:center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .out-head h2 { margin:0; font-size: 16px; }
+  .out-body { padding: 18px; max-height: 70vh; overflow:auto; }
+  pre.script { white-space: pre-wrap; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: rgba(255,255,255,0.88); margin:0; }
+  .mini { background:none; border:none; color: var(--muted); cursor:pointer; font-size: 12px; padding: 6px 8px; }
+  .mini:hover { color: var(--gold); }
+  .menu { position: relative; display:inline-block; }
+  .menu-list { position:absolute; right:0; top: 100%; margin-top: 6px; background: var(--panel2); border:1px solid var(--line); border-radius: 8px; overflow:hidden; min-width: 170px; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  .menu-list button { display:block; width:100%; text-align:left; background:none; border:none; color: var(--text); padding: 10px 14px; font-size: 13px; cursor:pointer; }
+  .menu-list button:hover { background: var(--gold); color: #0a0a0a; }
+  .hidden { display: none !important; }
+  .disclaimer { color: var(--muted); font-size: 12px; text-align:center; margin-top: 22px; }
+  details.cfg { margin-top: 22px; border:1px solid var(--line); border-radius: 12px; background: var(--panel); }
+  details.cfg > summary { cursor:pointer; padding: 16px 18px; font-weight: 600; list-style: none; display:flex; align-items:center; gap: 10px; }
+  details.cfg > summary::-webkit-details-marker { display:none; }
+  details.cfg .cfg-body { padding: 0 18px 18px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .spin { display:inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: var(--gold); border-radius: 50%; animation: sp .7s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .ok { color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="overline">🎬 Ferramenta de IA · Luiz Laffey Productions</span>
+    <h1>Transforme qualquer documento em <span class="hl">roteiro profissional</span></h1>
+    <p class="sub">Envie um documento — PDF, Word, Excel ou texto — e a IA atua como diretor de cinema e TV para adaptar sua história em um roteiro completo, com locação, câmera, iluminação, trilha sonora e falas de personagens.</p>
+  </div>
+
+  <!-- Config -->
+  <details class="cfg" id="cfg">
+    <summary>⚙️ Configuração da IA <span id="cfgState" class="hint" style="margin-left:auto"></span></summary>
+    <div class="cfg-body">
+      <div class="row">
+        <div>
+          <label>Provedor</label>
+          <select id="provider">
+            <option value="anthropic">Anthropic (direto no navegador)</option>
+            <option value="openai">Gateway OpenAI-compatível (ex: Angel AI Labs)</option>
+          </select>
+        </div>
+        <div>
+          <label>Modelo</label>
+          <input type="text" id="model" placeholder="claude-opus-4-20250514" />
+        </div>
+      </div>
+      <div id="baseUrlRow" class="hidden" style="margin-top:14px">
+        <label>Base URL do gateway</label>
+        <input type="text" id="baseUrl" placeholder="https://.../v1" />
+      </div>
+      <div style="margin-top:14px">
+        <label>Chave de API (fica salva só no seu navegador)</label>
+        <input type="password" id="apiKey" placeholder="sk-ant-... ou seu token do gateway" />
+        <p class="hint">A chave é guardada em <code>localStorage</code> deste arquivo e nunca sai do seu navegador (vai direto para o provedor escolhido).</p>
+      </div>
+    </div>
+  </details>
+
+  <!-- Step 1 -->
+  <div class="panel">
+    <div class="head-row">
+      <h2><span class="num">1</span> Sua história</h2>
+      <div class="tabs">
+        <button class="tab active" id="tabFile" onclick="setMode('upload')">Arquivo</button>
+        <button class="tab" id="tabPaste" onclick="setMode('paste')">Colar texto</button>
+      </div>
+    </div>
+    <div id="fileMode">
+      <button class="drop" id="drop">
+        <div class="big">⬆️</div>
+        <div style="font-weight:600; margin-top:8px">Arraste um arquivo ou clique para enviar</div>
+        <div class="hint">PDF, Word (.docx), Excel (.xlsx), CSV, TXT ou Markdown</div>
+      </button>
+      <div class="file-chip hidden" id="fileChip">
+        <span>📄 <span id="fileName"></span> <span class="hint" id="fileMeta"></span></span>
+        <button class="x" onclick="clearFile()">✕</button>
+      </div>
+      <input type="file" id="fileInput" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.rtf" />
+    </div>
+    <div id="pasteMode" class="hidden">
+      <textarea id="pasteText" rows="9" placeholder="Cole aqui a história, sinopse ou texto que deseja adaptar..."></textarea>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="panel">
+    <h2><span class="num">2</span> Formato da adaptação</h2>
+    <div class="formats">
+      <button class="fmt active" data-fmt="film" onclick="setFormat('film')">
+        <div class="ic">🎞️</div><div class="name">Filme</div>
+        <div class="d">Longa-metragem em três atos, com arco autocontido.</div>
+      </button>
+      <button class="fmt" data-fmt="series" onclick="setFormat('series')">
+        <div class="ic">📺</div><div class="name">Série de TV</div>
+        <div class="d">Visão geral, mapa de episódios e episódio piloto completo.</div>
+      </button>
+      <button class="fmt" data-fmt="both" onclick="setFormat('both')">
+        <div class="ic">🎬</div><div class="name">Ambos</div>
+        <div class="d">Versão para filme e para série, lado a lado.</div>
+      </button>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <div>
+        <label>Título (opcional)</label>
+        <input type="text" id="title" placeholder="Ex: O Último Trem" />
+      </div>
+      <div>
+        <label>Idioma do roteiro (opcional)</label>
+        <input type="text" id="language" placeholder="Ex: Português, Inglês..." />
+      </div>
+    </div>
+  </div>
+
+  <div class="err hidden" id="error"></div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="genBtn" onclick="generate()">✨ Gerar roteiro</button>
+    <button class="btn btn-ghost hidden" id="stopBtn" onclick="stopGen()">Parar</button>
+  </div>
+
+  <!-- Output -->
+  <div class="out hidden" id="out">
+    <div class="out-head">
+      <h2>🎬 Seu roteiro</h2>
+      <div style="display:flex; align-items:center; gap:6px">
+        <button class="mini" id="copyBtn" onclick="copyOut()">⧉ Copiar</button>
+        <div class="menu" id="exportMenu">
+          <button class="mini" onclick="toggleExport()">⬇ Exportar ▾</button>
+          <div class="menu-list hidden" id="exportList">
+            <button onclick="doExport('pdf')">PDF (.pdf)</button>
+            <button onclick="doExport('docx')">Word (.docx)</button>
+            <button onclick="doExport('fdx')">Final Draft (.fdx)</button>
+            <button onclick="doExport('md')">Markdown (.md)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="out-body"><pre class="script" id="output"></pre></div>
+  </div>
+
+  <p class="disclaimer">Roteiros gerados por IA podem conter imprecisões. Revise antes de produzir.</p>
+</div>
+
+<!-- Libraries (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script type="module">
+  import * as pdfjs from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs";
+  pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs";
+  window.__pdfjs = pdfjs;
+</script>
+
+<script>
+//=================== State ===================//
+let mode = "upload";
+let format = "film";
+let docText = "";
+let docName = "";
+let outputText = "";
+let controller = null;
+
+const $ = (id) => document.getElementById(id);
+
+//=================== Config persistence ===================//
+const CFG_KEY = "roteirista_cfg_v1";
+function loadCfg() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CFG_KEY) || "{}");
+    $("provider").value = c.provider || "anthropic";
+    $("model").value = c.model || "";
+    $("baseUrl").value = c.baseUrl || "";
+    $("apiKey").value = c.apiKey || "";
+  } catch (e) {}
+  onProviderChange();
+  refreshCfgState();
+}
+function saveCfg() {
+  const c = {
+    provider: $("provider").value, model: $("model").value,
+    baseUrl: $("baseUrl").value, apiKey: $("apiKey").value,
+  };
+  localStorage.setItem(CFG_KEY, JSON.stringify(c));
+  refreshCfgState();
+}
+function onProviderChange() {
+  const p = $("provider").value;
+  $("baseUrlRow").classList.toggle("hidden", p !== "openai");
+  if (!$("model").value) {
+    $("model").value = p === "anthropic" ? "claude-opus-4-20250514" : "anthropic/claude-opus-4.5";
+  }
+}
+function refreshCfgState() {
+  const ok = !!$("apiKey").value.trim();
+  $("cfgState").textContent = ok ? "✓ configurado" : "chave de API necessária";
+  $("cfgState").className = "hint " + (ok ? "ok" : "");
+}
+["provider","model","baseUrl","apiKey"].forEach(id => {
+  $(id).addEventListener("change", () => { if (id==="provider") onProviderChange(); saveCfg(); });
+  $(id).addEventListener("input", saveCfg);
+});
+
+//=================== Mode / format ===================//
+function setMode(m) {
+  mode = m;
+  $("tabFile").classList.toggle("active", m === "upload");
+  $("tabPaste").classList.toggle("active", m === "paste");
+  $("fileMode").classList.toggle("hidden", m !== "upload");
+  $("pasteMode").classList.toggle("hidden", m !== "paste");
+}
+function setFormat(f) {
+  format = f;
+  document.querySelectorAll(".fmt").forEach(b => b.classList.toggle("active", b.dataset.fmt === f));
+}
+window.setMode = setMode; window.setFormat = setFormat;
+
+//=================== Error ===================//
+function showError(msg) { const e = $("error"); e.textContent = "⚠ " + msg; e.classList.remove("hidden"); }
+function clearError() { $("error").classList.add("hidden"); }
+
+//=================== Document parsing ===================//
+$("drop").addEventListener("click", () => $("fileInput").click());
+$("drop").addEventListener("dragover", (e) => { e.preventDefault(); $("drop").classList.add("drag"); });
+$("drop").addEventListener("dragleave", () => $("drop").classList.remove("drag"));
+$("drop").addEventListener("drop", (e) => {
+  e.preventDefault(); $("drop").classList.remove("drag");
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+$("fileInput").addEventListener("change", (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+async function handleFile(file) {
+  clearError();
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  $("drop").querySelector(".big").textContent = "⏳";
+  try {
+    let text = "";
+    if (ext === "pdf") text = await parsePdf(file);
+    else if (ext === "doc" || ext === "docx") text = await parseWord(file);
+    else if (ext === "xls" || ext === "xlsx" || ext === "csv") text = await parseSheet(file);
+    else if (["txt","md","rtf"].includes(ext)) text = await file.text();
+    else { showError("Formato não suportado. Use PDF, Word, Excel, CSV, TXT ou Markdown."); resetDrop(); return; }
+
+    text = text.replace(/ /g, " ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+    if (!text) { showError("Não foi possível extrair texto desse documento."); resetDrop(); return; }
+
+    docText = text; docName = file.name;
+    $("fileName").textContent = file.name;
+    $("fileMeta").textContent = text.length.toLocaleString("pt-BR") + " caracteres";
+    $("drop").classList.add("hidden");
+    $("fileChip").classList.remove("hidden");
+  } catch (err) {
+    console.error(err); showError("Erro ao ler o documento. Tente outro arquivo.");
+    resetDrop();
+  }
+}
+function resetDrop() { $("drop").querySelector(".big").textContent = "⬆️"; }
+function clearFile() {
+  docText = ""; docName = ""; $("fileInput").value = "";
+  $("fileChip").classList.add("hidden"); $("drop").classList.remove("hidden"); resetDrop();
+}
+window.clearFile = clearFile;
+
+async function parsePdf(file) {
+  const pdfjs = window.__pdfjs;
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data: buf }).promise;
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(content.items.map(it => it.str || "").join(" "));
+  }
+  return pages.join("\n\n");
+}
+async function parseWord(file) {
+  const buf = await file.arrayBuffer();
+  const res = await window.mammoth.extractRawText({ arrayBuffer: buf });
+  return res.value;
+}
+async function parseSheet(file) {
+  const buf = await file.arrayBuffer();
+  const wb = window.XLSX.read(buf, { type: "array" });
+  return wb.SheetNames.map(name => "# " + name + "\n" + window.XLSX.utils.sheet_to_csv(wb.Sheets[name], { blankrows: false })).join("\n\n");
+}
+
+//=================== Prompt ===================//
+const FORMAT_GUIDANCE = {
+  film: "TARGET FORMAT: FEATURE FILM. Structure the adaptation as a single feature-length screenplay following the classic three-act structure (setup, confrontation, resolution). Aim for a self-contained cinematic arc with a clear inciting incident, midpoint, climax, and resolution.",
+  series: "TARGET FORMAT: TELEVISION SERIES. First provide a SERIES OVERVIEW (logline, tone, target seasons) and a SEASON 1 EPISODE MAP (episode titles + one-line synopses). Then write the full PILOT EPISODE screenplay in detail, ending on a hook. Think in terms of serialized arcs, act breaks, and ensemble development.",
+  both: "TARGET FORMAT: BOTH. Produce TWO clearly separated deliverables: PART A — FEATURE FILM adaptation (three-act, self-contained). PART B — TELEVISION SERIES adaptation (series overview + season 1 episode map + full pilot). Add a short note on which format best serves this story and why.",
+};
+function buildSystem(fmt, lang) {
+  return `You are an award-winning film and television DIRECTOR and professional SCREENWRITER. You receive raw source material and adapt it into a complete, production-ready screenplay, thinking and writing exactly as a director would on set.
+
+${FORMAT_GUIDANCE[fmt]}
+
+WRITE THE OUTPUT IN THIS LANGUAGE: ${lang}.
+
+Follow professional screenplay craft and industry formatting conventions:
+1. TITLE & LOGLINE — Open with a title and a one-sentence logline.
+2. CHARACTER BREAKDOWN — Principal characters with a short description (age range, essence, motivation).
+3. SCENE HEADINGS (sluglines) — Every scene starts with INT./EXT. LOCATION — TIME.
+4. ACTION / SCENE DESCRIPTION — Present tense, vivid but economical.
+5. DIRECTOR'S NOTES per scene — As the director, specify (label them clearly as [DIRECTOR'S NOTES]):
+   • LOCATION: where it is shot and why this setting serves the story.
+   • CAMERA: shot sizes, angles, and movement (dolly, handheld, crane, OTS...).
+   • LIGHTING: mood, key/fill, color temperature, practical sources.
+   • SOUND / SCORE: ambience, musical cues, silence.
+   • BLOCKING / PERFORMANCE: how actors move and the emotional beat to play.
+6. DIALOGUE — Character name uppercase above their lines, parentheticals for delivery where it matters.
+7. TRANSITIONS — CUT TO:, DISSOLVE TO:, SMASH CUT:, etc.
+
+Preserve the spirit, themes, and key characters of the source material, but exercise creative directorial judgment to make it cinematic. Be thorough and concrete — this should read like a real shooting script. Output well-structured Markdown. Do not ask clarifying questions; commit to strong creative choices.`;
+}
+
+//=================== Generate (streaming) ===================//
+async function generate() {
+  const src = mode === "upload" ? docText : $("pasteText").value.trim();
+  const key = $("apiKey").value.trim();
+  if (!src) { showError("Envie um documento ou cole um texto primeiro."); return; }
+  if (!key) { showError("Configure sua chave de API em ⚙️ Configuração da IA."); $("cfg").open = true; return; }
+
+  clearError();
+  outputText = ""; $("output").textContent = "";
+  $("out").classList.remove("hidden");
+  $("genBtn").disabled = true; $("genBtn").innerHTML = '<span class="spin"></span> Dirigindo...';
+  $("stopBtn").classList.remove("hidden");
+
+  controller = new AbortController();
+  const lang = $("language").value.trim() || "the same language as the source document";
+  const title = $("title").value.trim();
+  const system = buildSystem(format, lang);
+  const material = src.slice(0, 200000);
+  const userPrompt = (title ? `The user suggests this working title: "${title}".\n\n` : "") +
+    "Here is the source material to adapt into a screenplay:\n\n--- SOURCE MATERIAL START ---\n" + material + "\n--- SOURCE MATERIAL END ---";
+
+  try {
+    if ($("provider").value === "anthropic") await streamAnthropic(key, system, userPrompt);
+    else await streamOpenAI(key, system, userPrompt);
+  } catch (err) {
+    if (err.name !== "AbortError") { console.error(err); showError("Erro ao gerar: " + (err.message || err)); }
+  } finally {
+    $("genBtn").disabled = false;
+    $("genBtn").innerHTML = outputText ? "✨ Gerar novamente" : "✨ Gerar roteiro";
+    $("stopBtn").classList.add("hidden");
+    controller = null;
+  }
+}
+function stopGen() { if (controller) controller.abort(); }
+window.generate = generate; window.stopGen = stopGen;
+
+function appendOut(chunk) {
+  outputText += chunk;
+  const el = $("output"); el.textContent = outputText;
+  el.parentElement.scrollTop = el.parentElement.scrollHeight;
+}
+
+async function streamAnthropic(key, system, userPrompt) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST", signal: controller.signal,
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: $("model").value.trim() || "claude-opus-4-20250514",
+      max_tokens: 16000, system, stream: true,
+      messages: [{ role: "user", content: userPrompt }],
+    }),
+  });
+  if (!res.ok) throw new Error("API " + res.status + ": " + (await res.text()).slice(0, 300));
+  await readSSE(res, (data) => {
+    if (data === "[DONE]") return;
+    try {
+      const ev = JSON.parse(data);
+      if (ev.type === "content_block_delta" && ev.delta?.text) appendOut(ev.delta.text);
+    } catch (e) {}
+  });
+}
+
+async function streamOpenAI(key, system, userPrompt) {
+  let base = $("baseUrl").value.trim().replace(/\/+$/, "");
+  if (!base) throw new Error("Informe a Base URL do gateway na configuração.");
+  const res = await fetch(base + "/chat/completions", {
+    method: "POST", signal: controller.signal,
+    headers: { "content-type": "application/json", "authorization": "Bearer " + key },
+    body: JSON.stringify({
+      model: $("model").value.trim() || "anthropic/claude-opus-4.5",
+      stream: true,
+      messages: [{ role: "system", content: system }, { role: "user", content: userPrompt }],
+    }),
+  });
+  if (!res.ok) throw new Error("API " + res.status + ": " + (await res.text()).slice(0, 300));
+  await readSSE(res, (data) => {
+    if (data === "[DONE]") return;
+    try {
+      const ev = JSON.parse(data);
+      const delta = ev.choices?.[0]?.delta?.content;
+      if (delta) appendOut(delta);
+    } catch (e) {}
+  });
+}
+
+async function readSSE(res, onData) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop();
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("data:")) onData(trimmed.slice(5).trim());
+    }
+  }
+}
+
+//=================== Copy / Export menu ===================//
+async function copyOut() {
+  await navigator.clipboard.writeText(outputText);
+  $("copyBtn").textContent = "✓ Copiado!";
+  setTimeout(() => $("copyBtn").textContent = "⧉ Copiar", 2000);
+}
+function toggleExport() { $("exportList").classList.toggle("hidden"); }
+document.addEventListener("click", (e) => {
+  if (!$("exportMenu").contains(e.target)) $("exportList").classList.add("hidden");
+});
+window.copyOut = copyOut; window.toggleExport = toggleExport;
+
+function doExport(kind) {
+  $("exportList").classList.add("hidden");
+  try {
+    const base = slugify($("title").value || "roteiro");
+    if (kind === "md") return download(new Blob([outputText], { type: "text/markdown" }), base + ".md");
+    const els = parseScreenplay(outputText);
+    if (kind === "fdx") return exportFdx(els, base);
+    if (kind === "pdf") return exportPdf(els, base);
+    if (kind === "docx") return exportDocx(els, base);
+  } catch (err) { console.error(err); showError("Erro ao exportar: " + (err.message || err)); }
+}
+window.doExport = doExport;
+
+function slugify(v) {
+  return (v || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "roteiro";
+}
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+//=================== Screenplay parser ===================//
+const SCENE_RE = /^(INT\.?\/EXT\.?|EXT\.?\/INT\.?|INT\.?|EXT\.?|EST\.?|I\/E\.?)[\s.]/i;
+const TRANSITION_RE = /^(FADE IN:|FADE OUT\.?:?|FADE TO:|CUT TO:|SMASH CUT TO:?|MATCH CUT TO:?|DISSOLVE TO:|JUMP CUT TO:|TIME CUT:|HARD CUT TO:|INTERCUT.*|BACK TO:)$/i;
+const PAREN_RE = /^\(.*\)$/;
+const NOTE_RE = /^\[?\s*director'?s notes?\s*\]?:?/i;
+const SECTION_RE = /^(CHARACTER BREAKDOWN|CHARACTERS?|CAST|LOGLINE|TITLE|SERIES OVERVIEW|OVERVIEW|SEASON \d|EPISODE \d|EPISODE MAP|PART [A-Z0-9]|ACT [IVX\d]|PILOT|SYNOPSIS|FEATURE FILM|TELEVISION SERIES|THEMES?|TONE)\b/i;
+function stripMd(s) { return s.replace(/\*\*/g, "").replace(/(^|[^*])\*([^*]+)\*/g, "$1$2").replace(/`/g, "").replace(/^>\s?/, "").trim(); }
+function isUpper(s) { const l = s.replace(/[^A-Za-zÀ-ÿ]/g, ""); return l.length > 0 && s === s.toUpperCase(); }
+function nextNonEmpty(lines, from) { for (let i = from; i < lines.length; i++) { const v = stripMd(lines[i]); if (v) return v; } return null; }
+
+function parseScreenplay(raw) {
+  const lines = raw.replace(/\r\n/g, "\n").split("\n");
+  const out = []; let titleDone = false; let prev = null;
+  for (let i = 0; i < lines.length; i++) {
+    const original = lines[i]; const line = stripMd(original);
+    if (!line) { prev = null; continue; }
+    const h = original.match(/^(#{1,6})\s+(.*)$/);
+    if (h) { const text = stripMd(h[2]); if (!titleDone && h[1].length <= 2) { out.push({ type:"title", text }); titleDone = true; } else { out.push({ type:"section", text }); } prev = "section"; continue; }
+    if (/^[-*_]{3,}$/.test(line)) { prev = null; continue; }
+    if (NOTE_RE.test(line)) { out.push({ type:"note", text: line.replace(/^\[|\]$/g, "") }); prev = "note"; continue; }
+    if (SCENE_RE.test(line)) { out.push({ type:"scene_heading", text: line.toUpperCase() }); prev = "scene_heading"; continue; }
+    if (isUpper(line) && SECTION_RE.test(line)) { out.push({ type:"section", text: line }); prev = "section"; continue; }
+    if (TRANSITION_RE.test(line) || (isUpper(line) && /\bTO:$/.test(line) && line.length <= 30)) { out.push({ type:"transition", text: line.toUpperCase() }); prev = "transition"; continue; }
+    if (PAREN_RE.test(line) && (prev === "character" || prev === "dialogue")) { out.push({ type:"parenthetical", text: line }); prev = "parenthetical"; continue; }
+    const bullet = line.match(/^[-*•]\s+(.*)$/);
+    if (bullet) { const type = prev === "note" ? "note" : "action"; out.push({ type, text: stripMd(bullet[1]) }); prev = type; continue; }
+    const next = nextNonEmpty(lines, i + 1);
+    const core = line.replace(/\((CONT'D|O\.S\.|V\.O\.|OFF|OS|VO)\)\s*$/i, "").trim();
+    const looksChar = isUpper(line) && core.length > 0 && core.length <= 40 && core.split(/\s+/).length <= 5 &&
+      !/[.!?,:;]$/.test(core) && next !== null && !/^[-*•]\s+/.test(next) && !SCENE_RE.test(next);
+    if (looksChar) { out.push({ type:"character", text: line.toUpperCase() }); prev = "character"; continue; }
+    if (prev === "character" || prev === "parenthetical" || prev === "dialogue") { out.push({ type:"dialogue", text: line }); prev = "dialogue"; continue; }
+    out.push({ type:"action", text: line }); prev = "action";
+  }
+  return out;
+}
+
+//=================== Exporters ===================//
+const FDX_TYPE = { title:"General", section:"General", scene_heading:"Scene Heading", action:"Action", character:"Character", parenthetical:"Parenthetical", dialogue:"Dialogue", transition:"Transition", note:"General" };
+function xmlEscape(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function exportFdx(els, base) {
+  const paras = els.map(e => `    <Paragraph Type="${FDX_TYPE[e.type]}"><Text>${xmlEscape(e.text)}</Text></Paragraph>`).join("\n");
+  const fdx = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<FinalDraft DocumentType="Script" Template="No" Version="5">\n  <Content>\n${paras}\n  </Content>\n</FinalDraft>\n`;
+  download(new Blob([fdx], { type: "application/xml" }), base + ".fdx");
+}
+
+function exportPdf(els, base) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "in", format: "letter" });
+  const pageW = 8.5, pageH = 11, left = 1.5, right = 1, top = 1, bottom = 1, lineH = 1/6;
+  const bodyW = pageW - left - right;
+  const L = {
+    title:        { x: pageW/2, w: bodyW, align: "center", style: "bold", size: 18, sb: 0.5 },
+    section:      { x: pageW/2, w: bodyW, align: "center", style: "bold", size: 13, sb: lineH*1.5 },
+    scene_heading:{ x: left, w: bodyW, style: "bold", sb: lineH },
+    action:       { x: left, w: bodyW, style: "normal" },
+    character:    { x: left+2.2, w: 3, style: "normal", sb: lineH },
+    parenthetical:{ x: left+1.6, w: 2, style: "normal" },
+    dialogue:     { x: left+1, w: 3.3, style: "normal" },
+    transition:   { x: pageW-right, w: bodyW, align: "right", style: "normal", sb: lineH },
+    note:         { x: left, w: bodyW, style: "italic", size: 10 },
+  };
+  let y = top;
+  for (const el of els) {
+    const lo = L[el.type]; const size = lo.size || 12;
+    doc.setFont("courier", lo.style); doc.setFontSize(size);
+    if (lo.sb) y += lo.sb;
+    const text = el.type === "note" ? "» " + el.text : el.text;
+    const wrapped = doc.splitTextToSize(text, lo.w);
+    const wlh = (size/12) * lineH;
+    for (const wl of wrapped) {
+      if (y > pageH - bottom) { doc.addPage(); y = top; }
+      doc.text(wl, lo.x, y, lo.align ? { align: lo.align } : undefined);
+      y += wlh;
+    }
+  }
+  doc.save(base + ".pdf");
+}
+
+async function exportDocx(els, base) {
+  const D = window.docx;
+  const inch = D.convertInchesToTwip;
+  const styleFor = (t) => ({
+    title:        { alignment: D.AlignmentType.CENTER, bold: true, size: 32, before: 240, after: 240 },
+    section:      { alignment: D.AlignmentType.CENTER, bold: true, size: 26, before: 240, after: 120 },
+    scene_heading:{ bold: true, before: 240, after: 60 },
+    action:       { after: 120 },
+    character:    { indent: { left: inch(2.2) }, before: 120 },
+    parenthetical:{ indent: { left: inch(1.6) } },
+    dialogue:     { indent: { left: inch(1), right: inch(1.5) }, after: 120 },
+    transition:   { alignment: D.AlignmentType.RIGHT, before: 120, after: 120 },
+    note:         { italics: true, size: 20, after: 120 },
+  })[t];
+  const children = els.map(el => {
+    const s = styleFor(el.type);
+    const text = el.type === "note" ? "» " + el.text : el.text;
+    return new D.Paragraph({
+      alignment: s.alignment, indent: s.indent,
+      spacing: { before: s.before, after: s.after },
+      children: [ new D.TextRun({ text, font: "Courier New", bold: s.bold, italics: s.italics, size: s.size || 24 }) ],
+    });
+  });
+  const document = new D.Document({
+    sections: [{ properties: { page: { margin: { top: inch(1), bottom: inch(1), left: inch(1.5), right: inch(1) } } }, children }],
+  });
+  const blob = await D.Packer.toBlob(document);
+  download(blob, base + ".docx");
+}
+
+//=================== Init ===================//
+loadCfg();
+</script>
+</body>
+</html>
