@@ -18,6 +18,7 @@ import Login from "./pages/login";
 import Broadcasts from "./pages/broadcasts";
 import SubscriptionSuccess from "./pages/subscription-success";
 import AIVideoAds from "./pages/services/ai-video-ads";
+import ScriptAdapter from "./pages/script-adapter";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route path="/about" component={About} />
             <Route path="/services" component={Services} />
             <Route path="/services/ai-video-ads" component={AIVideoAds} />
+            <Route path="/script-adapter" component={ScriptAdapter} />
             <Route path="/portfolio" component={Portfolio} />
             <Route path="/originals" component={Originals} />
             <Route path="/originals/luiz-laffeys-collection" component={LuizLaffeysCollection} />

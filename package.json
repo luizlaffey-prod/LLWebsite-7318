@@ -16,7 +16,9 @@
     "hono": "4.11.3",
     "i18next": "^25.8.4",
     "lucide-react": "^0.562.0",
+    "mammoth": "^1.12.0",
     "mathjs": "^15.1.0",
+    "pdfjs-dist": "^6.0.227",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.70.0",
@@ -25,6 +27,7 @@
     "runable-website-runtime": "^0.0.14",
     "tailwind-merge": "^3.4.0",
     "wouter": "^3.9.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.5"
   },
   "devDependencies": {

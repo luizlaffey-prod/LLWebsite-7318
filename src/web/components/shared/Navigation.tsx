@@ -14,6 +14,7 @@ const navLinks: NavLink[] = [
   { key: "services", href: "/services" },
   { key: "portfolio", href: "/portfolio" },
   { key: "originals", href: "/originals" },
+  { key: "scriptAdapter", href: "/script-adapter" },
   { key: "plans", href: "/plans" },
   { key: "contact", href: "/contact" },
 ];

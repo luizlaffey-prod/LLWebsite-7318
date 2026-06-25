@@ -8,7 +8,61 @@ const pt = {
     originals: "Originais",
     plans: "Planos",
     contact: "Contato",
+    scriptAdapter: "Roteirista IA",
     login: "Entrar",
+  },
+
+  // Script Adapter (AI Screenwriter)
+  scriptAdapter: {
+    overline: "Ferramenta de IA",
+    title: "Transforme qualquer documento em",
+    titleHighlight: "roteiro profissional",
+    subtitle:
+      "Envie um documento — PDF, Word, Excel ou texto — e a IA atua como diretor de cinema e TV para adaptar sua história em um roteiro completo, com locação, câmera, iluminação, trilha sonora e falas de personagens.",
+    source: {
+      title: "Sua história",
+      fileTab: "Arquivo",
+      pasteTab: "Colar texto",
+      dropLabel: "Arraste um arquivo ou clique para enviar",
+      dropHint: "PDF, Word (.docx), Excel (.xlsx), CSV, TXT ou Markdown",
+      parsing: "Lendo o documento...",
+      parsed: "{{count}} caracteres extraídos",
+      remove: "Remover",
+      pastePlaceholder: "Cole aqui a história, sinopse ou texto que deseja adaptar...",
+    },
+    format: {
+      title: "Formato da adaptação",
+      film: "Filme",
+      filmDesc: "Longa-metragem em três atos, com arco autocontido.",
+      series: "Série de TV",
+      seriesDesc: "Visão geral, mapa de episódios e episódio piloto completo.",
+      both: "Ambos",
+      bothDesc: "Versão para filme e para série, lado a lado.",
+    },
+    options: {
+      titleLabel: "Título (opcional)",
+      titlePlaceholder: "Ex: O Último Trem",
+      languageLabel: "Idioma do roteiro (opcional)",
+      languagePlaceholder: "Ex: Português, Inglês...",
+    },
+    generate: "Gerar roteiro",
+    generating: "Dirigindo...",
+    regenerate: "Gerar novamente",
+    stop: "Parar",
+    output: {
+      title: "Seu roteiro",
+      copy: "Copiar",
+      copied: "Copiado!",
+      download: "Baixar",
+    },
+    errors: {
+      unsupported: "Formato de arquivo não suportado. Use PDF, Word, Excel, CSV, TXT ou Markdown.",
+      empty: "Não foi possível extrair texto desse documento.",
+      parse: "Erro ao ler o documento. Tente outro arquivo.",
+      noInput: "Envie um documento ou cole um texto primeiro.",
+      generic: "Algo deu errado ao gerar o roteiro. Tente novamente.",
+    },
+    disclaimer: "Roteiros gerados por IA podem conter imprecisões. Revise antes de produzir.",
   },
 
   // Home Page

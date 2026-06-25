@@ -8,7 +8,61 @@ const es = {
     originals: "Originales",
     plans: "Planes",
     contact: "Contacto",
+    scriptAdapter: "Guionista IA",
     login: "Ingresar",
+  },
+
+  // Script Adapter (AI Screenwriter)
+  scriptAdapter: {
+    overline: "Herramienta de IA",
+    title: "Convierte cualquier documento en un",
+    titleHighlight: "guion profesional",
+    subtitle:
+      "Sube un documento — PDF, Word, Excel o texto — y la IA actúa como director de cine y TV para adaptar tu historia en un guion completo, con localización, cámara, iluminación, banda sonora y diálogos de personajes.",
+    source: {
+      title: "Tu historia",
+      fileTab: "Archivo",
+      pasteTab: "Pegar texto",
+      dropLabel: "Arrastra un archivo o haz clic para subir",
+      dropHint: "PDF, Word (.docx), Excel (.xlsx), CSV, TXT o Markdown",
+      parsing: "Leyendo el documento...",
+      parsed: "{{count}} caracteres extraídos",
+      remove: "Quitar",
+      pastePlaceholder: "Pega aquí la historia, sinopsis o texto que quieras adaptar...",
+    },
+    format: {
+      title: "Formato de la adaptación",
+      film: "Película",
+      filmDesc: "Largometraje en tres actos, arco autoconclusivo.",
+      series: "Serie de TV",
+      seriesDesc: "Visión general, mapa de episodios y episodio piloto completo.",
+      both: "Ambos",
+      bothDesc: "Versión para película y para serie, lado a lado.",
+    },
+    options: {
+      titleLabel: "Título (opcional)",
+      titlePlaceholder: "Ej: El Último Tren",
+      languageLabel: "Idioma del guion (opcional)",
+      languagePlaceholder: "Ej: Español, Inglés...",
+    },
+    generate: "Generar guion",
+    generating: "Dirigiendo...",
+    regenerate: "Generar de nuevo",
+    stop: "Detener",
+    output: {
+      title: "Tu guion",
+      copy: "Copiar",
+      copied: "¡Copiado!",
+      download: "Descargar",
+    },
+    errors: {
+      unsupported: "Formato de archivo no compatible. Usa PDF, Word, Excel, CSV, TXT o Markdown.",
+      empty: "No se pudo extraer texto de este documento.",
+      parse: "Error al leer el documento. Prueba con otro archivo.",
+      noInput: "Sube un documento o pega un texto primero.",
+      generic: "Algo salió mal al generar el guion. Inténtalo de nuevo.",
+    },
+    disclaimer: "Los guiones generados por IA pueden contener imprecisiones. Revísalos antes de producir.",
   },
 
   // Home Page

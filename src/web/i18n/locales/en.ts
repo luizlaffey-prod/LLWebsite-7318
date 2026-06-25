@@ -8,7 +8,61 @@ const en = {
     originals: "Originals",
     plans: "Plans",
     contact: "Contact",
+    scriptAdapter: "AI Screenwriter",
     login: "Login",
+  },
+
+  // Script Adapter (AI Screenwriter)
+  scriptAdapter: {
+    overline: "AI Tool",
+    title: "Turn any document into a",
+    titleHighlight: "professional screenplay",
+    subtitle:
+      "Upload a document — PDF, Word, Excel or text — and the AI acts as a film and TV director to adapt your story into a complete screenplay, with locations, camera, lighting, score and character dialogue.",
+    source: {
+      title: "Your story",
+      fileTab: "File",
+      pasteTab: "Paste text",
+      dropLabel: "Drag a file here or click to upload",
+      dropHint: "PDF, Word (.docx), Excel (.xlsx), CSV, TXT or Markdown",
+      parsing: "Reading the document...",
+      parsed: "{{count}} characters extracted",
+      remove: "Remove",
+      pastePlaceholder: "Paste the story, synopsis or text you want to adapt...",
+    },
+    format: {
+      title: "Adaptation format",
+      film: "Film",
+      filmDesc: "Feature-length, three-act, self-contained arc.",
+      series: "TV Series",
+      seriesDesc: "Series overview, episode map and full pilot episode.",
+      both: "Both",
+      bothDesc: "Film and series versions, side by side.",
+    },
+    options: {
+      titleLabel: "Title (optional)",
+      titlePlaceholder: "e.g. The Last Train",
+      languageLabel: "Screenplay language (optional)",
+      languagePlaceholder: "e.g. English, Portuguese...",
+    },
+    generate: "Generate screenplay",
+    generating: "Directing...",
+    regenerate: "Generate again",
+    stop: "Stop",
+    output: {
+      title: "Your screenplay",
+      copy: "Copy",
+      copied: "Copied!",
+      download: "Download",
+    },
+    errors: {
+      unsupported: "Unsupported file format. Use PDF, Word, Excel, CSV, TXT or Markdown.",
+      empty: "Could not extract any text from this document.",
+      parse: "Error reading the document. Try another file.",
+      noInput: "Upload a document or paste some text first.",
+      generic: "Something went wrong while generating the screenplay. Please try again.",
+    },
+    disclaimer: "AI-generated screenplays may contain inaccuracies. Review before production.",
   },
 
   // Home Page
