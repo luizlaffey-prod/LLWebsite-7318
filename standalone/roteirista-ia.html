@@ -465,22 +465,40 @@ function extractText(out) {
 // is served by server.mjs (http://localhost) we call the same origin and the
 // local proxy forwards to Angel, avoiding CORS. Opened directly via file:// it
 // would hit CORS, so the local server is the supported path for Angel.
-// The Angel deployment has a per-prediction execution deadline that long/cold
-// generations can intermittently exceed. Retrying usually succeeds because the
-// model is then warm — so we retry transient failures automatically.
+// Angel's deployment has a per-prediction execution deadline that a single long
+// generation (large input + large output) intermittently exceeds. We sidestep it
+// with a two-stage flow that keeps EVERY call short:
+//   Stage 1: full source  -> compact scene treatment (big input, tiny output)
+//   Stage 2: the treatment -> full screenplay        (small input, moderate output)
+// Each stage is retried on transient deadline/5xx errors.
 async function runAngel(key, system, userPrompt, maxTokens) {
+  const treatment = await angelPredict(
+    key,
+    "You are a film development executive. Read the source material and produce a DETAILED scene-by-scene treatment: a numbered list of scenes, each with INT/EXT, location, time period, the characters present, and the dramatic beat (1-3 sentences). Capture the ENTIRE story faithfully and in order. Be complete but compact. Output plain text.",
+    userPrompt,
+    2200,
+    false
+  );
+
+  const screenplayPrompt =
+    "Adapt the following SCENE TREATMENT into the complete screenplay, following all formatting and director's-notes instructions. Stay faithful to the treatment's scenes and order.\n\n=== SCENE TREATMENT ===\n" +
+    treatment;
+  outputText = await angelPredict(key, system, screenplayPrompt, maxTokens, true);
+  $("output").textContent = outputText;
+}
+
+// Submit + poll one Angel prediction, retrying transient failures. Returns text.
+async function angelPredict(key, system, prompt, maxTokens, isFinal) {
   const MAX_ATTEMPTS = 3;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      await runAngelOnce(key, system, userPrompt, maxTokens);
-      return;
+      return await angelPredictOnce(key, system, prompt, maxTokens, isFinal, attempt);
     } catch (err) {
       if (err.name === "AbortError") throw err;
       const transient = /deadline|timeout|temporar|503|502|429|overload/i.test(err.message || "");
       if (attempt < MAX_ATTEMPTS && transient) {
         $("output").textContent =
-          `⚠ O modelo estourou o tempo (provável cold start do servidor). ` +
-          `Tentando novamente automaticamente (${attempt + 1}/${MAX_ATTEMPTS})...`;
+          `⚠ O servidor estourou o tempo (provável cold start). Tentando novamente (${attempt + 1}/${MAX_ATTEMPTS})...`;
         await sleep(2500);
         continue;
       }
@@ -489,7 +507,7 @@ async function runAngel(key, system, userPrompt, maxTokens) {
   }
 }
 
-async function runAngelOnce(key, system, userPrompt, maxTokens) {
+async function angelPredictOnce(key, system, prompt, maxTokens, isFinal, attempt) {
   const base = location.protocol.startsWith("http") ? "" : "https://ai-labs.angel-tools.io";
   const model = $("model").value.trim() || "anthropic/claude-4.5-sonnet";
 
@@ -497,10 +515,7 @@ async function runAngelOnce(key, system, userPrompt, maxTokens) {
     method: "POST",
     signal: controller.signal,
     headers: { "content-type": "application/json", authorization: "Bearer " + key },
-    body: JSON.stringify({
-      model,
-      input: { prompt: userPrompt, system_prompt: system, max_tokens: maxTokens },
-    }),
+    body: JSON.stringify({ model, input: { prompt, system_prompt: system, max_tokens: maxTokens } }),
   });
   if (!res.ok) throw new Error("API " + res.status + ": " + (await res.text()).slice(0, 300));
   const data = await res.json();
@@ -508,11 +523,10 @@ async function runAngelOnce(key, system, userPrompt, maxTokens) {
   if (!id) throw new Error("Resposta inesperada do gateway Angel.");
 
   let secs = 0;
+  const label = isFinal ? "Etapa 2/2 — dirigindo o roteiro" : "Etapa 1/2 — analisando a história";
   while (true) {
     if (controller.signal.aborted) throw new DOMException("aborted", "AbortError");
-    $("output").textContent =
-      `⏳ A IA está dirigindo seu roteiro no gateway da Angel AI Labs... (${Math.round(secs)}s)\n\n` +
-      "Modelos do porte do Opus podem levar de 30s a ~2min para um roteiro completo.";
+    $("output").textContent = `⏳ ${label}... (${Math.round(secs)}s${attempt > 1 ? `, tentativa ${attempt}` : ""})`;
     await sleep(2500);
     secs += 2.5;
     const pr = await fetch(base + "/api/v1/predictions/" + id, {
@@ -521,11 +535,7 @@ async function runAngelOnce(key, system, userPrompt, maxTokens) {
     });
     if (!pr.ok) throw new Error("Poll " + pr.status + ": " + (await pr.text()).slice(0, 200));
     const pd = await pr.json();
-    if (pd.status === "completed") {
-      outputText = extractText(pd.output);
-      $("output").textContent = outputText;
-      return;
-    }
+    if (pd.status === "completed") return extractText(pd.output);
     if (pd.status === "failed" || pd.status === "cancelled") {
       throw new Error("Geração " + pd.status + (pd.error ? ": " + pd.error : ""));
     }
