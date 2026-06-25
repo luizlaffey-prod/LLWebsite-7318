@@ -471,31 +471,59 @@ function extractText(out) {
 //   Stage 1: full source  -> compact scene treatment (big input, tiny output)
 //   Stage 2: the treatment -> full screenplay        (small input, moderate output)
 // Each stage is retried on transient deadline/5xx errors.
-async function runAngel(key, system, userPrompt, maxTokens) {
-  const treatment = await angelPredict(
-    key,
-    "You are a film development executive. Read the source material and produce a DETAILED scene-by-scene treatment: a numbered list of scenes, each with INT/EXT, location, time period, the characters present, and the dramatic beat (1-3 sentences). Capture the ENTIRE story faithfully and in order. Be complete but compact. Output plain text.",
-    userPrompt,
-    2200,
-    false
-  );
+const TREATMENT_SYSTEM =
+  "You are a film development executive. Read the source material and produce a DETAILED scene-by-scene treatment: a NUMBERED list of scenes (1., 2., 3., ...), each with INT/EXT, location, time period, the characters present, and the dramatic beat (1-3 sentences). Capture the ENTIRE story faithfully and in order. Be complete but compact. Output plain text.";
 
-  const screenplayPrompt =
-    "Adapt the following SCENE TREATMENT into the complete screenplay, following all formatting and director's-notes instructions. Stay faithful to the treatment's scenes and order.\n\n=== SCENE TREATMENT ===\n" +
-    treatment;
-  outputText = await angelPredict(key, system, screenplayPrompt, maxTokens, true);
-  $("output").textContent = outputText;
+function splitTreatmentScenes(t) {
+  return t
+    .split(/\n(?=\s*\d+[.)]\s)/)
+    .map((s) => s.trim())
+    .filter((s) => /^\d+[.)]/.test(s));
+}
+
+async function runAngel(key, system, userPrompt, maxTokens) {
+  // Stage 1 — condense the whole document into a numbered scene treatment.
+  const treatment = await angelPredict(key, TREATMENT_SYSTEM, userPrompt, 2000, "Etapa 1/2 — analisando a historia");
+
+  const scenes = splitTreatmentScenes(treatment);
+
+  // Fallback: couldn't split into scenes -> single capped screenplay call.
+  if (scenes.length < 4) {
+    const sp =
+      "Adapt the following SCENE TREATMENT into the complete screenplay, following all formatting and director's-notes instructions.\n\n=== SCENE TREATMENT ===\n" +
+      treatment;
+    outputText = await angelPredict(key, system, sp, Math.min(maxTokens, 2600), "Etapa 2/2 — dirigindo o roteiro");
+    $("output").textContent = outputText;
+    return;
+  }
+
+  // Stage 2 — write the screenplay a few scenes per call, concatenating results.
+  const PER = 4;
+  const groups = [];
+  for (let i = 0; i < scenes.length; i += PER) groups.push(scenes.slice(i, i + PER));
+
+  outputText = "";
+  for (let g = 0; g < groups.length; g++) {
+    const head =
+      g === 0
+        ? "You are writing a screenplay from a treatment. Begin with the TITLE, a one-line logline and a brief CHARACTER BREAKDOWN, then write the full screenplay for the scenes listed below."
+        : "Continue the SAME screenplay already in progress. Write ONLY the scenes listed below, in the same style and formatting. Do NOT repeat or recap earlier scenes, and do not add a title or character list again.";
+    const chunkPrompt = `${head}\n\n(Part ${g + 1} of ${groups.length}.)\n\n=== SCENES (from the treatment) ===\n${groups[g].join("\n")}`;
+    const part = await angelPredict(key, system, chunkPrompt, 2600, `Etapa 2/2 — escrevendo cenas (parte ${g + 1}/${groups.length})`);
+    outputText = (outputText ? outputText + "\n\n" : "") + part.trim();
+    $("output").textContent = outputText;
+  }
 }
 
 // Submit + poll one Angel prediction, retrying transient failures. Returns text.
-async function angelPredict(key, system, prompt, maxTokens, isFinal) {
-  const MAX_ATTEMPTS = 3;
+async function angelPredict(key, system, prompt, maxTokens, label) {
+  const MAX_ATTEMPTS = 4;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      return await angelPredictOnce(key, system, prompt, maxTokens, isFinal, attempt);
+      return await angelPredictOnce(key, system, prompt, maxTokens, label, attempt);
     } catch (err) {
       if (err.name === "AbortError") throw err;
-      const transient = /deadline|timeout|temporar|503|502|429|overload/i.test(err.message || "");
+      const transient = /deadline|timeout|temporar|503|502|429|overload|failed/i.test(err.message || "");
       if (attempt < MAX_ATTEMPTS && transient) {
         $("output").textContent =
           `⚠ O servidor estourou o tempo (provável cold start). Tentando novamente (${attempt + 1}/${MAX_ATTEMPTS})...`;
@@ -507,7 +535,7 @@ async function angelPredict(key, system, prompt, maxTokens, isFinal) {
   }
 }
 
-async function angelPredictOnce(key, system, prompt, maxTokens, isFinal, attempt) {
+async function angelPredictOnce(key, system, prompt, maxTokens, label, attempt) {
   const base = location.protocol.startsWith("http") ? "" : "https://ai-labs.angel-tools.io";
   const model = $("model").value.trim() || "anthropic/claude-4.5-sonnet";
 
@@ -523,10 +551,10 @@ async function angelPredictOnce(key, system, prompt, maxTokens, isFinal, attempt
   if (!id) throw new Error("Resposta inesperada do gateway Angel.");
 
   let secs = 0;
-  const label = isFinal ? "Etapa 2/2 — dirigindo o roteiro" : "Etapa 1/2 — analisando a história";
+  const accumulated = outputText ? outputText + "\n\n" : "";
   while (true) {
     if (controller.signal.aborted) throw new DOMException("aborted", "AbortError");
-    $("output").textContent = `⏳ ${label}... (${Math.round(secs)}s${attempt > 1 ? `, tentativa ${attempt}` : ""})`;
+    $("output").textContent = `${accumulated}⏳ ${label}... (${Math.round(secs)}s${attempt > 1 ? `, tentativa ${attempt}` : ""})`;
     await sleep(2500);
     secs += 2.5;
     const pr = await fetch(base + "/api/v1/predictions/" + id, {
