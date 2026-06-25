@@ -474,43 +474,72 @@ function extractText(out) {
 const TREATMENT_SYSTEM =
   "You are a film development executive. Read the source material and produce a DETAILED scene-by-scene treatment: a NUMBERED list of scenes (1., 2., 3., ...), each with INT/EXT, location, time period, the characters present, and the dramatic beat (1-3 sentences). Capture the ENTIRE story faithfully and in order. Be complete but compact. Output plain text.";
 
+// Robustly break a treatment into scene-sized units. Tries numbered lists, then
+// scene headings (INT./EXT./CENA/SCENE), then plain paragraph blocks — so we
+// ALWAYS get chunkable pieces and never fall back to one giant generation.
 function splitTreatmentScenes(t) {
-  return t
-    .split(/\n(?=\s*\d+[.)]\s)/)
+  const clean = (t || "").replace(/\*\*/g, "").replace(/\r/g, "").trim();
+  if (!clean) return [];
+
+  let parts = clean.split(/\n(?=\s*\d{1,3}\s*[.)\-:]\s)/).map((s) => s.trim()).filter(Boolean);
+  let scenes = parts.filter((p) => /^\d{1,3}\s*[.)\-:]/.test(p));
+  if (scenes.length >= 3) return scenes;
+
+  parts = clean
+    .split(/\n(?=\s*(?:CENA\b|SCENE\b|INT[.\/ ]|EXT[.\/ ]|EST\.))/i)
     .map((s) => s.trim())
-    .filter((s) => /^\d+[.)]/.test(s));
+    .filter(Boolean);
+  if (parts.length >= 3) return parts;
+
+  return clean.split(/\n\s*\n+/).map((s) => s.trim()).filter(Boolean);
 }
 
+// Every Angel call is capped at the proven-safe size (~2000 output tokens — the
+// size Stage 1 always completed at). We build the screenplay incrementally:
+//   1) treatment  2) opening (title/logline/cast)  3) scenes, a few per call.
 async function runAngel(key, system, userPrompt, maxTokens) {
-  // Stage 1 — condense the whole document into a numbered scene treatment.
-  const treatment = await angelPredict(key, TREATMENT_SYSTEM, userPrompt, 2000, "Etapa 1/2 — analisando a historia");
-
+  const treatment = await angelPredict(key, TREATMENT_SYSTEM, userPrompt, 2000, "Etapa 1 — analisando a história");
   const scenes = splitTreatmentScenes(treatment);
 
-  // Fallback: couldn't split into scenes -> single capped screenplay call.
-  if (scenes.length < 4) {
-    const sp =
-      "Adapt the following SCENE TREATMENT into the complete screenplay, following all formatting and director's-notes instructions.\n\n=== SCENE TREATMENT ===\n" +
-      treatment;
-    outputText = await angelPredict(key, system, sp, Math.min(maxTokens, 2600), "Etapa 2/2 — dirigindo o roteiro");
+  // Safety net (should not happen): treatment unusable -> one small capped call.
+  if (scenes.length === 0) {
+    outputText = await angelPredict(
+      key,
+      system,
+      "Write the complete screenplay adapted from this treatment, with scene headings, dialogue and [DIRECTOR'S NOTES].\n\n" + treatment,
+      2000,
+      "Etapa 2 — escrevendo o roteiro"
+    );
     $("output").textContent = outputText;
     return;
   }
 
-  // Stage 2 — write the screenplay a few scenes per call, concatenating results.
-  const PER = 4;
+  // Opening: title, logline, character breakdown (small, fast).
+  const header = await angelPredict(
+    key,
+    system,
+    "Write ONLY the opening of a screenplay adapted from the treatment below: the TITLE, a one-line logline, and a brief CHARACTER BREAKDOWN. Do NOT write any scenes yet.\n\n=== TREATMENT ===\n" + treatment,
+    1200,
+    "Etapa 2 — título e personagens"
+  );
+  outputText = header.trim();
+  $("output").textContent = outputText;
+
+  // Scenes, a few per call. Each call stays at the proven-safe size.
+  const PER = 3;
   const groups = [];
   for (let i = 0; i < scenes.length; i += PER) groups.push(scenes.slice(i, i + PER));
 
-  outputText = "";
   for (let g = 0; g < groups.length; g++) {
-    const head =
-      g === 0
-        ? "You are writing a screenplay from a treatment. Begin with the TITLE, a one-line logline and a brief CHARACTER BREAKDOWN, then write the full screenplay for the scenes listed below."
-        : "Continue the SAME screenplay already in progress. Write ONLY the scenes listed below, in the same style and formatting. Do NOT repeat or recap earlier scenes, and do not add a title or character list again.";
-    const chunkPrompt = `${head}\n\n(Part ${g + 1} of ${groups.length}.)\n\n=== SCENES (from the treatment) ===\n${groups[g].join("\n")}`;
-    const part = await angelPredict(key, system, chunkPrompt, 2600, `Etapa 2/2 — escrevendo cenas (parte ${g + 1}/${groups.length})`);
-    outputText = (outputText ? outputText + "\n\n" : "") + part.trim();
+    const part = await angelPredict(
+      key,
+      system,
+      "Continue the SAME screenplay already in progress. Do NOT repeat the title, character list, or earlier scenes. Write ONLY the following scene(s), fully formatted (scene heading, action, dialogue), each followed by a [DIRECTOR'S NOTES] block.\n\n=== SCENES (from the treatment) ===\n" +
+        groups[g].join("\n\n"),
+      2000,
+      `Etapa 3 — escrevendo cenas (${g + 1}/${groups.length})`
+    );
+    outputText = outputText + "\n\n" + part.trim();
     $("output").textContent = outputText;
   }
 }
@@ -787,8 +816,9 @@ function updateEstimate() {
   const inTok = Math.ceil(currentSourceLen() / 4);
   const outTok = parseInt($("length").value, 10) || 6000;
   const el = $("estimate");
-  if (!inTok) { el.textContent = `Saída limitada a ~${(outTok/1000).toFixed(1)}k tokens. Você paga só pelos tokens realmente gerados.`; return; }
-  el.textContent = `Estimativa: ~${(inTok/1000).toFixed(1)}k tokens de entrada + até ~${(outTok/1000).toFixed(1)}k de saída. Você paga só pelo que for gerado.`;
+  const tail = " O roteiro é gerado em blocos curtos (para caber no tempo do servidor); você paga só pelos tokens realmente gerados.";
+  if (!inTok) { el.textContent = "Defina o tamanho e gere." + tail; return; }
+  el.textContent = `Entrada: ~${(inTok / 1000).toFixed(1)}k tokens.` + tail;
 }
 $("length").addEventListener("change", updateEstimate);
 $("pasteText").addEventListener("input", updateEstimate);
