@@ -172,9 +172,9 @@
     <div style="margin-top:18px">
       <label>Tamanho do roteiro <span class="hint">— quanto menor, menos tokens e menor custo</span></label>
       <select id="length">
-        <option value="3500">Curto — cenas-chave / tratamento enxuto (mais econômico)</option>
-        <option value="6000" selected>Médio — roteiro padrão</option>
-        <option value="9000">Longo — roteiro detalhado (mais tokens)</option>
+        <option value="3000">Curto — cenas-chave / tratamento enxuto (mais econômico)</option>
+        <option value="4500" selected>Médio — roteiro padrão</option>
+        <option value="6000">Longo — roteiro detalhado (mais tokens)</option>
       </select>
       <p class="hint" id="estimate"></p>
     </div>
@@ -377,16 +377,16 @@ const FORMAT_GUIDANCE = {
   both: "TARGET FORMAT: BOTH. Produce TWO clearly separated deliverables: PART A — FEATURE FILM adaptation (three-act, self-contained). PART B — TELEVISION SERIES adaptation (series overview + season 1 episode map + full pilot). Add a short note on which format best serves this story and why.",
 };
 const LENGTH_GUIDANCE = {
-  "3500": "LENGTH: CONCISE. Deliver a tight, treatment-style screenplay that covers only the key scenes and turning points. Be economical — no filler, no repetition, no padding. Prioritize the most cinematic moments.",
-  "6000": "LENGTH: STANDARD. Cover the main story beats as full scenes. Be efficient and avoid padding.",
-  "9000": "LENGTH: DETAILED. Develop the scenes fully, but never pad — every line must earn its place.",
+  "3000": "LENGTH: CONCISE. Deliver a tight, treatment-style screenplay that covers only the key scenes and turning points. Be economical — no filler, no repetition, no padding. Prioritize the most cinematic moments.",
+  "4500": "LENGTH: STANDARD. Cover the main story beats as full scenes. Be efficient and avoid padding.",
+  "6000": "LENGTH: DETAILED. Develop the scenes fully, but never pad — every line must earn its place.",
 };
 function buildSystem(fmt, lang, maxTokens) {
   return `You are an award-winning film and television DIRECTOR and professional SCREENWRITER. You receive raw source material and adapt it into a complete, production-ready screenplay, thinking and writing exactly as a director would on set.
 
 ${FORMAT_GUIDANCE[fmt]}
 
-${LENGTH_GUIDANCE[String(maxTokens)] || LENGTH_GUIDANCE["6000"]}
+${LENGTH_GUIDANCE[String(maxTokens)] || LENGTH_GUIDANCE["4500"]}
 
 WRITE THE OUTPUT IN THIS LANGUAGE: ${lang}.
 
@@ -465,7 +465,31 @@ function extractText(out) {
 // is served by server.mjs (http://localhost) we call the same origin and the
 // local proxy forwards to Angel, avoiding CORS. Opened directly via file:// it
 // would hit CORS, so the local server is the supported path for Angel.
+// The Angel deployment has a per-prediction execution deadline that long/cold
+// generations can intermittently exceed. Retrying usually succeeds because the
+// model is then warm — so we retry transient failures automatically.
 async function runAngel(key, system, userPrompt, maxTokens) {
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      await runAngelOnce(key, system, userPrompt, maxTokens);
+      return;
+    } catch (err) {
+      if (err.name === "AbortError") throw err;
+      const transient = /deadline|timeout|temporar|503|502|429|overload/i.test(err.message || "");
+      if (attempt < MAX_ATTEMPTS && transient) {
+        $("output").textContent =
+          `⚠ O modelo estourou o tempo (provável cold start do servidor). ` +
+          `Tentando novamente automaticamente (${attempt + 1}/${MAX_ATTEMPTS})...`;
+        await sleep(2500);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+async function runAngelOnce(key, system, userPrompt, maxTokens) {
   const base = location.protocol.startsWith("http") ? "" : "https://ai-labs.angel-tools.io";
   const model = $("model").value.trim() || "anthropic/claude-4.5-sonnet";
 

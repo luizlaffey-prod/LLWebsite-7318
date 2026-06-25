@@ -83,9 +83,9 @@ type Length = "short" | "medium" | "long";
 // Output-token budget per length. Capping this is the main lever for both cost
 // (you only pay for tokens generated) and for staying within model deadlines.
 const LENGTH_TOKENS: Record<Length, number> = {
-  short: 3500,
-  medium: 6000,
-  long: 9000,
+  short: 3000,
+  medium: 4500,
+  long: 6000,
 };
 
 const LENGTH_GUIDANCE: Record<Length, string> = {
