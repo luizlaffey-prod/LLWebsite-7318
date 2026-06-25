@@ -104,8 +104,9 @@
         <div>
           <label>Provedor</label>
           <select id="provider">
+            <option value="angel">Angel AI Labs (recomendado)</option>
             <option value="anthropic">Anthropic (direto no navegador)</option>
-            <option value="openai">Gateway OpenAI-compatível (ex: Angel AI Labs)</option>
+            <option value="openai">Outro gateway OpenAI-compatível</option>
           </select>
         </div>
         <div>
@@ -119,8 +120,8 @@
       </div>
       <div style="margin-top:14px">
         <label>Chave de API (fica salva só no seu navegador)</label>
-        <input type="password" id="apiKey" placeholder="sk-ant-... ou seu token do gateway" />
-        <p class="hint">A chave é guardada em <code>localStorage</code> deste arquivo e nunca sai do seu navegador (vai direto para o provedor escolhido).</p>
+        <input type="password" id="apiKey" placeholder="aal_... (Angel) ou sk-ant-... (Anthropic)" />
+        <p class="hint">A chave é guardada em <code>localStorage</code> deste arquivo e nunca sai da sua máquina. Para a Angel AI Labs, rode com <code>node standalone/server.mjs</code> e abra <code>http://localhost:5800</code> (o servidor local repassa as chamadas, evitando bloqueio de CORS).</p>
       </div>
     </div>
   </details>
@@ -237,7 +238,7 @@ const CFG_KEY = "roteirista_cfg_v1";
 function loadCfg() {
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || "{}");
-    $("provider").value = c.provider || "anthropic";
+    $("provider").value = c.provider || "angel";
     $("model").value = c.model || "";
     $("baseUrl").value = c.baseUrl || "";
     $("apiKey").value = c.apiKey || "";
@@ -253,12 +254,17 @@ function saveCfg() {
   localStorage.setItem(CFG_KEY, JSON.stringify(c));
   refreshCfgState();
 }
+const MODEL_DEFAULTS = {
+  angel: "anthropic/claude-opus-4.6",
+  anthropic: "claude-opus-4-20250514",
+  openai: "anthropic/claude-opus-4.5",
+};
+const ALL_DEFAULTS = Object.values(MODEL_DEFAULTS);
 function onProviderChange() {
   const p = $("provider").value;
   $("baseUrlRow").classList.toggle("hidden", p !== "openai");
-  if (!$("model").value) {
-    $("model").value = p === "anthropic" ? "claude-opus-4-20250514" : "anthropic/claude-opus-4.5";
-  }
+  const cur = $("model").value.trim();
+  if (!cur || ALL_DEFAULTS.includes(cur)) $("model").value = MODEL_DEFAULTS[p];
 }
 function refreshCfgState() {
   const ok = !!$("apiKey").value.trim();
@@ -405,7 +411,9 @@ async function generate() {
     "Here is the source material to adapt into a screenplay:\n\n--- SOURCE MATERIAL START ---\n" + material + "\n--- SOURCE MATERIAL END ---";
 
   try {
-    if ($("provider").value === "anthropic") await streamAnthropic(key, system, userPrompt);
+    const provider = $("provider").value;
+    if (provider === "angel") await runAngel(key, system, userPrompt);
+    else if (provider === "anthropic") await streamAnthropic(key, system, userPrompt);
     else await streamOpenAI(key, system, userPrompt);
   } catch (err) {
     if (err.name !== "AbortError") { console.error(err); showError("Erro ao gerar: " + (err.message || err)); }
@@ -423,6 +431,62 @@ function appendOut(chunk) {
   outputText += chunk;
   const el = $("output"); el.textContent = outputText;
   el.parentElement.scrollTop = el.parentElement.scrollHeight;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function extractText(out) {
+  if (out == null) return "";
+  if (typeof out === "string") return out;
+  if (Array.isArray(out)) return out.map((x) => (typeof x === "string" ? x : JSON.stringify(x))).join("");
+  if (typeof out === "object") return out.text || out.output || JSON.stringify(out);
+  return String(out);
+}
+
+// Angel AI Labs uses an async predictions API (submit -> poll). When this page
+// is served by server.mjs (http://localhost) we call the same origin and the
+// local proxy forwards to Angel, avoiding CORS. Opened directly via file:// it
+// would hit CORS, so the local server is the supported path for Angel.
+async function runAngel(key, system, userPrompt) {
+  const base = location.protocol.startsWith("http") ? "" : "https://ai-labs.angel-tools.io";
+  const model = $("model").value.trim() || "anthropic/claude-opus-4.6";
+
+  const res = await fetch(base + "/api/v1/predictions?async=true", {
+    method: "POST",
+    signal: controller.signal,
+    headers: { "content-type": "application/json", authorization: "Bearer " + key },
+    body: JSON.stringify({
+      model,
+      input: { prompt: userPrompt, system_prompt: system, max_tokens: 32000 },
+    }),
+  });
+  if (!res.ok) throw new Error("API " + res.status + ": " + (await res.text()).slice(0, 300));
+  const data = await res.json();
+  const id = data.id;
+  if (!id) throw new Error("Resposta inesperada do gateway Angel.");
+
+  let secs = 0;
+  while (true) {
+    if (controller.signal.aborted) throw new DOMException("aborted", "AbortError");
+    $("output").textContent =
+      `⏳ A IA está dirigindo seu roteiro no gateway da Angel AI Labs... (${Math.round(secs)}s)\n\n` +
+      "Modelos do porte do Opus podem levar de 30s a ~2min para um roteiro completo.";
+    await sleep(2500);
+    secs += 2.5;
+    const pr = await fetch(base + "/api/v1/predictions/" + id, {
+      headers: { authorization: "Bearer " + key },
+      signal: controller.signal,
+    });
+    if (!pr.ok) throw new Error("Poll " + pr.status + ": " + (await pr.text()).slice(0, 200));
+    const pd = await pr.json();
+    if (pd.status === "completed") {
+      outputText = extractText(pd.output);
+      $("output").textContent = outputText;
+      return;
+    }
+    if (pd.status === "failed" || pd.status === "cancelled") {
+      throw new Error("Geração " + pd.status + (pd.error ? ": " + pd.error : ""));
+    }
+  }
 }
 
 async function streamAnthropic(key, system, userPrompt) {
