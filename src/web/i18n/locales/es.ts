@@ -39,6 +39,16 @@ const es = {
       both: "Ambos",
       bothDesc: "Versión para película y para serie, lado a lado.",
     },
+    length: {
+      label: "Tamaño del guion",
+      short: "Corto",
+      shortDesc: "Escenas clave, más económico",
+      medium: "Medio",
+      mediumDesc: "Guion estándar",
+      long: "Largo",
+      longDesc: "Detallado, más tokens",
+      hint: "Cuanto menor el tamaño, menos tokens y menor costo. Solo pagas por lo que se genera.",
+    },
     options: {
       titleLabel: "Título (opcional)",
       titlePlaceholder: "Ej: El Último Tren",

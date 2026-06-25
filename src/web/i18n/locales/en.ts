@@ -39,6 +39,16 @@ const en = {
       both: "Both",
       bothDesc: "Film and series versions, side by side.",
     },
+    length: {
+      label: "Screenplay length",
+      short: "Short",
+      shortDesc: "Key scenes, most economical",
+      medium: "Medium",
+      mediumDesc: "Standard screenplay",
+      long: "Long",
+      longDesc: "Detailed, more tokens",
+      hint: "Shorter length means fewer tokens and lower cost. You only pay for what is generated.",
+    },
     options: {
       titleLabel: "Title (optional)",
       titlePlaceholder: "e.g. The Last Train",

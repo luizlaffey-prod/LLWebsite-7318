@@ -39,6 +39,16 @@ const pt = {
       both: "Ambos",
       bothDesc: "Versão para filme e para série, lado a lado.",
     },
+    length: {
+      label: "Tamanho do roteiro",
+      short: "Curto",
+      shortDesc: "Cenas-chave, mais econômico",
+      medium: "Médio",
+      mediumDesc: "Roteiro padrão",
+      long: "Longo",
+      longDesc: "Detalhado, mais tokens",
+      hint: "Quanto menor o tamanho, menos tokens e menor custo. Você paga só pelo que for gerado.",
+    },
     options: {
       titleLabel: "Título (opcional)",
       titlePlaceholder: "Ex: O Último Trem",

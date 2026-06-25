@@ -169,6 +169,15 @@
         <div class="d">Versão para filme e para série, lado a lado.</div>
       </button>
     </div>
+    <div style="margin-top:18px">
+      <label>Tamanho do roteiro <span class="hint">— quanto menor, menos tokens e menor custo</span></label>
+      <select id="length">
+        <option value="3500">Curto — cenas-chave / tratamento enxuto (mais econômico)</option>
+        <option value="6000" selected>Médio — roteiro padrão</option>
+        <option value="9000">Longo — roteiro detalhado (mais tokens)</option>
+      </select>
+      <p class="hint" id="estimate"></p>
+    </div>
     <div class="row" style="margin-top:18px">
       <div>
         <label>Título (opcional)</label>
@@ -255,7 +264,7 @@ function saveCfg() {
   refreshCfgState();
 }
 const MODEL_DEFAULTS = {
-  angel: "anthropic/claude-opus-4.6",
+  angel: "anthropic/claude-4.5-sonnet",
   anthropic: "claude-opus-4-20250514",
   openai: "anthropic/claude-opus-4.5",
 };
@@ -324,6 +333,7 @@ async function handleFile(file) {
     $("fileMeta").textContent = text.length.toLocaleString("pt-BR") + " caracteres";
     $("drop").classList.add("hidden");
     $("fileChip").classList.remove("hidden");
+    updateEstimate();
   } catch (err) {
     console.error(err); showError("Erro ao ler o documento. Tente outro arquivo.");
     resetDrop();
@@ -333,6 +343,7 @@ function resetDrop() { $("drop").querySelector(".big").textContent = "⬆️"; }
 function clearFile() {
   docText = ""; docName = ""; $("fileInput").value = "";
   $("fileChip").classList.add("hidden"); $("drop").classList.remove("hidden"); resetDrop();
+  updateEstimate();
 }
 window.clearFile = clearFile;
 
@@ -365,10 +376,17 @@ const FORMAT_GUIDANCE = {
   series: "TARGET FORMAT: TELEVISION SERIES. First provide a SERIES OVERVIEW (logline, tone, target seasons) and a SEASON 1 EPISODE MAP (episode titles + one-line synopses). Then write the full PILOT EPISODE screenplay in detail, ending on a hook. Think in terms of serialized arcs, act breaks, and ensemble development.",
   both: "TARGET FORMAT: BOTH. Produce TWO clearly separated deliverables: PART A — FEATURE FILM adaptation (three-act, self-contained). PART B — TELEVISION SERIES adaptation (series overview + season 1 episode map + full pilot). Add a short note on which format best serves this story and why.",
 };
-function buildSystem(fmt, lang) {
+const LENGTH_GUIDANCE = {
+  "3500": "LENGTH: CONCISE. Deliver a tight, treatment-style screenplay that covers only the key scenes and turning points. Be economical — no filler, no repetition, no padding. Prioritize the most cinematic moments.",
+  "6000": "LENGTH: STANDARD. Cover the main story beats as full scenes. Be efficient and avoid padding.",
+  "9000": "LENGTH: DETAILED. Develop the scenes fully, but never pad — every line must earn its place.",
+};
+function buildSystem(fmt, lang, maxTokens) {
   return `You are an award-winning film and television DIRECTOR and professional SCREENWRITER. You receive raw source material and adapt it into a complete, production-ready screenplay, thinking and writing exactly as a director would on set.
 
 ${FORMAT_GUIDANCE[fmt]}
+
+${LENGTH_GUIDANCE[String(maxTokens)] || LENGTH_GUIDANCE["6000"]}
 
 WRITE THE OUTPUT IN THIS LANGUAGE: ${lang}.
 
@@ -403,18 +421,19 @@ async function generate() {
   $("stopBtn").classList.remove("hidden");
 
   controller = new AbortController();
+  const maxTokens = parseInt($("length").value, 10) || 6000;
   const lang = $("language").value.trim() || "the same language as the source document";
   const title = $("title").value.trim();
-  const system = buildSystem(format, lang);
+  const system = buildSystem(format, lang, maxTokens);
   const material = src.slice(0, 200000);
   const userPrompt = (title ? `The user suggests this working title: "${title}".\n\n` : "") +
     "Here is the source material to adapt into a screenplay:\n\n--- SOURCE MATERIAL START ---\n" + material + "\n--- SOURCE MATERIAL END ---";
 
   try {
     const provider = $("provider").value;
-    if (provider === "angel") await runAngel(key, system, userPrompt);
-    else if (provider === "anthropic") await streamAnthropic(key, system, userPrompt);
-    else await streamOpenAI(key, system, userPrompt);
+    if (provider === "angel") await runAngel(key, system, userPrompt, maxTokens);
+    else if (provider === "anthropic") await streamAnthropic(key, system, userPrompt, maxTokens);
+    else await streamOpenAI(key, system, userPrompt, maxTokens);
   } catch (err) {
     if (err.name !== "AbortError") { console.error(err); showError("Erro ao gerar: " + (err.message || err)); }
   } finally {
@@ -446,9 +465,9 @@ function extractText(out) {
 // is served by server.mjs (http://localhost) we call the same origin and the
 // local proxy forwards to Angel, avoiding CORS. Opened directly via file:// it
 // would hit CORS, so the local server is the supported path for Angel.
-async function runAngel(key, system, userPrompt) {
+async function runAngel(key, system, userPrompt, maxTokens) {
   const base = location.protocol.startsWith("http") ? "" : "https://ai-labs.angel-tools.io";
-  const model = $("model").value.trim() || "anthropic/claude-opus-4.6";
+  const model = $("model").value.trim() || "anthropic/claude-4.5-sonnet";
 
   const res = await fetch(base + "/api/v1/predictions?async=true", {
     method: "POST",
@@ -456,7 +475,7 @@ async function runAngel(key, system, userPrompt) {
     headers: { "content-type": "application/json", authorization: "Bearer " + key },
     body: JSON.stringify({
       model,
-      input: { prompt: userPrompt, system_prompt: system, max_tokens: 32000 },
+      input: { prompt: userPrompt, system_prompt: system, max_tokens: maxTokens },
     }),
   });
   if (!res.ok) throw new Error("API " + res.status + ": " + (await res.text()).slice(0, 300));
@@ -489,7 +508,7 @@ async function runAngel(key, system, userPrompt) {
   }
 }
 
-async function streamAnthropic(key, system, userPrompt) {
+async function streamAnthropic(key, system, userPrompt, maxTokens) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST", signal: controller.signal,
     headers: {
@@ -500,7 +519,7 @@ async function streamAnthropic(key, system, userPrompt) {
     },
     body: JSON.stringify({
       model: $("model").value.trim() || "claude-opus-4-20250514",
-      max_tokens: 16000, system, stream: true,
+      max_tokens: maxTokens, system, stream: true,
       messages: [{ role: "user", content: userPrompt }],
     }),
   });
@@ -514,7 +533,7 @@ async function streamAnthropic(key, system, userPrompt) {
   });
 }
 
-async function streamOpenAI(key, system, userPrompt) {
+async function streamOpenAI(key, system, userPrompt, maxTokens) {
   let base = $("baseUrl").value.trim().replace(/\/+$/, "");
   if (!base) throw new Error("Informe a Base URL do gateway na configuração.");
   const res = await fetch(base + "/chat/completions", {
@@ -522,7 +541,7 @@ async function streamOpenAI(key, system, userPrompt) {
     headers: { "content-type": "application/json", "authorization": "Bearer " + key },
     body: JSON.stringify({
       model: $("model").value.trim() || "anthropic/claude-opus-4.5",
-      stream: true,
+      stream: true, max_tokens: maxTokens,
       messages: [{ role: "system", content: system }, { role: "user", content: userPrompt }],
     }),
   });
@@ -698,8 +717,23 @@ async function exportDocx(els, base) {
   download(blob, base + ".docx");
 }
 
+//=================== Token estimate ===================//
+function currentSourceLen() {
+  return (mode === "upload" ? docText : $("pasteText").value).length;
+}
+function updateEstimate() {
+  const inTok = Math.ceil(currentSourceLen() / 4);
+  const outTok = parseInt($("length").value, 10) || 6000;
+  const el = $("estimate");
+  if (!inTok) { el.textContent = `Saída limitada a ~${(outTok/1000).toFixed(1)}k tokens. Você paga só pelos tokens realmente gerados.`; return; }
+  el.textContent = `Estimativa: ~${(inTok/1000).toFixed(1)}k tokens de entrada + até ~${(outTok/1000).toFixed(1)}k de saída. Você paga só pelo que for gerado.`;
+}
+$("length").addEventListener("change", updateEstimate);
+$("pasteText").addEventListener("input", updateEstimate);
+
 //=================== Init ===================//
 loadCfg();
+updateEstimate();
 </script>
 </body>
 </html>

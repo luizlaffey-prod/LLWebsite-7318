@@ -37,13 +37,15 @@ const FORMAT_GUIDANCE: Record<Format, string> = {
     Note in a short paragraph which format best serves this story and why.`,
 };
 
-const buildSystemPrompt = (format: Format, language: string) => dedent`
+const buildSystemPrompt = (format: Format, language: string, length: Length) => dedent`
   You are an award-winning film and television DIRECTOR and professional
   SCREENWRITER. You receive raw source material — a story, novel excerpt, report,
   notes, or any prose — and you adapt it into a complete, production-ready
   screenplay, thinking and writing exactly as a director would on set.
 
   ${FORMAT_GUIDANCE[format]}
+
+  ${LENGTH_GUIDANCE[length]}
 
   WRITE THE OUTPUT IN THIS LANGUAGE: ${language}.
 
@@ -76,11 +78,29 @@ const buildSystemPrompt = (format: Format, language: string) => dedent`
   strong creative choices.
 `;
 
+type Length = "short" | "medium" | "long";
+
+// Output-token budget per length. Capping this is the main lever for both cost
+// (you only pay for tokens generated) and for staying within model deadlines.
+const LENGTH_TOKENS: Record<Length, number> = {
+  short: 3500,
+  medium: 6000,
+  long: 9000,
+};
+
+const LENGTH_GUIDANCE: Record<Length, string> = {
+  short:
+    "LENGTH: CONCISE. Deliver a tight, treatment-style screenplay covering only the key scenes and turning points. Be economical — no filler, no repetition, no padding.",
+  medium: "LENGTH: STANDARD. Cover the main story beats as full scenes. Be efficient and avoid padding.",
+  long: "LENGTH: DETAILED. Develop the scenes fully, but never pad — every line must earn its place.",
+};
+
 interface AdaptRequest {
   text?: string;
   format?: Format;
   title?: string;
   language?: string;
+  length?: Length;
 }
 
 app.post("/adapt", async (c) => {
@@ -95,6 +115,7 @@ app.post("/adapt", async (c) => {
   const body = await c.req.json<AdaptRequest>();
   const sourceText = body.text?.trim();
   const format: Format = body.format ?? "film";
+  const length: Length = body.length && body.length in LENGTH_TOKENS ? body.length : "medium";
   const language = body.language?.trim() || "the same language as the source document";
 
   if (!sourceText) {
@@ -126,8 +147,9 @@ app.post("/adapt", async (c) => {
 
   const result = streamText({
     model: openai.chat("anthropic/claude-opus-4.5"),
-    system: buildSystemPrompt(format, language),
+    system: buildSystemPrompt(format, language, length),
     prompt: userPrompt,
+    maxOutputTokens: LENGTH_TOKENS[length],
   });
 
   return result.toTextStreamResponse();

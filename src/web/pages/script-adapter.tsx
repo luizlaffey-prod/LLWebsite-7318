@@ -60,6 +60,7 @@ function ScriptAdapterTool() {
   const [pastedText, setPastedText] = useState("");
   const [mode, setMode] = useState<"upload" | "paste">("upload");
   const [format, setFormat] = useState<Format>("film");
+  const [length, setLength] = useState<"short" | "medium" | "long">("medium");
   const [title, setTitle] = useState("");
   const [language, setLanguage] = useState("");
   const [parsing, setParsing] = useState(false);
@@ -140,6 +141,7 @@ function ScriptAdapterTool() {
         body: JSON.stringify({
           text: sourceText,
           format,
+          length,
           title: title.trim() || undefined,
           language: language.trim() || undefined,
         }),
@@ -361,6 +363,30 @@ function ScriptAdapterTool() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Length (token economy) */}
+            <div className="mt-6">
+              <label className="block text-white/60 text-xs uppercase tracking-wider mb-2">
+                {t("scriptAdapter.length.label")}
+              </label>
+              <div className="grid sm:grid-cols-3 gap-3">
+                {(["short", "medium", "long"] as const).map((value) => (
+                  <button
+                    key={value}
+                    onClick={() => setLength(value)}
+                    className={`text-left rounded-lg border px-4 py-3 transition-all ${
+                      length === value
+                        ? "border-[#d4a843] bg-[#d4a843]/10"
+                        : "border-white/10 bg-white/5 hover:border-white/25"
+                    }`}
+                  >
+                    <p className="text-white text-sm font-medium">{t(`scriptAdapter.length.${value}`)}</p>
+                    <p className="text-white/50 text-xs mt-0.5">{t(`scriptAdapter.length.${value}Desc`)}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-white/40 text-xs mt-2">{t("scriptAdapter.length.hint")}</p>
             </div>
 
             {/* Optional refinements */}
