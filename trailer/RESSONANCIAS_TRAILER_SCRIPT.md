@@ -1,66 +1,82 @@
 # RESSONÂNCIAS DO AMANHÃ
-## *Echoes of Tomorrow* — Official Teaser Trailer
-**Runtime:** ~2:00 · **Format:** 2.39:1 cinematic · **Source:** feature screenplay *Ressonâncias do Amanhã (V5)*
+## *Echoes of Tomorrow* — Official Teaser Trailer (v2, full-story cut)
+**Runtime:** ~2:00 · **Format:** 2.39:1 cinematic · **Source:** *Ressonâncias do Amanhã* by Marcelo Bighetti (complete story) · **Language:** English (all VO & dialogue)
 
-**Logline:** When a 2072 scientist's holographic messages — sent into the past as dreams — reach a trapped, secretly-literate woman in 1754 Brazil, the proof she buries for him to find three centuries later sets off a desperate race to undo a fate already written.
+**Logline:** In 2072, scientists learn to send messages into the past as dreams. When their signal reaches Ursulina de Jesus — a secretly literate woman in 1754 colonial São Paulo — she buries proof for them to find three centuries later. The discovery confirms their triumph. The history books reveal its cost: the dreams led her to the stake.
 
 ---
 
 ### Conventions
-- **TC** = approximate timecode. **VISUAL** = on-screen image (each = one storyboard frame). **AUDIO** = VO / dialogue / SFX / music. **CARD** = on-screen text.
-- Music build noted as **[CUE]**. Dialogue marked *verbatim* is lifted directly from the screenplay.
+**TC** = approx. timecode · **VISUAL** = on-screen image (each = one storyboard frame) · **AUDIO** = VO / dialogue / SFX / score · **CARD** = on-screen text · **[CUE]** = score beat · *verbatim* = translated directly from the source story.
 
 ---
 
-## ACT I — THE MYSTERY (0:00 – 0:40)
-> *Tone: intimate, candlelit, uncanny. No score yet — only diegetic sound.*
+## ACT I — THE DREAM (0:00 – 0:38)
+> *Intimate, candlelit, uncanny. Diegetic sound only.*
 
 | # | TC | VISUAL | AUDIO / CARD |
 |---|------|--------|--------------|
-| **1** | 0:00–0:05 | BLACK. A single point of candlelight ignites. EXTREME CLOSE — a goose-quill tip touches rough paper; ink blooms into the fibers. (1754) | SFX: quill scratch (contact-mic intimate), a house settling, distant cough. No music. |
-| **2** | 0:05–0:11 | URSULINA (late 20s), hunched at a tiny colonial desk, writing by one tallow flame — half her face in warm amber, half swallowed by shadow. Her lips move in silence. | URSULINA (V.O., whisper, *verbatim*): "He returned tonight. The man without a voice. His mouth moves but there is no sound." |
-| **3** | 0:11–0:18 | A featureless WHITE VOID — no walls, no windows, light from everywhere. A MAN IN WHITE (Marcos) stands, mouthing words. No sound comes out. He reaches toward us. | SFX: a wet, desperate mouthing — air, no voice. A sub-bass hum rises in the chest. |
-| **4** | 0:18–0:24 | Ursulina's eyes snap open in the dark. She sits up, breath caught, listening to nothing. | URSULINA (whisper, *verbatim*): "Who are you?" **[CUE: first low cello note]** |
-| **5** | 0:24–0:31 | SMASH CUT — sterile blue-white. A vast subterranean 2072 lab; the crystalline TRANSMISSION ARRAY rings a neural chair like a throne. | SFX hard cut: machine hush, holographic chime. |
-| **6** | 0:31–0:37 | MARCOS (42, grey-templed, exhausted) at a curved console, a glowing waveform pulsing with his voice. | MARCOS (*verbatim*): "Confirmation of reception remains, as always, impossible to verify. We are… sending letters into a house with no mailbox." |
-| **7** | 0:37–0:40 | LOW ANGLE from the floor: Ursulina kneels, prying up a warped floorboard, hiding a wrapped bundle — a Latin Bible, diary pages, a porcelain teacup. | SFX: floorboard whisper shut. Hum swells. |
-| **8** | 0:40 | Atmospheric backdrop — drifting theta-wave light over colonial dark. | **CARD:** *In 2072, they learned to send dreams into the past.* |
+| **1** | 0:00–0:06 | 1754. Candlelight. URSULINA writes in a hidden diary, glancing at the door, terrified of being heard. She slips the diary under a loose floorboard, over a Latin Bible. | URSULINA (V.O., whisper, *verbatim*): "For three nights I have dreamed of this man. I am terrified. My husband must never know." |
+| **2** | 0:06–0:14 | THE DREAM — an infinite white void. A MESSENGER in white (Marcos) speaks in strange, broken Portuguese, his mouth moving as if underwater. | MESSENGER (warped, distant): "Mar… cu… zi…" SFX: a sub-bass hum rises in the chest. |
+| **3** | 0:14–0:22 | SMASH to 2072. A vast lab. MARCOS watches holographic images convert into rippling brainwaves and fire into the past — the "message in a bottle." | MARCOS (V.O.): "We convert the image to a dream… and send it three hundred years back. The problem is knowing if anyone ever receives it." |
+| **4** | 0:22–0:30 | Cafeteria. MARCOS and VANESSA, trays untouched, a glowing map between them. Wry, warm — before the dark. | VANESSA (*verbatim*, teasing): "Whoever gets your message might even fall in love with you." → MARCOS: "This time-travel business is complicated." |
+| **5** | 0:30–0:38 | 1754. A sunlit colonial square. URSULINA confides in her only friend, ANTÔNIA, on a stone bench. | URSULINA (*verbatim*): "He says he is from the future. He wants me to bury something — so he can dig it up in his time." |
 
 ---
 
-## ACT II — THE WONDER (0:40 – 1:25)
-> *Tone: awe, obsession, the impossible made real. Score builds — viola da gamba over low strings.*
+## ACT II — THE PROOF (0:38 – 1:08)
+> *Awe and obsession. Score builds — viola da gamba over low strings.*
 
 | # | TC | VISUAL | AUDIO / CARD |
 |---|------|--------|--------------|
-| **9** | 0:40–0:48 | 2072 cafeteria, brutalist concrete under hanging hydroponic gardens; green dappled light. MARCOS & VANESSA across an untouched tray, a glowing map between them. | VANESSA (*verbatim*): "Cause precedes effect. We sent the signal. They received it." → MARCOS: "Or—" → VANESSA: "Or time isn't linear." |
-| **10** | 0:48–0:56 | 1754, a sun-dappled colonial square. Ursulina, shawl tight over a bruised arm, beside ANTONIA on a stone bench. | URSULINA (*verbatim*): "He says he's from the future… He asked me to bury something. Behind the church." → ANTONIA: "It sounds like a demon." |
-| **11** | 0:56–1:03 | NIGHT. Ursulina, alone behind the Church of Santo Antônio, digging with bare hands by the back wall, glancing over her shoulder. She lowers the teacup into the earth. | SFX: spade of fingers in wet soil, distant bell. Score rising. |
-| **12** | 1:03–1:10 | 2072, 1:30 AM. A cramped stone courtyard blazes under floodlights hazed by mist. Six archaeologists work a dig pit; Marcos & Vanessa grip the perimeter rope. | TECHNICIAN (*verbatim*): "Contact. Quadrant C-7. Twelve centimeters. Small object, dense." |
-| **13** | 1:10–1:14 | A portable ultrasound scanner glides over earth; ghostly blue-green subsurface layers bloom on the monitor; a dense shape resolves. | SFX: rhythmic scanner pulse. Crowd breath held. |
-| **14** | 1:14–1:20 | EXTREME CLOSE — a sable brush sweeps dark soil from white porcelain. Cobalt-blue chrysanthemums emerge, vivid after 318 years. | SFX: one beat of pure silence. |
-| **15** | 1:20–1:25 | Marcos on his knees at the pit's edge, a single tear cutting through the dust on his cheek. Vanessa's hand on the back of his neck. | VANESSA (*verbatim*): "She was real." **[CUE: viola da gamba theme blooms]** |
-| **16** | 1:25 | The teacup on a padded tray, floodlit, reverent. | **CARD:** *They proved she existed.* |
+| **6** | 0:38–0:44 | Antônia grips Ursulina's hands, alarmed, glancing around the square. | ANTÔNIA (*verbatim*): "That does not seem to be of God." **CARD:** *In 2072, they learned to send dreams into the past.* |
+| **7** | 0:44–0:51 | NIGHT, 1754. Alone, Ursulina walks to the Igreja de Santo Antônio and buries a small cloth-wrapped bundle behind the chapel. | SFX: bare hands in wet earth, a distant bell. **[CUE: theme enters]** |
+| **8** | 0:51–0:58 | 2072, 1:30 AM. Behind the same church (Praça do Patriarca), floodlights and mist; an ultrasound scanner sweeps the exposed soil. | TECHNICIAN: "Contact. A small object." Crowd breath held. |
+| **9** | 0:58–1:03 | EXTREME CLOSE — a brush sweeps soil from white porcelain: cobalt-blue chrysanthemums, intact after three centuries. The courtyard ERUPTS in cheers. | SFX: one beat of pure silence → cheers, whistles. |
+| **10** | 1:03–1:08 | Marcos's office. He reads the report and freezes on the name painted at the cup's base: **"Ursulina de Jesus."** | MARCOS (soft, *verbatim*): "So it was you, Ursulina." **CARD:** *They proved she existed.* |
 
 ---
 
-## ACT III — THE COST (1:25 – 2:00)
-> *Tone: dread, guilt, free-fall. Score fractures — rising harmonic, 30Hz drone, then silence.*
+## ACT III — THE TRUTH (1:08 – 1:32)
+> *Dread, guilt, free-fall. Score fractures — rising harmonic, 30Hz drone, then silence.*
 
 | # | TC | VISUAL | AUDIO / CARD |
 |---|------|--------|--------------|
-| **17** | 1:25–1:31 | Marcos's minimalist office, honey-gold dusk. A macro scan on his tablet: near the cup's base, a name surfaces in 18th-century calligraphy — **"Ursulina de Jesus."** | MARCOS (soft, *verbatim*): "Ursulina de Jesus… Who were you?" |
-| **18** | 1:31–1:38 | Marcos at the OmniWeb display, search fields blooming in the air. A colonial church registry, sepia ink. His face drains, lit only by cold screen-blue as the smart-glass dims. | SFX: haptic clicks → sub-bass drone → a thin string harmonic climbing past comfort. |
-| **19** | 1:38–1:43 | WIDE — Marcos hurls back from the desk, small in the pristine room, a scream tearing from his chest. The bonsai trembles. | MARCOS (*verbatim*): "No. No, no—" → "NO!" *(scream → ALL SOUND CUTS)* |
-| **20** | 1:43–1:48 | The cathedral-scale TRANSMISSION HALL — towering quantum relay stacks pulsing cold blue. Marcos sprints across the floor, lab coat billowing, tiny beneath the machine. | SFX returns: bone-deep 30Hz hum, ricocheting footsteps. |
-| **21** | 1:48–1:53 | TIGHT on Marcos at the console, recording into the lens, voice breaking — trying to warn his own past self. | MARCOS (*verbatim*, breaking): "Do not calibrate the signal for sustained integration. The dreams are not passive. They suffer. They break." |
-| **22** | 1:53–1:57 | The transmission progress bar climbs — 91%… 94% — then a sharp electronic SHRIEK; red text floods the air. | SYSTEM (V.O., *verbatim*): "Transmission failure. Audio payload was not delivered." **CARD (red holo):** *AUDIO NOT SENT.* |
-| **23** | 1:57–2:00 | INTERCUT — 1754 confessional: Ursulina behind the carved lattice, forehead pressed to the wood; a crude syncretic saint on a side altar, its painted eyes impossibly alive. Marcos, in the blue dark, lowers his hands in defeat. | URSULINA (V.O., whisper, *verbatim*): "It's like shouting into a well." *Score collapses to a single held tone.* |
-| **24** | 2:00 | BLACK. Title resolves in slow theta-wave light. | **MAIN TITLE:** **RESSONÂNCIAS DO AMANHÃ** / *ECHOES OF TOMORROW* — **TAGLINE:** *Some messages arrive too late.* |
+| **11** | 1:08–1:15 | Marcos searches the OmniWeb for her name. His eyes widen; the blood leaves his face. | MARCOS (*verbatim*): "It can't be. No. No, no, no…" |
+| **12** | 1:15–1:21 | Night. Marcos runs alone through the dark facility to the transmission hall and forces an emergency message to his past self, bypassing every protocol. | MARCOS (breaking): "Change the directives. The dreams are not harmless. Stop — before it's too late." |
+| **13** | 1:21–1:26 | The transmission readout resolves — then fails. | SYSTEM (V.O.): "Emergency message — 89.13% efficiency." **CARD (red holo):** *ERROR: AUDIO NOT SENT.* |
+| **14** | 1:26–1:32 | 1754. SEBASTIANO bursts in and catches Ursulina writing — sees the Bible. He strikes her, seizes the diary. | SEBASTIANO (*verbatim*): "You traitor. You think yourself better than me?" → "You are confined to this room." *(door slams, key turns)* |
+
+---
+
+## ACT IV — THE FIRE (1:32 – 1:54)
+> *The trailer's gut-punch. Score strips to a single viola line, then a war-drum pulse.*
+
+| # | TC | VISUAL | AUDIO / CARD |
+|---|------|--------|--------------|
+| **15** | 1:32–1:38 | 2072. Marcos and Vanessa, deep in the dusty church archive, find Ursulina's diary — then a heavy Parish Registry stamped *haeretici damnati*. | VANESSA (whisper): "Chief… she wrote about you." |
+| **16** | 1:38–1:43 | Marcos's finger stops on a date: **20 April 1754.** He reads. A moan tears out of him; Vanessa reads over his shoulder and breaks. | MARCOS (*verbatim*): "What have we done…" |
+| **17** | 1:43–1:48 | 1754. The Inquisition. A packed church. Ursulina on a low log stool — black eye, head bowed. INQUISITOR GERÔNIMO rises. | INQUISITOR: "We bring a charge of witchcraft against this woman." |
+| **18** | 1:48–1:51 | SEBASTIANO, before the crowd, raises her diary aloft as evidence. | SEBASTIANO (*verbatim*): "She has visions of messengers — demons in angelic form. It is all in her diary." |
+| **19** | 1:51–1:54 | ANTÔNIA testifies against her, eyes turned away. Ursulina lifts her head once — then lowers it forever. | ANTÔNIA (*verbatim*): "I witnessed her bury something… on a night of the full moon." |
+
+---
+
+## ACT V — THE APOLOGY (1:54 – 2:00)
+> *Elegy. Score resolves the theme, sung as if by the cup itself.*
+
+| # | TC | VISUAL | AUDIO / CARD |
+|---|------|--------|--------------|
+| **20** | 1:54–1:57 | 21 April 1754. The square, a jeering crowd, the stake. Flames climb. | CROWD (*verbatim*): "Burn, witch of hell! Burn!" |
+| **21** | 1:57–1:59 | 2072. The team, in reverent silence, transmits a formal apology into the past; the packet falls back through the years — 2071… 1756… 1755… | MARCOS (V.O., *verbatim*): "Thanks to your courage in answering us… please accept our plea for forgiveness." |
+| **22** | 1:59–2:00 | In the flames, Ursulina sees the white messengers again, leaving one last message: *…maybe one day… we can save you.* She closes her eyes. | URSULINA (whisper, *verbatim*): "Receive my soul, messenger." |
+| **23** | 2:00 | Hard cut to black. A single thread of theta-light meets a thread of candle-amber. | **MAIN TITLE:** **RESSONÂNCIAS DO AMANHÃ** / *ECHOES OF TOMORROW* |
+| **24** | 2:03 | Tagline resolves, then fades. | **CARD:** *They reached across time. She paid for it.* |
 
 ---
 
 ### Editorial notes
-- **Time-cut rhythm:** every era change is a hard SMASH CUT (1754 ↔ 2072) — the cutting *is* the premise. Match-cut candle flame (frame 1) to holographic glow (frame 5), and the buried cup (frame 7/11) to the unearthed cup (frame 14).
-- **Sound spine:** silence → single cello → viola da gamba theme (the cup "singing") → harmonic dread → the failure shriek → one held tone under the title. Marcos's whispered "No" (not his scream) is the emotional floor.
-- **Withhold the twist:** never show *what* Marcos reads. The horror is his face and the unsent warning — the audience leaves needing to know what fate was "already written."
+- **Two timelines, one cut:** every era change is a hard SMASH CUT. Match-cut the buried cup (7) to the unearthed cup (9); the dream-messenger (2) to the messenger-in-the-flames (22).
+- **The turn:** the trailer sells "wonder" through frame 10, then the name on the cup flips it to horror. Antônia is planted as the loyal friend (5–6) so her betrayal (19) lands.
+- **Withhold specifics:** never show the registry's exact words. The dread is Marcos's face and "AUDIO NOT SENT" — the audience must need to know what fate was already written.
+- **Sound spine:** silence → solo viola da gamba (the cup "singing") → harmonic dread → the failure shriek → war-drum under the fire → one held tone under the title.
