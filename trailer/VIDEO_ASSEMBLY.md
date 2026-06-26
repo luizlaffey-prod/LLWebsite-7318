@@ -42,7 +42,7 @@ ffmpeg -i picture.mp4 -i score.mp3 -i dialogue_stem.mp3 \
 | 12 | The emergency message | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_024508_7360e842-6674-4117-a93c-50bccbb27270.mp4 |
 | 13 | AUDIO NOT SENT | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_024512_b2d9cae0-9e27-4a57-88c0-c2c59dab44b3.mp4 |
 | 14 | Sebastiano's discovery | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_024515_0776d5c1-34ff-4f70-87f0-93b576020850.mp4 |
-| 15 | Finding the diary | ⏳ rendering |
+| 15 | Finding the diary | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_025140_03563abf-40bb-4a9a-921f-148bd6e42111.mp4 |
 | 16 | The registry date | ⏳ rendering |
 | 17 | The Inquisition | ⏳ rendering |
 | 18 | The accusation | ⏳ rendering |
