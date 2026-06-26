@@ -1,7 +1,15 @@
 # RESSONÂNCIAS DO AMANHÃ — Trailer Assembly Sheet (EDL)
 ### *Echoes of Tomorrow* · ~2:00 · 2.39:1 (clips render 1344×576, 21:9) · English
 
-This sheet is everything needed to cut the finished trailer in any NLE (Premiere, Resolve, CapCut, or `ffmpeg`). **All assets are generated and hosted** — video clips on Higgsfield (Seedance 2.0, native ambient audio baked in), music/VO/SFX on the Angel/ElevenLabs gateway. The sandbox can't download these to mux a single MP4, so this is the build recipe.
+This sheet is everything needed to cut the finished trailer in any NLE (Premiere, Resolve, CapCut, or `ffmpeg`). **All assets are generated and hosted** — video clips on Higgsfield (Seedance 2.0, native ambient audio baked in), music/VO/SFX on the Angel/ElevenLabs gateway.
+
+## ✅ Build status (CDN liberada)
+
+The Higgsfield/CloudFront CDN is now reachable from this environment, so the **picture cut has been assembled and committed**: [`picture_cut.mp4`](./picture_cut.mp4).
+
+- **What it is:** all 24 clips downloaded from the CDN and concatenated in story order (§2), 1470×630 (21:9), h264, ~121.7s (≈2:01). Carries each clip's native ambient audio (AAC 48 kHz stereo; silent audio padded onto the two title clips 23/24 which render mute).
+- **How it was built:** clips fetched in order, audio normalized to a common AAC 48 kHz stereo track, then `ffmpeg -f concat -c copy`. See §1 for the recipe.
+- **What's still missing — the music/VO/SFX mix.** The audio host `angel-replicate-media.angel-tools.io` (§3) is **still blocked by this environment's egress policy** (proxy returns 403). To finish the full mix here, that host needs to be allow-listed too; otherwise pull the audio from the links in §3 and lay it over `picture_cut.mp4` in any NLE per the timeline in §4.
 
 > **Link expiry:** audio URLs (`angel-tools.io`) are signed for **30 days**. Video URLs (`cloudfront.net`) are your Higgsfield workspace assets — also viewable in the Higgsfield app under this workspace. Re-pull any expired link from its source.
 
