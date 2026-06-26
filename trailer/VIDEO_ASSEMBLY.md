@@ -47,11 +47,11 @@ ffmpeg -i picture.mp4 -i score.mp3 -i dialogue_stem.mp3 \
 | 17 | The Inquisition | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_025146_e35a0649-f145-4e04-9cbd-e47b0444acda.mp4 |
 | 18 | The accusation | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_025211_adb83e56-d3ef-462c-a73c-23791ab4589c.mp4 |
 | 19 | The betrayal | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_025638_b6436ad3-98a0-4897-8321-fe2889c925bf.mp4 |
-| 20 | The stake | ⏳ rendering |
-| 21 | The apology transmission | ⏳ rendering |
+| 20 | The stake | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_030108_6977dac9-bc00-46f0-8873-85826f30a8fa.mp4 |
+| 21 | The apology transmission | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_030111_321db300-1df2-4944-8269-d46e481c6d43.mp4 |
 | 22 | The vision in the flames | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_030113_f46bbcbf-5c3f-49e7-be30-2838a3745d00.mp4 |
-| 23 | Main title | ⏳ rendering |
-| 24 | Tagline | ⏳ rendering |
+| 23 | Main title | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_030800_e500e159-9ea8-462e-82f6-c193f668a97f.mp4 |
+| 24 | Tagline | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_030804_1eaa2424-6a57-47c5-b76d-4db90450f6af.mp4 |
 
 ---
 
