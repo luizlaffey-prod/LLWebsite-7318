@@ -1,150 +1,159 @@
-# RESSONÂNCIAS DO AMANHÃ — Ultra-Realistic Storyboard
-### *Echoes of Tomorrow* · 2-minute teaser trailer · 24 frames · 2.39:1 cinematic
+# RESSONÂNCIAS DO AMANHÃ — Ultra-Realistic Storyboard (v2, full-story cut)
+### *Echoes of Tomorrow* · 2-minute teaser · 24 distinct frames · 2.39:1 cinematic
 
-Frames generated with **Higgsfield** — `soul_cinematic` (Soul Cinema, 2K, 2528×1088) for photographic shots and `nano_banana_pro` (3168×1344) for the text/title cards. Character continuity across shots is anchored by two reference "hero" frames: **Frame 02 (Ursulina)** and **Frame 06 (Marcos)**, reused as identity references in every shot where each appears.
+Rebuilt from the **complete** source story (Marcelo Bighetti) — the full arc through the Inquisition trial, the betrayal, the burning, and the apology transmission. Every frame is a **distinct** beat (no repeated scenes), mapped 1:1 to `RESSONANCIAS_TRAILER_SCRIPT.md`.
 
-> **Note on files:** this sandbox's network policy blocks downloading from Higgsfield's CDN, so the PNGs are linked (not committed as binaries). Open any link in your browser, or view them in your Higgsfield workspace. Each link is the full-resolution image.
+**Consistency method:** all frames rendered with **Nano Banana Pro** (Higgsfield) using fixed per-character **reference portraits**, so faces stay consistent across shots:
+- **Ursulina** ▸ ref `ef7ac824` · **Marcos** ▸ ref `ed86c412` · **Vanessa** ▸ ref `4d6b948b` · **Antônia** ▸ ref `9b9a76b9` · **Sebastiano** ▸ ref `0df127ba`. Two-character frames pass both portraits.
 
-This storyboard maps 1:1 to `RESSONANCIAS_TRAILER_SCRIPT.md`.
-
----
-
-## ACT I — THE MYSTERY (0:00 – 0:40)
-
-### Frame 01 · 0:00–0:05 · 1754 · EXTREME CLOSE-UP (macro)
-Quill tip touches paper; a bead of iron-gall ink blooms in candlelight. We enter through the act of writing.
-![Frame 01](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015835_5a8ab66b-6ff7-44f7-a6db-05953fc2ad47.png)
-
-### Frame 02 · 0:05–0:11 · 1754 · MEDIUM CLOSE-UP — *Ursulina hero / reference*
-Ursulina writing by a single tallow flame, half her face in amber, half in absolute shadow.
-![Frame 02](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015332_ef7ac824-edf2-49f1-be7d-4fed4fc8aa7f.png)
-
-### Frame 03 · 0:11–0:18 · DREAM · FULL SHOT
-The "voiceless man" (Marcos) in an infinite white void, mouth moving with no sound, reaching toward us.
-![Frame 03](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015900_72dfbf53-915f-4b84-9e39-ee2a3af5a4ba.png)
-
-### Frame 04 · 0:18–0:24 · 1754 · CLOSE-UP
-Ursulina awake in the dark — *"Who are you?"* — longing, not fear.
-![Frame 04](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015903_189a05ee-b5e8-44fb-83b7-3549da34c9e5.png)
-
-### Frame 05 · 0:24–0:31 · 2072 · WIDE (establishing) — *SMASH CUT*
-The subterranean Project Chronos lab; the crystalline transmission array on its raised platform.
-![Frame 05](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015905_0c779f87-e140-44fa-9a2c-808cafac20b5.png)
-
-### Frame 06 · 0:31–0:37 · 2072 · MEDIUM — *Marcos hero / reference*
-Marcos at the console, lit by the holographic waveform: *"…sending letters into a house with no mailbox."*
-![Frame 06](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015345_ed86c412-1f32-4e61-a844-d7cefe803d4f.png)
-
-### Frame 07 · 0:37–0:40 · 1754 · LOW ANGLE (floor level)
-Ursulina hides the bundle — Bible, diary pages, teacup — beneath a warped floorboard.
-![Frame 07](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015907_e1a1e61b-385f-477e-8c14-dae769511a3a.png)
-
-### Frame 08 · 0:40 · TEXT CARD #1
-*"In 2072, they learned to send dreams into the past."*
-![Frame 08](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015908_5eec4162-d679-4450-8b1a-c8535d4ec4b0.png)
+> **Files:** this sandbox's network policy blocks the Higgsfield CDN, so frames are linked (full-resolution PNGs), not committed as binaries. Open links in your browser or view them in your Higgsfield workspace.
 
 ---
 
-## ACT II — THE WONDER (0:40 – 1:25)
+## ACT I — THE DREAM
 
-### Frame 09 · 0:40–0:48 · 2072 · TWO-SHOT
-Marcos & Vanessa debate the paradox under the cafeteria's green hydroponic light: *"Or time isn't linear."*
-![Frame 09](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015911_1871bcee-4668-47af-b5ba-af16f10a74b5.png)
+### Frame 01 · 0:00 · 1754 · CU — *Ursulina*
+Ursulina writes in her hidden diary by candlelight, glancing at the door; the Latin Bible and loose floorboard beside her. *"For three nights I have dreamed of this man…"*
+![01](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021117_f984cf7e-936e-429d-ace0-d342198f9746.png)
 
-### Frame 10 · 0:48–0:56 · 1754 · TWO-SHOT
-Ursulina (bruised arm) confides in Antonia on the square's stone bench: *"He says he's from the future."*
-![Frame 10](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015929_dde85499-71e9-4b5d-8f6e-e661905a811d.png)
+### Frame 02 · 0:06 · DREAM — *Marcos as the messenger*
+The messenger in an infinite white void, mouth moving in silence, reaching out. *"Mar… cu… zi…"*
+![02](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021121_46553a19-f539-4478-98bf-d2b37664c468.png)
 
-### Frame 11 · 0:56–1:03 · 1754 · MEDIUM (night)
-Ursulina buries the chrysanthemum teacup behind the church, glancing over her shoulder.
-![Frame 11](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015932_03cbaa5e-71d4-4a9f-b972-354817dc1178.png)
+### Frame 03 · 0:14 · 2072 · MS — *Marcos*
+Smash to the lab: holographic images convert into brainwaves and fire into the past. *"…sending letters into a house with no mailbox."*
+![03](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021124_e90dd3de-2116-4814-8670-f5798b84bc47.png)
 
-### Frame 12 · 1:03–1:10 · 2072 · WIDE (night dig)
-The floodlit, mist-hazed courtyard excavation — six archaeologists, the perimeter rope.
-![Frame 12](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015934_2b681931-8759-4f6c-aa8a-a7b38f0a103a.png)
+### Frame 04 · 0:22 · 2072 · TWO-SHOT — *Marcos + Vanessa*
+Cafeteria banter before the dark. *"Whoever gets your message might even fall in love with you."*
+![04](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021811_6f0ae294-225d-4613-a32e-edbdbc5279a8.png)
 
-### Frame 13 · 1:10–1:14 · 2072 · INSERT (monitor)
-The ultrasound scanner resolves a dense object: *"Contact. Quadrant C-7."*
-![Frame 13](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015936_32e12b4e-19b7-405e-ab98-dfaba6a89d30.png)
+### Frame 05 · 0:30 · 1754 · TWO-SHOT — *Ursulina + Antônia*
+Ursulina confides in her only friend on the square bench. *"He says he is from the future."*
+![05](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021128_faf305d5-734e-4198-b001-044552719b10.png)
 
-### Frame 14 · 1:14–1:20 · 2072 · EXTREME CLOSE-UP (macro)
-The brush reveals the teacup — cobalt chrysanthemums vivid after 318 years.
-![Frame 14](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015938_59deaf7e-cd43-4613-bb6f-0be935951c64.png)
-
-### Frame 15 · 1:20–1:25 · 2072 · LOW ANGLE (from pit)
-Marcos kneeling, a tear through the dust; Vanessa's hand on his neck: *"She was real."*
-![Frame 15](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015942_2b4faa67-c2f1-4af0-82ef-751248193a7f.png)
-
-### Frame 16 · 1:25 · TEXT CARD #2
-*"They proved she existed."*
-![Frame 16](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_015944_553d1243-2286-4fef-8e2f-51258d238a2b.png)
+### Frame 06 · 0:38 · 1754 · TWO-SHOT — *Ursulina + Antônia*
+Antônia grips her hands, alarmed. *"That does not seem to be of God."* — **CARD:** *In 2072, they learned to send dreams into the past.*
+![06](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021131_cd86b091-ddec-4ebd-958e-428a08cc886e.png)
 
 ---
 
-## ACT III — THE COST (1:25 – 2:00)
+## ACT II — THE PROOF
 
-### Frame 17 · 1:25–1:31 · 2072 · MEDIUM CLOSE-UP
-Marcos reads the report; the name on the cup's base: **"Ursulina de Jesus."** *"Who were you?"*
-![Frame 17](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_020001_0ea4080e-d1ae-473b-a91e-c7f582c2cf98.png)
+### Frame 07 · 0:44 · 1754 · MS — *Ursulina*
+Night. Alone behind the Igreja de Santo Antônio, she buries the cloth-wrapped bundle.
+![07](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021133_05ad349b-24d8-40d2-91fc-5a02faf760f2.png)
 
-### Frame 18 · 1:31–1:38 · 2072 · CLOSE-UP (blue-lit)
-Marcos at the OmniWeb, horror dawning as the registry loads; the smart-glass dims around him.
-![Frame 18](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_020003_3ebd04b6-4bc2-403b-a392-28d51feb689e.png)
+### Frame 08 · 0:51 · 2072 · WS — *night dig*
+Floodlit, misty excavation behind the same church (Praça do Patriarca); ultrasound sweeps the soil. *"Contact. A small object."*
+![08](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021135_8d182dc0-7c19-4d54-85dc-869c76ddfacf.png)
 
-### Frame 19 · 1:38–1:43 · 2072 · WIDE
-Marcos thrown back from the desk, screaming — small in his pristine office. *"NO!"*
-![Frame 19](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_020006_c08677ab-6e83-41ac-8630-4dcdbd0fc9e4.png)
+### Frame 09 · 0:58 · 2072 · XCU macro — *the teacup*
+A brush reveals the cobalt-chrysanthemum teacup, intact after three centuries. The courtyard erupts.
+![09](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021137_0fb440b8-720a-4a17-a307-ca06d30045e0.png)
 
-### Frame 20 · 1:43–1:48 · 2072 · WIDE CRANE
-Marcos sprints into the cathedral-scale Transmission Hall, dwarfed by the blue relay stacks.
-![Frame 20](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_020009_59956374-a40f-454d-8b9c-4c2549da47da.png)
-
-### Frame 21 · 1:48–1:53 · 2072 · TIGHT CLOSE-UP
-Marcos records the desperate warning to his past self, voice breaking: *"The dreams are not passive."*
-![Frame 21](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_020012_5ebab7dc-9340-43d9-a8e5-c5b44455a6e1.png)
-
-### Frame 22 · 1:53–1:57 · 2072 · INSERT (interface)
-The progress bar freezes at **94%** → red holo: **AUDIO NOT SENT.**
-![Frame 22](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_020015_dd55b8a5-dea7-4f86-a16c-c3f8a31ee0a7.png)
-
-### Frame 23 · 1:57–2:00 · 1754 · CLOSE-UP (intercut)
-Ursulina in the confessional, forehead to the lattice: *"It's like shouting into a well."*
-![Frame 23](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_020020_40d703b7-b38a-4362-a052-1a85843b5d82.png)
-
-### Frame 24 · 2:00 · MAIN TITLE CARD
-**RESSONÂNCIAS DO AMANHÃ** / *ECHOES OF TOMORROW* — *"Some messages arrive too late."*
-![Frame 24](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_020023_5962862f-d177-43f8-9a84-6659ddd9ca57.png)
+### Frame 10 · 1:03 · 2072 · MCU — *Marcos*
+He freezes on the name painted at the cup's base: **"Ursulina de Jesus."** *"So it was you, Ursulina."* — **CARD:** *They proved she existed.*
+![10](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021231_b75c2512-f652-4c00-859b-60c9410265ad.png)
 
 ---
 
-## Frame index (quick reference)
+## ACT III — THE TRUTH
 
-| # | TC | Era | Shot | Beat |
-|---|------|------|------|------|
-| 01 | 0:00 | 1754 | XCU macro | Quill on paper |
-| 02 | 0:05 | 1754 | MCU | Ursulina writing *(hero ref)* |
-| 03 | 0:11 | Dream | FS | Voiceless man |
-| 04 | 0:18 | 1754 | CU | "Who are you?" |
-| 05 | 0:24 | 2072 | WS | Lab / array *(smash cut)* |
-| 06 | 0:31 | 2072 | MS | Marcos / waveform *(hero ref)* |
-| 07 | 0:37 | 1754 | Low angle | Hiding the bundle |
-| 08 | 0:40 | — | Card | "…send dreams into the past." |
-| 09 | 0:40 | 2072 | 2-shot | Paradox debate |
-| 10 | 0:48 | 1754 | 2-shot | Confiding in Antonia |
-| 11 | 0:56 | 1754 | MS | Burying the teacup |
-| 12 | 1:03 | 2072 | WS | Night excavation |
-| 13 | 1:10 | 2072 | Insert | Scanner "Contact" |
-| 14 | 1:14 | 2072 | XCU macro | Teacup reveal |
-| 15 | 1:20 | 2072 | Low angle | "She was real." |
-| 16 | 1:25 | — | Card | "They proved she existed." |
-| 17 | 1:25 | 2072 | MCU | Name on the cup |
-| 18 | 1:31 | 2072 | CU | OmniWeb horror |
-| 19 | 1:38 | 2072 | WS | The scream |
-| 20 | 1:43 | 2072 | Wide crane | Run to Transmission Hall |
-| 21 | 1:48 | 2072 | Tight CU | Recording the warning |
-| 22 | 1:53 | 2072 | Insert | "AUDIO NOT SENT" |
-| 23 | 1:57 | 1754 | CU | Confessional intercut |
-| 24 | 2:00 | — | Title | Main title + tagline |
+### Frame 11 · 1:08 · 2072 · CU — *Marcos*
+He searches the OmniWeb; horror dawns. *"It can't be. No. No, no, no…"*
+![11](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021234_d527148c-0b81-4b38-a698-d5f5d7f2352a.png)
+
+### Frame 12 · 1:15 · 2072 · MS — *Marcos*
+He forces an emergency message to his past self in the transmission hall. *"The dreams are not harmless. Stop — before it's too late."*
+![12](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021237_0c56abda-74e4-4a02-b988-2e622f5d63d5.png)
+
+### Frame 13 · 1:21 · 2072 · INSERT — *the failure*
+**89.13% efficiency** — then red holo: **ERROR: AUDIO NOT SENT.**
+![13](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021241_7dd0b8ae-7b8c-4df1-8d5f-aa53edc2952c.png)
+
+### Frame 14 · 1:26 · 1754 · MS — *Sebastiano + Ursulina*
+Sebastiano bursts in, catches her writing, sees the Bible. *"You traitor. You think yourself better than me?"*
+![14](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021243_a9775e4d-da7d-411f-81ab-6c3ac3368869.png)
 
 ---
-*Engine: Higgsfield · soul_cinematic 2K + nano_banana_pro 2K · 21:9 (2.39:1) · 24 frames.*
+
+## ACT IV — THE FIRE
+
+### Frame 15 · 1:32 · 2072 · TWO-SHOT — *Marcos + Vanessa*
+In the dusty church archive, they find Ursulina's diary. *"Chief… she wrote about you."*
+![15](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021813_b19ee1a8-cbb6-4f6b-973a-a7d94331d10d.png)
+
+### Frame 16 · 1:38 · 2072 · TWO-SHOT — *Marcos + Vanessa*
+Marcos's finger stops on a date in the Parish Registry — **20 April 1754** — and both break. *"What have we done…"*
+![16](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021543_1c82da20-2b85-40dc-a079-9bccddbc319d.png)
+
+### Frame 17 · 1:43 · 1754 · WS — *Ursulina + tribunal*
+The Inquisition. A packed church; Ursulina on a low log stool, black eye, head bowed; the inquisitor rises.
+![17](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021245_81a9a02a-1d3d-43d8-9c56-008a01bb5239.png)
+
+### Frame 18 · 1:48 · 1754 · MS — *Sebastiano*
+Before the crowd, Sebastiano raises her diary aloft. *"She has visions of messengers — demons in angelic form."*
+![18](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021248_b64fb940-b069-436d-92cb-f7096baa48ad.png)
+
+### Frame 19 · 1:51 · 1754 · TWO-SHOT — *Antônia + Ursulina*
+Her only friend betrays her, eyes turned away. *"I witnessed her bury something… on a night of the full moon."*
+![19](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021310_0fa37db3-7933-45fe-8fe8-6dd31bb20402.png)
+
+---
+
+## ACT V — THE APOLOGY
+
+### Frame 20 · 1:54 · 1754 · WS — *Ursulina at the stake*
+The square, a jeering crowd, the flames climbing. *"Burn, witch of hell! Burn!"*
+![20](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021312_d43f41d0-343a-4b1f-bc5a-bdfc17048623.png)
+
+### Frame 21 · 1:57 · 2072 · WS — *Marcos + team*
+In reverent silence, the team transmits the apology into the past; the packet falls back — 2071… 1755. *"…please accept our plea for forgiveness."*
+![21](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021316_5930365c-1448-4a9f-a70b-77fb482f1fdb.png)
+
+### Frame 22 · 1:59 · 1754 · CU — *Ursulina + the vision*
+In the flames she sees the white messengers again: *…maybe one day… we can save you.* — *"Receive my soul, messenger."*
+![22](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021339_275d3d16-f550-4bec-9cdc-35122b65edd3.png)
+
+### Frame 23 · 2:00 · MAIN TITLE
+**RESSONÂNCIAS DO AMANHÃ** / *ECHOES OF TOMORROW*
+![23](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021342_60bd860c-bab9-46d8-8238-bf85b30f07de.png)
+
+### Frame 24 · 2:03 · TAGLINE CARD
+*They reached across time. She paid for it.*
+![24](https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_021351_1fef1a53-37b4-40d9-afd5-fc55f79fb4cc.png)
+
+---
+
+## Frame index
+
+| # | TC | Era | Beat | Characters |
+|---|------|------|------|------------|
+| 01 | 0:00 | 1754 | Writing the secret diary | Ursulina |
+| 02 | 0:06 | Dream | The voiceless messenger | Marcos |
+| 03 | 0:14 | 2072 | Sending dreams to the past | Marcos |
+| 04 | 0:22 | 2072 | Cafeteria banter | Marcos, Vanessa |
+| 05 | 0:30 | 1754 | Confiding in Antônia | Ursulina, Antônia |
+| 06 | 0:38 | 1754 | "Not of God" | Ursulina, Antônia |
+| 07 | 0:44 | 1754 | Burying the bundle | Ursulina |
+| 08 | 0:51 | 2072 | Night excavation | — |
+| 09 | 0:58 | 2072 | The teacup revealed | — |
+| 10 | 1:03 | 2072 | The name on the cup | Marcos |
+| 11 | 1:08 | 2072 | OmniWeb horror | Marcos |
+| 12 | 1:15 | 2072 | The emergency message | Marcos |
+| 13 | 1:21 | 2072 | AUDIO NOT SENT | — |
+| 14 | 1:26 | 1754 | Sebastiano's discovery | Sebastiano, Ursulina |
+| 15 | 1:32 | 2072 | Finding the diary | Marcos, Vanessa |
+| 16 | 1:38 | 2072 | The registry date | Marcos, Vanessa |
+| 17 | 1:43 | 1754 | The Inquisition | Ursulina |
+| 18 | 1:48 | 1754 | The accusation | Sebastiano |
+| 19 | 1:51 | 1754 | The betrayal | Antônia, Ursulina |
+| 20 | 1:54 | 1754 | The stake | Ursulina |
+| 21 | 1:57 | 2072 | The apology transmission | Marcos, team |
+| 22 | 1:59 | 1754 | The vision in the flames | Ursulina, Marcos |
+| 23 | 2:00 | — | Main title | — |
+| 24 | 2:03 | — | Tagline | — |
+
+---
+*Engine: Higgsfield · Nano Banana Pro 2K · 21:9 (2.39:1) · 24 frames · per-character reference portraits for consistency.*
