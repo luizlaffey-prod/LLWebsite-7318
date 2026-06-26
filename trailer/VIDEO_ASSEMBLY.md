@@ -46,10 +46,10 @@ ffmpeg -i picture.mp4 -i score.mp3 -i dialogue_stem.mp3 \
 | 16 | The registry date | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_025143_53b0d5f4-b99f-4f93-9c61-bbef7e8b8c27.mp4 |
 | 17 | The Inquisition | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_025146_e35a0649-f145-4e04-9cbd-e47b0444acda.mp4 |
 | 18 | The accusation | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_025211_adb83e56-d3ef-462c-a73c-23791ab4589c.mp4 |
-| 19 | The betrayal | ⏳ rendering |
+| 19 | The betrayal | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_025638_b6436ad3-98a0-4897-8321-fe2889c925bf.mp4 |
 | 20 | The stake | ⏳ rendering |
 | 21 | The apology transmission | ⏳ rendering |
-| 22 | The vision in the flames | ⏳ rendering |
+| 22 | The vision in the flames | https://d8j0ntlcm91z4.cloudfront.net/user_2zjmzLjFqwqOrZnBEfhFIe0matI/hf_20260626_030113_f46bbcbf-5c3f-49e7-be30-2838a3745d00.mp4 |
 | 23 | Main title | ⏳ rendering |
 | 24 | Tagline | ⏳ rendering |
 
