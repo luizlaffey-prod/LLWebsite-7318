@@ -52,7 +52,15 @@ export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoi
     try {
       const res = await changePlan(tier, locale);
       if ('error' in res) {
-        setError(t('errorChangeFailed'));
+        // Surface the concrete reason (missing env var, Stripe upstream
+        // error) instead of a generic message — the reason string is
+        // config-level, never a secret. Falls back to the localized
+        // generic copy for the plain 'unauthorized' case.
+        setError(
+          res.error && res.error !== 'unauthorized'
+            ? `${t('errorChangeFailed')} (${res.error})`
+            : t('errorChangeFailed')
+        );
         setPendingTier(null);
         return;
       }
