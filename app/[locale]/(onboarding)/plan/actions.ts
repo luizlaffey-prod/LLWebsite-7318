@@ -48,6 +48,7 @@ export async function startTrialCheckout(input: {
 
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: 'subscription',
+        allow_promotion_codes: true,
     customer: customerId,
     payment_method_collection: 'always',
     line_items: [{ price: stripePriceForTier(input.tier), quantity: 1 }],
