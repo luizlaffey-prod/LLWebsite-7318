@@ -77,6 +77,7 @@ export async function changePlan(
 
       const checkout = await stripe.checkout.sessions.create({
         mode: 'subscription',
+        allow_promotion_codes: true,
         customer: customer.id,
         payment_method_collection: 'always',
         line_items: [{ price: priceId, quantity: 1 }],
@@ -104,6 +105,7 @@ export async function changePlan(
       // No live subscription — run a fresh checkout so they subscribe.
       const checkout = await stripe.checkout.sessions.create({
         mode: 'subscription',
+        allow_promotion_codes: true,
         customer: u.stripeCustomerId,
         payment_method_collection: 'always',
         line_items: [{ price: priceId, quantity: 1 }],
