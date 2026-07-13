@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/lib/db/client';
 import * as schema from '@/lib/db/schema';
+import { TRIAL_DAYS } from '@/lib/billing/plans';
 
 /**
  * Returns whether Google OAuth is plumbed in. Used by the auth UI to
@@ -53,11 +54,13 @@ export const auth = betterAuth({
       });
     },
   },
-  // Stamp every new user with a 7-day trial window. trialEndsAt is
+  // Stamp every new user with a trial window. trialEndsAt is
   // nullable in the schema and nothing else was setting it on signup,
   // so dashboards rendered "0 days left" the moment an account was
   // created. The hook runs inside the same transaction as the user
-  // insert so it can't leave half-baked rows.
+  // insert so it can't leave half-baked rows. Window length comes
+  // from TRIAL_DAYS (14) — was hardcoded to 7 which no longer matched
+  // the plans config after the trial was extended.
   databaseHooks: {
     user: {
       create: {
@@ -66,7 +69,7 @@ export const auth = betterAuth({
             ...data,
             trialEndsAt:
               (data.trialEndsAt as Date | null | undefined) ??
-              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000),
           },
         }),
       },

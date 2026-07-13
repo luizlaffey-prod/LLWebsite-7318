@@ -86,6 +86,12 @@ async function upsertSubscription(sub: Stripe.Subscription) {
     });
   }
 
+  // Persist the Stripe customer id as a safety net — the checkout
+  // flow already saves it, but recording it here too keeps the row
+  // consistent even if a subscription was created out-of-band.
+  const customerId =
+    typeof sub.customer === 'string' ? sub.customer : sub.customer?.id ?? null;
+
   await db
     .update(user)
     .set({
@@ -93,6 +99,7 @@ async function upsertSubscription(sub: Stripe.Subscription) {
       trialEndsAt: trialEnd,
       downgradesTo: status === 'trialing' ? TRIAL_DOWNGRADE_TO : null,
       subscriptionStatus: status,
+      ...(customerId ? { stripeCustomerId: customerId } : {}),
       updatedAt: new Date(),
     })
     .where(eq(user.id, stripeUserId));

@@ -40,8 +40,8 @@
   "landing": {
     "headline": "Boletins de notícias com voz IA, prontos para o Ar.",
     "subheadline": "Busque notícias globais, gere roteiros com emoção e entregue áudio profissional em minutos.",
-    "cta": "Começar trial grátis de 7 dias",
-    "ctaSub": "Cartão obrigatório, sem cobrança durante o trial. Converte para Starter automaticamente.",
+    "cta": "Começar trial grátis de 14 dias",
+    "ctaSub": "Sem cartão. Explore todos os recursos Pro grátis por 14 dias.",
     "benefits": {
       "global": {
         "title": "Busca Global",
@@ -57,7 +57,7 @@
       }
     },
     "plansTitle": "Planos",
-    "plansSubtitle": "Comece com 7 dias de Pro grátis. Cancele quando quiser.",
+    "plansSubtitle": "Comece com 14 dias de Pro grátis — sem cartão. Cancele quando quiser.",
     "footer": {
       "copyright": "AURA — Áudio de Rádio Urbano Automatizado",
       "terms": "Termos",
@@ -99,7 +99,7 @@
       "feature_support": "E-mail prioritário"
     },
     "perMonth": "/mês",
-    "selectCta": "Começar trial de 7 dias",
+    "selectCta": "Começar trial de 14 dias",
     "currentBadge": "Plano atual",
     "popularBadge": "Mais popular"
   },
@@ -107,7 +107,7 @@
     "loginTitle": "Bem-vindo de volta",
     "loginSubtitle": "Entre na sua rádio AURA.",
     "signupTitle": "Crie a conta da sua rádio",
-    "signupSubtitle": "Comece seu trial Pro de 7 dias em menos de 1 minuto.",
+    "signupSubtitle": "Comece seu trial Pro de 14 dias em menos de 1 minuto — sem cartão.",
     "email": "Email",
     "emailPlaceholder": "voce@radio.fm",
     "password": "Senha",
@@ -150,7 +150,7 @@
   },
   "onboarding": {
     "planTitle": "Escolha seu plano",
-    "planSubtitle": "Todos os planos começam com 7 dias de trial Pro. Você só será cobrado depois.",
+    "planSubtitle": "Todos os planos começam com 14 dias de trial Pro — sem cartão. Você só paga se assinar depois do trial.",
     "continue": "Começar trial",
     "skipForNow": "Decido depois"
   },
@@ -631,7 +631,7 @@
     "badge": "Early Access",
     "title": "Obrigado pelo interesse",
     "subtitle": "Garanta sua vaga nos planos pagos da AURA — vamos te avisar antes do lançamento com sua oferta prioritária.",
-    "body": "Conta um pouco sobre sua emissora que a gente entra em contato. Seu trial de 7 dias continua rodando enquanto isso.",
+    "body": "Conta um pouco sobre sua emissora que a gente entra em contato. Seu trial de 14 dias continua rodando enquanto isso.",
     "field": {
       "plan": "Plano de interesse",
       "name": "Seu nome",
