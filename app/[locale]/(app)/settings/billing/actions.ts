@@ -122,10 +122,26 @@ export async function changePlan(
     const itemId = active.items.data[0]?.id;
     if (!itemId) return { error: 'no_subscription_item' };
 
-    await stripe.subscriptions.update(active.id, {
+    const updatedSub = await stripe.subscriptions.update(active.id, {
       items: [{ id: itemId, price: priceId }],
       proration_behavior: 'create_prorations',
     });
+
+    // Reflect the new tier in our DB immediately. The
+    // customer.subscription.updated webhook will also land shortly and
+    // set the exact same values (belt-and-suspenders), but writing here
+    // means the operator sees the change on the very next refresh
+    // instead of waiting on webhook latency. If the subscription is
+    // still trialing (rare for an in-place change) keep the trial plan.
+    const isTrialing = updatedSub.status === 'trialing';
+    await db
+      .update(user)
+      .set({
+        plan: isTrialing ? 'trial' : tier,
+        subscriptionStatus: isTrialing ? 'trialing' : 'active',
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, session.user.id));
 
     return { ok: true };
   } catch (err) {
