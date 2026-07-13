@@ -38,7 +38,12 @@ export async function changePlan(
   if (!session?.user) return { error: 'unauthorized' };
 
   const [u] = await db
-    .select({ stripeCustomerId: user.stripeCustomerId })
+    .select({
+      stripeCustomerId: user.stripeCustomerId,
+      email: user.email,
+      name: user.name,
+      radioName: user.radioName,
+    })
     .from(user)
     .where(eq(user.id, session.user.id))
     .limit(1);
@@ -46,10 +51,25 @@ export async function changePlan(
   const stripe = getStripe();
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
-  // No customer yet → run them through a fresh checkout.
+  // No customer yet → create the Stripe Customer up front, persist its
+  // id, then run a checkout tied to it. Persisting the id here (rather
+  // than only in the webhook) means the *next* plan change updates the
+  // subscription in place instead of spawning a second checkout.
   if (!u?.stripeCustomerId) {
+    if (!u) return { error: 'unauthorized' };
+    const customer = await stripe.customers.create({
+      email: u.email,
+      name: u.radioName ?? u.name ?? undefined,
+      metadata: { user_id: session.user.id },
+    });
+    await db
+      .update(user)
+      .set({ stripeCustomerId: customer.id, updatedAt: new Date() })
+      .where(eq(user.id, session.user.id));
+
     const checkout = await stripe.checkout.sessions.create({
       mode: 'subscription',
+      customer: customer.id,
       payment_method_collection: 'always',
       line_items: [{ price: stripePriceForTier(tier), quantity: 1 }],
       subscription_data: { metadata: { user_id: session.user.id, chosen_tier: tier } },

@@ -40,8 +40,8 @@
   "landing": {
     "headline": "AI-voiced news bulletins, ready for broadcast.",
     "subheadline": "Search global news, generate emotional scripts, and ship broadcast-quality audio in minutes.",
-    "cta": "Start 7-day free trial",
-    "ctaSub": "Card required, no charge during trial. Auto-converts to Starter.",
+    "cta": "Start 14-day free trial",
+    "ctaSub": "No card required. Explore every Pro feature free for 14 days.",
     "benefits": {
       "global": {
         "title": "Global Search",
@@ -57,7 +57,7 @@
       }
     },
     "plansTitle": "Pricing",
-    "plansSubtitle": "Start with a 7-day Pro trial. Cancel anytime.",
+    "plansSubtitle": "Start with a 14-day Pro trial — no card required. Cancel anytime.",
     "footer": {
       "copyright": "AURA — Automated Urban Radio Audio",
       "terms": "Terms",
@@ -99,7 +99,7 @@
       "feature_support": "Priority email"
     },
     "perMonth": "/mo",
-    "selectCta": "Start 7-day trial",
+    "selectCta": "Start 14-day trial",
     "currentBadge": "Current plan",
     "popularBadge": "Most popular"
   },
@@ -107,7 +107,7 @@
     "loginTitle": "Welcome back",
     "loginSubtitle": "Log in to your AURA station.",
     "signupTitle": "Create your station account",
-    "signupSubtitle": "Start your 7-day Pro trial in under a minute.",
+    "signupSubtitle": "Start your 14-day Pro trial in under a minute — no card required.",
     "email": "Email",
     "emailPlaceholder": "you@station.fm",
     "password": "Password",
@@ -150,7 +150,7 @@
   },
   "onboarding": {
     "planTitle": "Choose your plan",
-    "planSubtitle": "All plans start with a 7-day Pro trial. You'll only be charged after the trial.",
+    "planSubtitle": "All plans start with a 14-day Pro trial — no card required. You'll only pay if you subscribe after the trial.",
     "continue": "Start trial",
     "skipForNow": "I'll decide later"
   },
@@ -631,7 +631,7 @@
     "badge": "Early Access",
     "title": "Thanks for your interest",
     "subtitle": "Secure your spot for the AURA paid plans — we'll reach out before launch with your priority offer.",
-    "body": "Tell us a bit about your station and we'll be in touch. Your 7-day trial keeps running while you wait.",
+    "body": "Tell us a bit about your station and we'll be in touch. Your 14-day trial keeps running while you wait.",
     "field": {
       "plan": "Interested plan",
       "name": "Your name",

@@ -40,8 +40,8 @@
   "landing": {
     "headline": "Boletines de noticias con voz IA, listos para salir al aire.",
     "subheadline": "Busca noticias globales, genera guiones con emoción y entrega audio profesional en minutos.",
-    "cta": "Comenzar prueba gratis de 7 días",
-    "ctaSub": "Tarjeta obligatoria, sin cobro durante la prueba. Se convierte a Starter automáticamente.",
+    "cta": "Comenzar prueba gratis de 14 días",
+    "ctaSub": "Sin tarjeta. Explora todas las funciones Pro gratis por 14 días.",
     "benefits": {
       "global": {
         "title": "Búsqueda Global",
@@ -57,7 +57,7 @@
       }
     },
     "plansTitle": "Planes",
-    "plansSubtitle": "Empieza con 7 días de Pro gratis. Cancela cuando quieras.",
+    "plansSubtitle": "Empieza con 14 días de Pro gratis — sin tarjeta. Cancela cuando quieras.",
     "footer": {
       "copyright": "AURA — Audio de Radio Urbana Automatizado",
       "terms": "Términos",
@@ -99,7 +99,7 @@
       "feature_support": "Correo prioritario"
     },
     "perMonth": "/mes",
-    "selectCta": "Comenzar prueba de 7 días",
+    "selectCta": "Comenzar prueba de 14 días",
     "currentBadge": "Plan actual",
     "popularBadge": "Más popular"
   },
@@ -107,7 +107,7 @@
     "loginTitle": "Bienvenido de vuelta",
     "loginSubtitle": "Inicia sesión en tu emisora AURA.",
     "signupTitle": "Crea la cuenta de tu emisora",
-    "signupSubtitle": "Empieza tu prueba Pro de 7 días en menos de 1 minuto.",
+    "signupSubtitle": "Empieza tu prueba Pro de 14 días en menos de 1 minuto — sin tarjeta.",
     "email": "Correo electrónico",
     "emailPlaceholder": "tu@emisora.fm",
     "password": "Contraseña",
@@ -150,7 +150,7 @@
   },
   "onboarding": {
     "planTitle": "Elige tu plan",
-    "planSubtitle": "Todos los planes empiezan con 7 días de prueba Pro. Solo se cobra al terminar la prueba.",
+    "planSubtitle": "Todos los planes empiezan con 14 días de prueba Pro — sin tarjeta. Solo pagas si te suscribes al terminar la prueba.",
     "continue": "Comenzar prueba",
     "skipForNow": "Decido después"
   },
@@ -631,7 +631,7 @@
     "badge": "Early Access",
     "title": "Gracias por tu interés",
     "subtitle": "Reserva tu lugar en los planes de pago de AURA — te avisaremos antes del lanzamiento con tu oferta prioritaria.",
-    "body": "Cuéntanos un poco sobre tu emisora y te contactamos. Tu prueba de 7 días sigue activa mientras tanto.",
+    "body": "Cuéntanos un poco sobre tu emisora y te contactamos. Tu prueba de 14 días sigue activa mientras tanto.",
     "field": {
       "plan": "Plan de interés",
       "name": "Tu nombre",

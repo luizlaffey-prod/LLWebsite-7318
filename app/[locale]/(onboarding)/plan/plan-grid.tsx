@@ -24,7 +24,12 @@ export function PlanGrid({ locale }: { locale: Locale }) {
                 className="w-full"
                 variant={tier === 'standard' ? 'default' : 'secondary'}
               >
-                <Link href={`/${locale}/early-access?plan=${tier}`}>
+                {/* No-card trial: the account already has a 14-day Pro
+                    trial from signup, so onboarding just drops the user
+                    into the app. The plan they clicked is remembered as
+                    a hint so billing can pre-highlight it when the trial
+                    ends and they subscribe. */}
+                <Link href={`/${locale}/dashboard?intent=${tier}`}>
                   {t('continue')}
                 </Link>
               </Button>

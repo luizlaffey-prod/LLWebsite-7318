@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PLAN_ORDER, PLANS, type PlanTier } from '@/lib/billing/plans';
-import { openBillingPortal } from './actions';
+import { openBillingPortal, changePlan } from './actions';
 import type { Locale } from '@/i18n';
 
 interface Invoice {
@@ -46,10 +46,29 @@ export function BillingClient({ locale, currentTier, isTrial, trialEndsAt, invoi
     window.location.href = res.url;
   };
 
-  const handleChange = (tier: PlanTier) => {
+  const handleChange = async (tier: PlanTier) => {
     setError(null);
     setPendingTier(tier);
-    router.push(`/${locale}/early-access?plan=${tier}`);
+    try {
+      const res = await changePlan(tier, locale);
+      if ('error' in res) {
+        setError(t('errorChangeFailed'));
+        setPendingTier(null);
+        return;
+      }
+      // changePlan returns a Checkout / portal URL for new customers,
+      // or { ok: true } when it updated an existing subscription in
+      // place. In the latter case just refresh so the new tier shows.
+      if ('url' in res) {
+        window.location.href = res.url;
+        return;
+      }
+      router.refresh();
+      setPendingTier(null);
+    } catch {
+      setError(t('errorChangeFailed'));
+      setPendingTier(null);
+    }
   };
 
   return (
