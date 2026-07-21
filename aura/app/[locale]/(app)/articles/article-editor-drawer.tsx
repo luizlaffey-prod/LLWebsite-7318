@@ -13,6 +13,8 @@ import {
   Check,
   ImageOff,
   AlertCircle,
+  Send,
+  ExternalLink,
 } from 'lucide-react';
 import {
   Sheet,
@@ -41,6 +43,7 @@ interface FullArticle {
   imageCredit: string | null;
   sourceName: string | null;
   sourceArticleUrl: string | null;
+  publishedUrl: string | null;
 }
 
 interface Props {
@@ -68,14 +71,28 @@ export function ArticleEditorDrawer({ articleId, onClose, onSaved }: Props) {
     url: string | null;
   }>({ name: null, url: null });
 
+  // Website publishing: whether the station has a connection configured,
+  // the in-flight state, the resulting live URL, and any failure reason.
+  const [hasConnection, setHasConnection] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!articleId) return;
     setLoading(true);
     setError(null);
     setDirty(false);
+    setPublishError(null);
+    setPublishedUrl(null);
     (async () => {
       try {
-        const res = await fetch(`/api/articles/${articleId}`);
+        // Load the article and the station's publishing connection in
+        // parallel — the latter decides whether the Publish button shows.
+        const [res, connRes] = await Promise.all([
+          fetch(`/api/articles/${articleId}`),
+          fetch('/api/publishing'),
+        ]);
         if (!res.ok) {
           setError(t('errorLoad'));
           return;
@@ -88,6 +105,13 @@ export function ArticleEditorDrawer({ articleId, onClose, onSaved }: Props) {
         setImageCredit(a.imageCredit ?? '');
         setStatus(a.status);
         setSource({ name: a.sourceName, url: a.sourceArticleUrl });
+        setPublishedUrl(a.publishedUrl ?? null);
+        if (connRes.ok) {
+          const { connection } = (await connRes.json()) as {
+            connection: { enabled: boolean } | null;
+          };
+          setHasConnection(!!connection && connection.enabled);
+        }
       } catch {
         setError(t('errorLoad'));
       } finally {
@@ -171,6 +195,35 @@ export function ArticleEditorDrawer({ articleId, onClose, onSaved }: Props) {
   const exportArticle = (format: 'html' | 'md') => {
     if (!articleId) return;
     window.open(`/api/articles/${articleId}/export?format=${format}`, '_blank');
+  };
+
+  const publish = async () => {
+    if (!articleId) return;
+    // Persist any pending edits first so the site gets the current copy.
+    if (dirty) await save();
+    setPublishing(true);
+    setPublishError(null);
+    try {
+      const res = await fetch(`/api/articles/${articleId}/publish`, {
+        method: 'POST',
+      });
+      const data = (await res.json()) as { url?: string; reason?: string };
+      if (!res.ok) {
+        setPublishError(
+          data.reason && t.has(`publishReason_${data.reason}`)
+            ? t(`publishReason_${data.reason}`)
+            : t('publishReason_unknown')
+        );
+        return;
+      }
+      setStatus('published');
+      setPublishedUrl(data.url ?? null);
+      onSaved();
+    } catch {
+      setPublishError(t('publishReason_unreachable'));
+    } finally {
+      setPublishing(false);
+    }
   };
 
   return (
@@ -368,6 +421,54 @@ export function ArticleEditorDrawer({ articleId, onClose, onSaved }: Props) {
                   {t('addHeading')}
                 </Button>
               </div>
+            </div>
+
+            {/* Publish to website */}
+            <div className="border-t border-border pt-4">
+              <div className="flex flex-col gap-3 rounded-md border border-border bg-elevated/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">{t('publishTitle')}</div>
+                  <div className="mt-0.5 text-xs text-text-muted">
+                    {hasConnection ? t('publishHint') : t('publishNoConnection')}
+                  </div>
+                </div>
+                {hasConnection ? (
+                  <Button
+                    size="sm"
+                    onClick={publish}
+                    disabled={publishing || saving}
+                    className="shrink-0 bg-violet text-white hover:bg-violet/90"
+                  >
+                    {publishing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                    {status === 'published' ? t('republish') : t('publish')}
+                  </Button>
+                ) : (
+                  <Button asChild size="sm" variant="outline" className="shrink-0">
+                    <a href="../settings/publishing">{t('setupConnection')}</a>
+                  </Button>
+                )}
+              </div>
+              {publishedUrl && (
+                <a
+                  href={publishedUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-teal hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  {t('viewPublished')}
+                </a>
+              )}
+              {publishError && (
+                <div className="mt-2 flex items-start gap-2 rounded-md border border-error/30 bg-error/10 px-3 py-2 text-xs text-error">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span>{publishError}</span>
+                </div>
+              )}
             </div>
 
             {/* Export */}

@@ -547,6 +547,61 @@ export const deliveryLog = pgTable(
 export type DeliveryEndpoint = typeof deliveryEndpoint.$inferSelect;
 export type DeliveryLog = typeof deliveryLog.$inferSelect;
 
+// --- Website publishing (Pro) ---
+// Where approved written articles get pushed. Each station configures its
+// own connection in /settings/publishing — WordPress (REST API) or a
+// generic webhook — so AURA never needs to know the site ahead of time.
+export const publishingTypeEnum = pgEnum('publishing_type', [
+  'wordpress',
+  'webhook',
+]);
+
+// WordPress: username + application password go in the encrypted blob;
+// the site URL and default post status are stored in plaintext columns so
+// the UI can show them without decrypting.
+export interface WordPressSecret {
+  username: string;
+  appPassword: string;
+}
+
+// Webhook: an optional shared secret used to sign the payload (HMAC-SHA256
+// in the X-AURA-Signature header) so the receiver can verify authenticity.
+export interface WebhookSecret {
+  secret?: string;
+}
+
+export const publishingConnection = pgTable(
+  'publishing_connection',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // One connection per station for now — the article editor publishes to
+    // a single known target, so a unique user_id keeps the model simple.
+    userId: text('user_id')
+      .notNull()
+      .unique()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    type: publishingTypeEnum('type').notNull(),
+    // WordPress site root or the webhook endpoint URL.
+    siteUrl: text('site_url').notNull(),
+    /** Encrypted JSON blob (use lib/crypto/secrets.ts before persisting). */
+    configEncrypted: text('config_encrypted').notNull(),
+    // WordPress only: 'draft' (default — human reviews on the site before
+    // going live) or 'publish' (goes live immediately).
+    defaultStatus: text('default_status').notNull().default('draft'),
+    enabled: boolean('enabled').notNull().default(true),
+    // Stamped when a test connection last succeeded.
+    verifiedAt: timestamp('verified_at', { withTimezone: true }),
+    lastError: text('last_error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index('publishing_connection_user_idx').on(t.userId),
+  })
+);
+
+export type PublishingConnection = typeof publishingConnection.$inferSelect;
+
 // --- Anti-abuse: trial-stretching prevention ---
 // Each signup attempt records the requester's hashed IP. The signup
 // pre-check route counts entries in the last 30 days for the caller's
