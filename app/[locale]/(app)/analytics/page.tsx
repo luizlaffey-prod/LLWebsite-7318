@@ -7,9 +7,10 @@ import type { Locale } from '@/i18n';
 export default async function AnalyticsPage({
   params,
 }: {
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
   setRequestLocale(locale);
 
   const session = await getSession();

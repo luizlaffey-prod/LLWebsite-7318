@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   pgTable,
   text,
@@ -496,3 +497,481 @@ export const signupAttempt = pgTable(
     ipIdx: index('signup_attempt_ip_idx').on(t.ipHash, t.createdAt),
   })
 );
+
+// --- Studio Pro integration -------------------------------------------------
+//
+// These tables deliberately sit beside the existing user-owned AURA tables.
+// Existing accounts, automations and generated_audio rows keep their current
+// ownership model while Studio Pro gains an organization/station/device
+// boundary suitable for machine-to-machine access.
+export const organizationRoleEnum = pgEnum('organization_role', [
+  'owner',
+  'admin',
+  'operator',
+  'viewer',
+]);
+export const stationDeviceStatusEnum = pgEnum('station_device_status', [
+  'active',
+  'revoked',
+]);
+export const integrationRequestStatusEnum = pgEnum('integration_request_status', [
+  'pending',
+  'processing',
+  'ready',
+  'failed',
+  'expired',
+  'canceled',
+]);
+export const stationEventTypeEnum = pgEnum('station_event_type', [
+  'asset_downloaded',
+  'asset_validated',
+  'asset_queued',
+  'asset_aired',
+  'asset_skipped',
+  'asset_failed',
+]);
+export const studioEntitlementStatusEnum = pgEnum('studio_entitlement_status', [
+  'trialing',
+  'active',
+  'grace',
+  'suspended',
+  'canceled',
+]);
+export const studioLicenseLeaseStatusEnum = pgEnum('studio_license_lease_status', [
+  'active',
+  'superseded',
+  'revoked',
+  'expired',
+]);
+export const studioLicenseChallengePurposeEnum = pgEnum(
+  'studio_license_challenge_purpose',
+  ['lease', 'heartbeat', 'deactivate']
+);
+
+export const organization = pgTable(
+  'organization',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
+    billingUserId: text('billing_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'restrict' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugIdx: uniqueIndex('organization_slug_idx').on(t.slug),
+    billingUserIdx: index('organization_billing_user_idx').on(t.billingUserId),
+  })
+);
+
+export const organizationMember = pgTable(
+  'organization_member',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    role: organizationRoleEnum('role').notNull().default('viewer'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    organizationUserIdx: uniqueIndex('organization_member_org_user_idx').on(
+      t.organizationId,
+      t.userId
+    ),
+    userIdx: index('organization_member_user_idx').on(t.userId),
+  })
+);
+
+export const studioEntitlement = pgTable(
+  'studio_entitlement',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    status: studioEntitlementStatusEnum('status').notNull().default('trialing'),
+    planCode: text('plan_code').notNull().default('trial'),
+    source: text('source').notNull().default('trial'),
+    sourceReference: text('source_reference'),
+    features: jsonb('features').$type<string[]>().notNull(),
+    maxStations: integer('max_stations').notNull().default(1),
+    maxDevicesPerStation: integer('max_devices_per_station').notNull().default(2),
+    maxConcurrentOutputs: integer('max_concurrent_outputs').notNull().default(1),
+    validUntil: timestamp('valid_until', { withTimezone: true }),
+    graceUntil: timestamp('grace_until', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    organizationIdx: uniqueIndex('studio_entitlement_organization_idx').on(
+      t.organizationId
+    ),
+    sourceReferenceIdx: index('studio_entitlement_source_reference_idx').on(
+      t.source,
+      t.sourceReference
+    ),
+  })
+);
+
+export const station = pgTable(
+  'station',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
+    timezone: text('timezone').notNull().default('UTC'),
+    defaultLanguage: localeEnum('default_language').notNull().default('en'),
+    defaultVoiceId: uuid('default_voice_id').references(() => voice.id, {
+      onDelete: 'set null',
+    }),
+    enabled: boolean('enabled').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    organizationSlugIdx: uniqueIndex('station_org_slug_idx').on(
+      t.organizationId,
+      t.slug
+    ),
+    organizationIdx: index('station_organization_idx').on(t.organizationId),
+  })
+);
+
+export const stationDevice = pgTable(
+  'station_device',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stationId: uuid('station_id')
+      .notNull()
+      .references(() => station.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    platform: text('platform').notNull(),
+    status: stationDeviceStatusEnum('status').notNull().default('active'),
+    activationSlot: integer('activation_slot'),
+    scopes: jsonb('scopes').$type<string[]>().notNull(),
+    deviceKeyAlgorithm: text('device_key_algorithm').notNull(),
+    devicePublicKey: text('device_public_key').notNull(),
+    deviceKeyFingerprint: text('device_key_fingerprint').notNull(),
+    accessTokenHash: text('access_token_hash').notNull(),
+    accessTokenPrefix: text('access_token_prefix').notNull(),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', {
+      withTimezone: true,
+    }).notNull(),
+    refreshTokenHash: text('refresh_token_hash').notNull(),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
+      withTimezone: true,
+    }).notNull(),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
+    lastLicenseIssuedAt: timestamp('last_license_issued_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    accessTokenIdx: uniqueIndex('station_device_access_token_idx').on(
+      t.accessTokenHash
+    ),
+    refreshTokenIdx: uniqueIndex('station_device_refresh_token_idx').on(
+      t.refreshTokenHash
+    ),
+    stationIdx: index('station_device_station_idx').on(t.stationId, t.status),
+    activationSlotIdx: uniqueIndex('station_device_activation_slot_idx').on(
+      t.stationId,
+      t.activationSlot
+    ),
+    keyFingerprintIdx: uniqueIndex('station_device_key_fingerprint_idx').on(
+      t.deviceKeyFingerprint
+    ).where(sql`${t.status} = 'active'`),
+  })
+);
+
+export const devicePairingCode = pgTable(
+  'device_pairing_code',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stationId: uuid('station_id')
+      .notNull()
+      .references(() => station.id, { onDelete: 'cascade' }),
+    requestedByUserId: text('requested_by_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    scopes: jsonb('scopes').$type<string[]>().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    codeIdx: uniqueIndex('device_pairing_code_hash_idx').on(t.codeHash),
+    stationIdx: index('device_pairing_station_idx').on(t.stationId, t.expiresAt),
+  })
+);
+
+export const studioLicenseChallenge = pgTable(
+  'studio_license_challenge',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    deviceId: uuid('device_id')
+      .notNull()
+      .references(() => stationDevice.id, { onDelete: 'cascade' }),
+    purpose: studioLicenseChallengePurposeEnum('purpose').notNull(),
+    challengeHash: text('challenge_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    deviceExpiryIdx: index('studio_license_challenge_device_expiry_idx').on(
+      t.deviceId,
+      t.expiresAt
+    ),
+  })
+);
+
+export const studioLicenseLease = pgTable(
+  'studio_license_lease',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    entitlementId: uuid('entitlement_id')
+      .notNull()
+      .references(() => studioEntitlement.id, { onDelete: 'cascade' }),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    stationId: uuid('station_id')
+      .notNull()
+      .references(() => station.id, { onDelete: 'cascade' }),
+    deviceId: uuid('device_id')
+      .notNull()
+      .references(() => stationDevice.id, { onDelete: 'cascade' }),
+    status: studioLicenseLeaseStatusEnum('status').notNull().default('active'),
+    tokenHash: text('token_hash').notNull(),
+    keyId: text('key_id').notNull(),
+    planCode: text('plan_code').notNull(),
+    features: jsonb('features').$type<string[]>().notNull(),
+    appVersion: text('app_version').notNull(),
+    buildChannel: text('build_channel').notNull(),
+    onlineExpiresAt: timestamp('online_expires_at', { withTimezone: true }).notNull(),
+    offlineGraceUntil: timestamp('offline_grace_until', {
+      withTimezone: true,
+    }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenHashIdx: uniqueIndex('studio_license_lease_token_hash_idx').on(t.tokenHash),
+    deviceStatusIdx: index('studio_license_lease_device_status_idx').on(
+      t.deviceId,
+      t.status,
+      t.createdAt
+    ),
+    stationExpiryIdx: index('studio_license_lease_station_expiry_idx').on(
+      t.stationId,
+      t.offlineGraceUntil
+    ),
+  })
+);
+
+export const studioOutputLease = pgTable(
+  'studio_output_lease',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stationId: uuid('station_id')
+      .notNull()
+      .references(() => station.id, { onDelete: 'cascade' }),
+    slot: integer('slot').notNull(),
+    deviceId: uuid('device_id')
+      .notNull()
+      .references(() => stationDevice.id, { onDelete: 'cascade' }),
+    licenseLeaseId: uuid('license_lease_id')
+      .notNull()
+      .references(() => studioLicenseLease.id, { onDelete: 'cascade' }),
+    sessionId: uuid('session_id').notNull(),
+    outputId: text('output_id').notNull(),
+    appVersion: text('app_version').notNull(),
+    lastHeartbeatAt: timestamp('last_heartbeat_at', { withTimezone: true })
+      .notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    stationSlotIdx: uniqueIndex('studio_output_lease_station_slot_idx').on(
+      t.stationId,
+      t.slot
+    ),
+    sessionIdx: uniqueIndex('studio_output_lease_session_idx').on(t.sessionId),
+    expiryIdx: index('studio_output_lease_expiry_idx').on(t.expiresAt),
+  })
+);
+
+export const studioLicenseEvent = pgTable(
+  'studio_license_event',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    stationId: uuid('station_id').references(() => station.id, {
+      onDelete: 'set null',
+    }),
+    deviceId: uuid('device_id').references(() => stationDevice.id, {
+      onDelete: 'set null',
+    }),
+    type: text('type').notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    organizationCreatedIdx: index('studio_license_event_org_created_idx').on(
+      t.organizationId,
+      t.createdAt
+    ),
+    stationCreatedIdx: index('studio_license_event_station_created_idx').on(
+      t.stationId,
+      t.createdAt
+    ),
+  })
+);
+
+export interface IntegrationContentInput {
+  kind: 'news_bulletin';
+  source:
+    | {
+        mode: 'article';
+        title: string;
+        description: string;
+        source?: string;
+        url?: string;
+      }
+    | {
+        mode: 'search';
+        categories: string[];
+        bias: 'left' | 'center' | 'right' | 'mixed';
+        geographicScope: 'global' | 'country';
+        location?: string;
+      };
+  title?: string;
+  durationSeconds: number;
+  language: 'en' | 'pt' | 'es';
+  voiceId?: string;
+  speed: number;
+  includeWeather: boolean;
+  weatherFormat: 'separate' | 'integrated';
+  weatherLocation?: string;
+  transitionEffects: boolean;
+  scheduledFor?: string;
+  validForSeconds: number;
+}
+
+export interface IntegrationSourceReference {
+  title: string;
+  source?: string;
+  url?: string;
+  publishedAt?: string;
+}
+
+export const integrationContentRequest = pgTable(
+  'integration_content_request',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stationId: uuid('station_id')
+      .notNull()
+      .references(() => station.id, { onDelete: 'cascade' }),
+    requestedByDeviceId: uuid('requested_by_device_id').references(
+      () => stationDevice.id,
+      { onDelete: 'set null' }
+    ),
+    idempotencyKey: text('idempotency_key').notNull(),
+    requestHash: text('request_hash').notNull(),
+    kind: text('kind').notNull(),
+    status: integrationRequestStatusEnum('status').notNull().default('pending'),
+    input: jsonb('input').$type<IntegrationContentInput>().notNull(),
+    sourceReferences: jsonb('source_references').$type<IntegrationSourceReference[]>(),
+    audioId: uuid('audio_id').references(() => generatedAudio.id, {
+      onDelete: 'set null',
+    }),
+    scheduledFor: timestamp('scheduled_for', { withTimezone: true }),
+    validFrom: timestamp('valid_from', { withTimezone: true }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    assetSha256: text('asset_sha256'),
+    assetBytes: integer('asset_bytes'),
+    assetContentType: text('asset_content_type'),
+    errorCode: text('error_code'),
+    errorMessage: text('error_message'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    stationIdempotencyIdx: uniqueIndex('integration_request_station_idem_idx').on(
+      t.stationId,
+      t.idempotencyKey
+    ),
+    stationUpdatedIdx: index('integration_request_station_updated_idx').on(
+      t.stationId,
+      t.updatedAt
+    ),
+    pendingIdx: index('integration_request_pending_idx').on(t.status, t.createdAt),
+  })
+);
+
+export const stationEvent = pgTable(
+  'station_event',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stationId: uuid('station_id')
+      .notNull()
+      .references(() => station.id, { onDelete: 'cascade' }),
+    deviceId: uuid('device_id')
+      .notNull()
+      .references(() => stationDevice.id, { onDelete: 'cascade' }),
+    contentRequestId: uuid('content_request_id').references(
+      () => integrationContentRequest.id,
+      { onDelete: 'set null' }
+    ),
+    audioId: uuid('audio_id').references(() => generatedAudio.id, {
+      onDelete: 'set null',
+    }),
+    type: stationEventTypeEnum('type').notNull(),
+    idempotencyKey: text('idempotency_key').notNull(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    deviceIdempotencyIdx: uniqueIndex('station_event_device_idem_idx').on(
+      t.deviceId,
+      t.idempotencyKey
+    ),
+    stationOccurredIdx: index('station_event_station_occurred_idx').on(
+      t.stationId,
+      t.occurredAt
+    ),
+  })
+);
+
+export type Organization = typeof organization.$inferSelect;
+export type OrganizationMember = typeof organizationMember.$inferSelect;
+export type StudioEntitlement = typeof studioEntitlement.$inferSelect;
+export type Station = typeof station.$inferSelect;
+export type StationDevice = typeof stationDevice.$inferSelect;
+export type DevicePairingCode = typeof devicePairingCode.$inferSelect;
+export type StudioLicenseChallenge = typeof studioLicenseChallenge.$inferSelect;
+export type StudioLicenseLease = typeof studioLicenseLease.$inferSelect;
+export type StudioOutputLease = typeof studioOutputLease.$inferSelect;
+export type StudioLicenseEvent = typeof studioLicenseEvent.$inferSelect;
+export type IntegrationContentRequest = typeof integrationContentRequest.$inferSelect;
+export type StationEvent = typeof stationEvent.$inferSelect;

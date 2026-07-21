@@ -8,9 +8,10 @@ import type { Locale } from '@/i18n';
 export default async function AdminAutomationDetailPage({
   params,
 }: {
-  params: Promise<{ locale: Locale; id: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }) {
-  const { locale, id } = await params;
+  const { locale: rawLocale, id } = await params;
+  const locale = rawLocale as Locale;
   setRequestLocale(locale);
 
   const session = await getSession();

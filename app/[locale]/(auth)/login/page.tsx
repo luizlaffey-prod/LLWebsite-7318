@@ -8,9 +8,10 @@ import { isGoogleAuthConfigured } from '@/lib/auth/config';
 export default async function LoginPage({
   params,
 }: {
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
   setRequestLocale(locale);
   const t = await getTranslations('auth');
 

@@ -30,9 +30,10 @@ async function loadInvoices(stripeCustomerId: string | null) {
 export default async function BillingPage({
   params,
 }: {
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
   setRequestLocale(locale);
 
   const session = await getSession();

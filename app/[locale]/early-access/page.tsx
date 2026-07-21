@@ -13,10 +13,11 @@ export default async function EarlyAccessPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ plan?: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
   setRequestLocale(locale);
   const { plan: planParam } = await searchParams;
   const t = await getTranslations('earlyAccess');

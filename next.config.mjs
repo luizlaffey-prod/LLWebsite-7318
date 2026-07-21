@@ -1,10 +1,17 @@
 import createNextIntlPlugin from 'next-intl/plugin';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const withNextIntl = createNextIntlPlugin('./i18n.ts');
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // This source snapshot can be checked out below a home directory that also
+  // contains another lockfile. Pin tracing to AURA so Next never packages
+  // files from an unrelated parent workspace.
+  outputFileTracingRoot: projectRoot,
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',

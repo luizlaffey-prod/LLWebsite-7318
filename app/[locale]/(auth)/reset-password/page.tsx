@@ -8,9 +8,10 @@ import { LanguageSwitcher } from '@/components/site/language-switcher';
 export default async function ResetPasswordPage({
   params,
 }: {
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
   setRequestLocale(locale);
   const t = await getTranslations('auth');
 

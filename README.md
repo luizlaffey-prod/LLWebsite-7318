@@ -66,6 +66,23 @@ aura/
 └── drizzle/                     # SQL migrations
 ```
 
+## Studio Pro integration API
+
+The versioned machine-to-machine API used by Studio Pro lives under
+`/api/v1`. It adds organization, station and revocable device credentials
+without changing the existing browser session or bulletin routes.
+
+- Contract and rollout notes: [`docs/studio-pro-integration-api-v1.md`](docs/studio-pro-integration-api-v1.md)
+- OpenAPI 3.1 document: [`docs/openapi-studio-pro-v1.yaml`](docs/openapi-studio-pro-v1.yaml)
+- Licensing threat model: [`docs/studio-pro-licensing-threat-model.md`](docs/studio-pro-licensing-threat-model.md)
+
+Apply `drizzle/0012_studio_pro_integration.sql` and then
+`drizzle/0013_studio_pro_licensing.sql` before enabling the API. Set a
+dedicated `DEVICE_TOKEN_PEPPER` and an Ed25519
+`STUDIO_LICENSE_PRIVATE_KEY` in production. Device tokens are returned only
+once and stored in Postgres as keyed hashes; offline license leases are stored
+only as SHA-256 hashes.
+
 ## Required environment variables
 
 See `.env.example`. The most critical for the foundation phase:
@@ -261,4 +278,3 @@ upstream is missing or misbehaving.
 ## Phased delivery
 
 Implementation follows the plan at `../.claude/plans/greedy-strolling-valiant.md`. Phase 0 is foundation only — landing page, locale routing, Better Auth, Drizzle schema for `user`, `session`, `account`, `verification`, `subscription`, `usage_period`. Subsequent phases add billing, news search, bulletin generation, voices, automations, and Pro features.
-
