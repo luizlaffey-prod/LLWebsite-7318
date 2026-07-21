@@ -239,6 +239,21 @@ SELECT count(*) FROM drizzle.__drizzle_migrations;   -- expect 16 (0000–0015)
 If any count is off, or migrate errored, **stop** and investigate on the
 branch (it is disposable) before considering production.
 
+> ### ✅ Step 3 COMPLETE — 2026-07-21 (branch `studio-pro-preview`)
+>
+> `drizzle-kit migrate` ran from commit `795116d` with a guard that accepted
+> **only** the branch endpoint `ep-lucky-shadow-ak3why6p`. Exit code 0,
+> "migrations applied successfully", and **`0006` passed without error**.
+> Post-verification on the branch matched exactly:
+> - `relevant_tables = 13`
+> - `studio_enums = 7`
+> - `revoked_legacy = 0`
+> - `drizzle_migrations = 16` (0000–0015)
+>
+> Production untouched; the branch connection string was cleared from the
+> clipboard. Cleared to proceed to step 4 (Preview env) and step 5 (smoke
+> tests). The `0006` handling is now **proven** for the eventual production run.
+
 ### D. Do NOT hand-baseline `__drizzle_migrations`
 
 An alternative would be to skip re-running `0004`–`0011` by manually inserting
@@ -260,9 +275,16 @@ is letting migrate re-run the guarded `0004`–`0011` as no-ops.
 Goal: give the Preview deployment what it needs — nothing production.
 
 In **Vercel → Project → Settings → Environment Variables**, scoped to
-**Preview** (not Production):
+**Preview** (not Production, not Development):
 
-- `DATABASE_URL` → the `preview-studio-pro` branch connection string (step 2).
+- `DATABASE_URL` → the **`studio-pro-preview` branch** connection string
+  (endpoint `ep-lucky-shadow-ak3why6p`, branch `br-crimson-hall-akvxaaxy`).
+  - **Scope it to this PR's git branch** (`claude/studio-pro-integration-api`)
+    if the project has other preview branches, so no unrelated preview
+    deployment gets pointed at this database.
+  - ⏳ This branch **auto-expires 2026-07-28 17:34 GMT-3**. After the smoke
+    tests, **remove or repoint this Preview override** — do not leave Preview
+    pointing at an expired branch.
 - `DEVICE_TOKEN_PEPPER` → a Preview-only random ≥32-char secret
   (`openssl rand -base64 32`). Distinct from any production value.
 - `CRON_SECRET` → confirm a value exists for Preview (crons 500 without it).
