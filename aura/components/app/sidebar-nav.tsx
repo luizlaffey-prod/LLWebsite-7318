@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   MessageSquare,
+  BookOpen,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth/client';
@@ -135,6 +136,17 @@ export function SidebarNav({
       </nav>
 
       <div className="border-t border-border px-2 py-3 space-y-1">
+        <Link
+          href={`/${locale}/help`}
+          onClick={onNavigate}
+          className={cn(
+            'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-elevated hover:text-text-primary',
+            collapsed && 'justify-center px-2'
+          )}
+        >
+          <BookOpen className="h-4 w-4" />
+          {!collapsed && <span>{t('help')}</span>}
+        </Link>
         <button
           onClick={() => {
             setFeedbackOpen(true);
