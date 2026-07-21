@@ -38,6 +38,8 @@ const VARS: VarSpec[] = [
   { name: 'STRIPE_PRICE_STARTER', required: false, group: 'Payments' },
   { name: 'STRIPE_PRICE_STANDARD', required: false, group: 'Payments' },
   { name: 'STRIPE_PRICE_PRO', required: false, group: 'Payments' },
+  { name: 'STRIPE_PRICE_STUDIO_PRO', required: false, group: 'Payments' },
+  { name: 'STRIPE_PRICE_STUDIO_ENTERPRISE', required: false, group: 'Payments' },
 
   { name: 'RESEND_API_KEY', required: false, group: 'Email' },
   { name: 'RESEND_FROM_EMAIL', required: false, group: 'Email' },
@@ -49,6 +51,24 @@ const VARS: VarSpec[] = [
   { name: 'R2_PUBLIC_BASE_URL', required: false, group: 'Audio storage', note: 'optional CDN URL' },
 
   { name: 'CRON_SECRET', required: false, group: 'Cron jobs' },
+  {
+    name: 'DEVICE_TOKEN_PEPPER',
+    required: false,
+    group: 'Studio Pro integration',
+    note: 'recommended dedicated ≥32-char secret; falls back to SECRETS_KEY/BETTER_AUTH_SECRET',
+  },
+  {
+    name: 'STUDIO_LICENSE_PRIVATE_KEY',
+    required: false,
+    group: 'Studio Pro integration',
+    note: 'Ed25519 PKCS#8 PEM/base64; required to issue desktop license leases',
+  },
+  {
+    name: 'STUDIO_LICENSE_KEY_ID',
+    required: false,
+    group: 'Studio Pro integration',
+    note: 'public key rotation identifier; defaults to studio-2026-01',
+  },
 ];
 
 const COL = {
