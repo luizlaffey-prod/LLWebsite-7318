@@ -86,15 +86,26 @@ SELECT to_regclass('drizzle.__drizzle_migrations') AS meta;  -- non-null on prod
 SELECT * FROM drizzle.__drizzle_migrations ORDER BY 1;       -- expect 4 rows (0000–0003)
 ```
 
-## 2. Create an isolated database branch for Preview
+## 2. Isolated database branch for Preview — DONE
 
-Goal: never test schema changes on production data.
+An isolated branch was created **from `production`**. Nothing has been migrated
+on it yet, and production remains untouched.
 
-- In the **Neon Console → Branches**, create a branch from the production
-  branch, e.g. `preview-studio-pro`. This is a copy-on-write branch — cheap
-  and fully isolated.
-- Copy that branch's pooled connection string. It becomes the Preview
-  `DATABASE_URL` (step 4). Do not paste it into this repo or into chat.
+| Field | Value |
+|---|---|
+| Branch name | `studio-pro-preview` |
+| Branch ID | `br-crimson-hall-akvxaaxy` |
+| Source | `production` (copy-on-write) |
+| Auto-expires | **2026-07-28 17:34 (GMT-3)** |
+| Migrated? | No — pre-migration state (`__drizzle_migrations` = 0000–0003) |
+
+- ⏳ **The branch auto-expires 2026-07-28 17:34 GMT-3.** Complete steps 3–5
+  before then, or recreate the branch. Do not let a half-migrated branch
+  linger past expiry.
+- Copy the connection string **from this branch specifically** (Neon Console →
+  Branches → `studio-pro-preview` → Connect). It becomes the Preview
+  `DATABASE_URL` (step 4). Do not paste it into this repo or into chat, and
+  **never** use the `production` connection string for steps 3–5.
 
 ## 3. Run the official Drizzle flow up to `0015` on the isolated branch
 
@@ -103,15 +114,30 @@ official flow), not hand-pasted SQL — and prove it reconciles the divergence
 cleanly. Because production records only `0000`–`0003`, migrate will re-run
 `0004`–`0011` (already present in the schema), then apply `0012`–`0015`.
 
-Run everything against the **branch** connection string from step 2 — never
+Run everything against the **`studio-pro-preview` branch**
+(`br-crimson-hall-akvxaaxy`) connection string from step 2 — **never**
 production:
 
 ```bash
-# from aura/ — point drizzle at the ISOLATED branch, not production
-export DATABASE_URL='<preview-studio-pro branch connection string>'
+# from aura/ — point drizzle at the ISOLATED branch, not production.
+# Use the connection string copied from the studio-pro-preview branch.
+export DATABASE_URL='<studio-pro-preview branch connection string>'
 ```
 
-### A. Preflight — verify the history is what we expect, no hash drift
+### A. Preflight — verify the connection AND the history, no hash drift
+
+**Connection safety first.** Confirm the shell is pointed at the branch, not
+production, before running anything that writes. A Neon branch has its own
+endpoint host, so the host in `DATABASE_URL` must differ from production's:
+```bash
+echo "$DATABASE_URL" | sed -E 's#://[^@]+@#://<redacted>@#'   # eyeball the host
+```
+- The host must be the `studio-pro-preview` endpoint (Neon shows it under the
+  branch's Connect dialog), **not** the production endpoint. If in doubt, stop
+  and re-copy from the branch.
+- After step 3 completes, confirm in the Neon Console that the **`production`
+  branch is still at 0000–0003 / no 0012–0015 tables** — proof it was never
+  touched.
 
 `drizzle-kit migrate` (v0.30) has **no dry-run/plan mode** — the isolated
 branch *is* the dry run. Before applying, confirm the starting state with
