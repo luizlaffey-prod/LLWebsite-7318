@@ -5,8 +5,6 @@ export type PairingRateLimitScope = 'ip' | 'code' | 'station';
 export interface PairingRateLimitPolicy {
   limit: number;
   windowSeconds: number;
-  baseBackoffSeconds: number;
-  maxBackoffSeconds: number;
 }
 
 export const PAIRING_RATE_LIMIT_POLICIES: Record<
@@ -17,22 +15,16 @@ export const PAIRING_RATE_LIMIT_POLICIES: Record<
   ip: {
     limit: 20,
     windowSeconds: 10 * 60,
-    baseBackoffSeconds: 60,
-    maxBackoffSeconds: 15 * 60,
   },
   // The code bucket also works across distributed source addresses.
   code: {
     limit: 6,
     windowSeconds: 10 * 60,
-    baseBackoffSeconds: 2 * 60,
-    maxBackoffSeconds: 30 * 60,
   },
   // Once a valid code identifies its station, cap aggregate activation churn.
   station: {
     limit: 10,
     windowSeconds: 10 * 60,
-    baseBackoffSeconds: 60,
-    maxBackoffSeconds: 15 * 60,
   },
 };
 
@@ -44,8 +36,8 @@ export interface PairingRateLimitState {
 
 /**
  * Pure reference policy used by tests and mirrored by the atomic PostgreSQL
- * upsert. The first request over the limit starts a backoff; repeated requests
- * after each backoff expires double it up to the policy ceiling.
+ * upsert. The first request over the limit locks the bucket until the fixed
+ * window ends, making Retry-After both honest and predictable.
  */
 export function nextPairingRateLimitState(
   previous: PairingRateLimitState | null,
@@ -69,15 +61,12 @@ export function nextPairingRateLimitState(
     return { ...previous, attemptCount, blockedUntil: null };
   }
 
-  const exponent = Math.min(8, Math.max(0, attemptCount - policy.limit - 1));
-  const backoffSeconds = Math.min(
-    policy.maxBackoffSeconds,
-    policy.baseBackoffSeconds * 2 ** exponent
-  );
   return {
     ...previous,
     attemptCount,
-    blockedUntil: new Date(now.getTime() + backoffSeconds * 1000),
+    blockedUntil: new Date(
+      previous.windowStartedAt.getTime() + policy.windowSeconds * 1000
+    ),
   };
 }
 

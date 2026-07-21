@@ -10,8 +10,6 @@ import {
 const policy: PairingRateLimitPolicy = {
   limit: 2,
   windowSeconds: 600,
-  baseBackoffSeconds: 60,
-  maxBackoffSeconds: 180,
 };
 
 beforeAll(() => {
@@ -21,7 +19,7 @@ beforeAll(() => {
 describe('Studio Pro pairing rate-limit policy', () => {
   const start = new Date('2026-07-21T12:00:00.000Z');
 
-  it('allows attempts through the limit, then starts a backoff', () => {
+  it('allows attempts through the limit, then locks until the window ends', () => {
     const first = nextPairingRateLimitState(null, policy, start);
     const second = nextPairingRateLimitState(
       first,
@@ -34,7 +32,7 @@ describe('Studio Pro pairing rate-limit policy', () => {
     expect(first.attemptCount).toBe(1);
     expect(second.attemptCount).toBe(2);
     expect(third.attemptCount).toBe(3);
-    expect(pairingRateLimitRetryAfter(third.blockedUntil, thirdAt)).toBe(60);
+    expect(pairingRateLimitRetryAfter(third.blockedUntil, thirdAt)).toBe(598);
   });
 
   it('does not extend a live block merely because the client retries early', () => {
@@ -47,33 +45,6 @@ describe('Studio Pro pairing rate-limit policy', () => {
     );
 
     expect(next).toEqual(previous);
-  });
-
-  it('doubles repeated backoff up to the ceiling', () => {
-    const secondBlockAt = new Date(start.getTime() + 61_000);
-    const secondBlock = nextPairingRateLimitState(
-      {
-        attemptCount: 3,
-        windowStartedAt: start,
-        blockedUntil: new Date(start.getTime() + 60_000),
-      },
-      policy,
-      secondBlockAt
-    );
-    expect(pairingRateLimitRetryAfter(secondBlock.blockedUntil, secondBlockAt)).toBe(
-      120
-    );
-
-    const capped = nextPairingRateLimitState(
-      {
-        attemptCount: 20,
-        windowStartedAt: start,
-        blockedUntil: new Date(secondBlockAt.getTime() - 1),
-      },
-      policy,
-      secondBlockAt
-    );
-    expect(pairingRateLimitRetryAfter(capped.blockedUntil, secondBlockAt)).toBe(180);
   });
 
   it('resets after the rolling window', () => {

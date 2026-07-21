@@ -273,7 +273,7 @@ upgrades; none is part of the Studio Pro bearer-token path.
   planned contract additions.
 - One organization billing user pays the existing AURA quota.
 - Pairing exchange has persistent, atomic per-IP, per-code and per-station
-  limits with progressive backoff. Edge/WAF limits remain recommended as a
+  fixed-window limits with an exact `Retry-After`. Edge/WAF limits remain recommended as a
   defense-in-depth layer, including for refresh and challenge routes.
 - Stripe product/price creation and the customer-facing Studio Pro checkout UI
   are commercial rollout tasks; the secure webhook adapter is present but no

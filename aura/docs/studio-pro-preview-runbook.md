@@ -412,7 +412,8 @@ recorded, they still block production go-live.
    pending.**
    `POST /api/v1/device-pairings/exchange` is unauthenticated (it accepts the
    8-character pairing code). It now consumes atomic, persistent per-IP,
-   per-code and per-station buckets and returns `429` with progressive backoff.
+   per-code and per-station buckets and returns `429` with an exact
+   `Retry-After` through the end of the fixed window.
    Bucket identifiers are HMACs; client IPs and raw codes are never stored.
 
 2. **Purge expired pairing codes — implemented, Preview validation pending.**
