@@ -236,9 +236,9 @@ carry deck, planned start, actual start, duration and a failure reason.
 
 ## Deployment checklist
 
-1. Back up Neon and apply `drizzle/0011_automation_lead_time.sql`,
-   `drizzle/0012_studio_pro_integration.sql`, then
-   `drizzle/0013_studio_pro_licensing.sql`.
+1. Back up Neon and apply the migration history through
+   `drizzle/0016_studio_pro_pairing_hardening.sql` (the Studio Pro migrations
+   are `0014`, `0015` and `0016`).
 2. The licensing migration revokes any pre-key legacy device rows; those
    devices must pair again to establish a P-256 identity.
 3. Set `DEVICE_TOKEN_PEPPER`, `STUDIO_LICENSE_PRIVATE_KEY`,
@@ -256,10 +256,10 @@ carry deck, planned start, actual start, duration and a failure reason.
    output-slot conflicts, generation latency and checksum failures before
    expanding access.
 
-`/api/cron/studio-licensing` runs every ten minutes to remove expired
-challenges/output reservations and mark offline leases expired. Expiration is
-also enforced directly in every request, so cleanup timing is not an
-authorization boundary.
+`/api/cron/studio-licensing` runs every ten minutes to remove used/expired
+pairing codes, stale pairing-limit buckets, expired challenges/output
+reservations and mark offline leases expired. Expiration is also enforced
+directly in every request, so cleanup timing is not an authorization boundary.
 
 Security baseline checked on 2026-07-21: Next.js was moved from 15.1.11 to
 15.5.20, Better Auth to 1.6.13+ and Drizzle ORM to 0.45.2. `npm audit
@@ -272,7 +272,9 @@ upgrades; none is part of the Studio Pro bearer-token path.
 - The generated asset is MP3. Broadcast WAV and explicit loudness metadata are
   planned contract additions.
 - One organization billing user pays the existing AURA quota.
-- Pairing and refresh routes should receive edge/WAF rate limits in production.
+- Pairing exchange has persistent, atomic per-IP, per-code and per-station
+  limits with progressive backoff. Edge/WAF limits remain recommended as a
+  defense-in-depth layer, including for refresh and challenge routes.
 - Stripe product/price creation and the customer-facing Studio Pro checkout UI
   are commercial rollout tasks; the secure webhook adapter is present but no
   production price ID is invented by this branch.

@@ -843,6 +843,29 @@ export const devicePairingCode = pgTable(
   })
 );
 
+// Persistent, privacy-preserving buckets for the unauthenticated pairing
+// exchange. Bucket keys are HMACs of the IP/code/station subject, so neither
+// the client IP nor the pairing code is stored in plaintext. The exchange
+// route updates each row atomically to keep concurrent attempts from racing
+// past the configured limit.
+export const devicePairingRateLimit = pgTable(
+  'device_pairing_rate_limit',
+  {
+    bucketKey: text('bucket_key').primaryKey(),
+    attemptCount: integer('attempt_count').notNull().default(0),
+    windowStartedAt: timestamp('window_started_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    blockedUntil: timestamp('blocked_until', { withTimezone: true }),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    cleanupIdx: index('device_pairing_rate_limit_updated_idx').on(t.updatedAt),
+  })
+);
+
 export const studioLicenseChallenge = pgTable(
   'studio_license_challenge',
   {

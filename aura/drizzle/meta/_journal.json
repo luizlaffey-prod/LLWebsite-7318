@@ -113,6 +113,13 @@
       "when": 1784640900000,
       "tag": "0015_studio_pro_licensing",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1784671562000,
+      "tag": "0016_studio_pro_pairing_hardening",
+      "breakpoints": true
     }
   ]
 }

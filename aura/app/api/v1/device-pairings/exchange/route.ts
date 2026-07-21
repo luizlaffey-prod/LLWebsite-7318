@@ -16,6 +16,11 @@ import {
   verifyDeviceSignature,
 } from '@/lib/integration/license-crypto';
 import { requireUsableStudioEntitlement } from '@/lib/integration/licensing';
+import {
+  consumePairingRateLimit,
+  pairingRateLimitedResponse,
+} from '@/lib/integration/pairing-rate-limit';
+import { extractPairingClientIp } from '@/lib/integration/pairing-rate-limit-policy';
 
 export const runtime = 'nodejs';
 
@@ -30,6 +35,21 @@ export async function POST(req: Request) {
       );
     }
 
+    const now = new Date();
+    const normalizedCode = normalizePairingCode(parsed.data.code);
+    const codeHash = hashPairingCode(normalizedCode);
+    const initialLimits = await Promise.all([
+      consumePairingRateLimit('ip', extractPairingClientIp(req), now),
+      consumePairingRateLimit('code', codeHash, now),
+    ]);
+    const initialRetryAfter = Math.max(
+      0,
+      ...initialLimits.map((limit) => limit.retryAfterSeconds ?? 0)
+    );
+    if (initialRetryAfter > 0) {
+      return pairingRateLimitedResponse(initialRetryAfter);
+    }
+
     let keyFingerprint: string;
     try {
       keyFingerprint = deviceKeyFingerprint(parsed.data.devicePublicKey);
@@ -40,7 +60,7 @@ export async function POST(req: Request) {
       );
     }
     const pairingMessage = pairingProofMessage({
-      code: normalizePairingCode(parsed.data.code),
+      code: normalizedCode,
       deviceName: parsed.data.deviceName,
       platform: parsed.data.platform,
       deviceKeyFingerprint: keyFingerprint,
@@ -55,8 +75,6 @@ export async function POST(req: Request) {
       return Response.json({ error: 'invalid_pairing_proof' }, { status: 401 });
     }
 
-    const now = new Date();
-    const codeHash = hashPairingCode(parsed.data.code);
     const [pairing] = await db
       .select({ pairing: devicePairingCode, station })
       .from(devicePairingCode)
@@ -76,6 +94,15 @@ export async function POST(req: Request) {
         { error: 'invalid_or_expired_pairing_code' },
         { status: 401 }
       );
+    }
+
+    const stationLimit = await consumePairingRateLimit(
+      'station',
+      pairing.station.id,
+      now
+    );
+    if (stationLimit.limited) {
+      return pairingRateLimitedResponse(stationLimit.retryAfterSeconds);
     }
 
     const entitlement = await requireUsableStudioEntitlement(

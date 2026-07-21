@@ -15,16 +15,17 @@ until explicitly approved.
   `studio-pro-licensing-threat-model.md`). Licensing stays inert; the lease
   endpoint returns `503 studio_license_signing_unavailable`, which is fine.
 
-This PR introduces two migrations (renumbered to avoid colliding with the
+This PR introduces three migrations (renumbered to avoid colliding with the
 pre-existing `0012_articles` / `0013_publishing`):
 
 - `drizzle/0014_studio_pro_integration.sql`
 - `drizzle/0015_studio_pro_licensing.sql`
+- `drizzle/0016_studio_pro_pairing_hardening.sql`
 
-**Production migration scope is `0012` → `0015`, not just `0014/0015`.** The
+**Production migration scope is `0012` → `0016`, not just `0014`–`0016`.** The
 read-only audit (step 1) found that `0012_articles` and `0013_publishing` are
 **also absent** from production — so the migration to bring production current
-must apply all of `0012, 0013, 0014, 0015`.
+must apply all of `0012, 0013, 0014, 0015, 0016`.
 
 > ### Production schema ↔ history divergence (must be respected)
 >
@@ -34,12 +35,12 @@ must apply all of `0012, 0013, 0014, 0015`.
 > `delivery_type.local_folder`, `automation_schedule.weather_city`,
 > `transition_effects`, `lead_time_minutes`), and the `0008` trial backfill has
 > no pending rows. In other words, `0004`–`0011` were applied **manually** and
-> never recorded in the Drizzle history. `0012`–`0015` and the Studio Pro enums
+> never recorded in the Drizzle history. `0012`–`0016` and the Studio Pro enums
 > do **not** exist.
 >
 > Consequence: the official `drizzle-kit migrate` flow will re-encounter
 > `0004`–`0011` (which must be safely re-appliable — they are, see step 3) and
-> record them, then apply `0012`–`0015`. This is validated on an **isolated
+> record them, then apply `0012`–`0016`. This is validated on an **isolated
 > branch first**. We do **not** hand-insert rows into `__drizzle_migrations`
 > to "baseline" the manual migrations without a full schema comparison first
 > (step 3, point D).
@@ -254,6 +255,15 @@ branch (it is disposable) before considering production.
 > clipboard. Cleared to proceed to step 4 (Preview env) and step 5 (smoke
 > tests). The `0006` handling is now **proven** for the eventual production run.
 
+> ### Hardening follow-up — migration `0016`
+>
+> The completion record above is the historical `0012`–`0015` validation.
+> Before the hardening Preview can be tested, run the same guarded
+> `drizzle-kit migrate` flow against **only** `studio-pro-preview`; it should
+> add `device_pairing_rate_limit` and bring the branch history to **17 rows
+> (`0000`–`0016`)**. Verify `to_regclass('public.device_pairing_rate_limit')`
+> is non-null. This follow-up does not authorize any production migration.
+
 ### D. Do NOT hand-baseline `__drizzle_migrations`
 
 An alternative would be to skip re-running `0004`–`0011` by manually inserting
@@ -335,6 +345,11 @@ account. Base URL = the Preview deployment URL.
     ```
     Save both authenticated responses and the matching logs to the results
     record.
+14. **Pairing hardening:** with a disposable code/device, cross the configured
+    code-attempt threshold and confirm JSON **`429 pairing_rate_limited`** plus
+    a numeric **`Retry-After`** header. Then run the authenticated licensing
+    cron and confirm its response includes `deletedPairingCodes` and
+    `deletedPairingRateLimitBuckets`.
 
 > **Before production (cron frequency):** `vercel.json` schedules
 > `integration-content` every 5 min and `studio-licensing` every 10 min.
@@ -366,13 +381,14 @@ Do **not** start this section until steps 1–5 pass and a human approves.
    branch; record its identifier.
 2. Bring production current with the **same official Drizzle flow proven on
    the branch in step 3** — `drizzle-kit migrate` against production, which
-   re-runs the guarded `0004`–`0011` as no-ops and applies `0012`–`0015`
-   (scope is `0012`→`0015`, since articles/publishing are also absent). Apply
+   re-runs the guarded `0004`–`0011` as no-ops and applies `0012`–`0016`
+   (scope is `0012`→`0016`, since articles/publishing are also absent). Apply
    the exact `0006` handling that step 3.B established on the branch (if
    migrate cannot run the enum `ADD VALUE` in-transaction, use the same
    out-of-band procedure validated there — do not improvise on production).
-   Then run the step 3.C verification queries against production (expect 13
-   tables, 7 enums, `revoked_legacy = 0`, history through `0015`). Do **not**
+   Then run the step 3.C verification queries against production (expect 14
+   tables including `device_pairing_rate_limit`, 7 enums,
+   `revoked_legacy = 0`, history through `0016` / 17 rows). Do **not**
    hand-insert `__drizzle_migrations` rows (step 3.D).
 3. Set the Preview-proven env on **Production** (still leaving the Ed25519
    license key unset until the desktop client verifies it).
@@ -386,23 +402,20 @@ Do **not** start this section until steps 1–5 pass and a human approves.
 Only after all of the above is production considered done — and only if the
 panel generates a usable pairing code and the download passes its checksum.
 
-## Pre-production pending (must be resolved before production)
+## Pre-production hardening gates
 
-These are **known gaps** to close before the public launch of Studio Pro.
-They do not block Preview validation (step 1–5), but they **do** block a
-production go-live.
+These controls are implemented by migration `0016` and must pass the added
+Preview smoke checks before production approval. Until that validation is
+recorded, they still block production go-live.
 
-1. **Rate-limit the public pairing exchange.**
+1. **Rate-limit the public pairing exchange — implemented, Preview validation
+   pending.**
    `POST /api/v1/device-pairings/exchange` is unauthenticated (it accepts the
-   8-character pairing code) and currently has **no throttling**. That invites
-   brute-forcing the code space. Add per-IP and per-station rate limiting with
-   backoff (and consider a short lockout after repeated misses) before
-   production. The code TTL (10 min) and one-time use limit exposure, but are
-   not a substitute for rate limiting.
+   8-character pairing code). It now consumes atomic, persistent per-IP,
+   per-code and per-station buckets and returns `429` with progressive backoff.
+   Bucket identifiers are HMACs; client IPs and raw codes are never stored.
 
-2. **Purge expired pairing codes.**
-   `device_pairing_code` rows are **never deleted** — the `studio-licensing`
-   cron cleans challenges, output leases and license leases, but not pairing
-   codes. Expired/consumed rows accumulate indefinitely. Add a cleanup of
-   `device_pairing_code WHERE expires_at <= now()` (and consumed codes) to the
-   `studio-licensing` cron (or a dedicated job) before production.
+2. **Purge expired pairing codes — implemented, Preview validation pending.**
+   The `studio-licensing` cron now deletes all consumed or expired pairing
+   codes and rate-limit buckets inactive for 24 hours, and reports both counts
+   in its authenticated JSON result.

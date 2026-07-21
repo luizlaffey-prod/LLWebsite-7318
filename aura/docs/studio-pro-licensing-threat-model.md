@@ -100,7 +100,9 @@ revocation errors.
 
 ## Production gates
 
-- Add WAF/rate limits for pairing, refresh and challenge endpoints.
+- Keep the application-level persistent pairing limits enabled and add WAF
+  limits as defense in depth; add equivalent limits to refresh and challenge
+  endpoints before broad public rollout.
 - Reconcile Stripe subscriptions to AURA entitlements on a scheduled job; do
   not rely only on webhook delivery.
 - Alert on repeated invalid proofs, activation-slot conflicts, key reuse,
