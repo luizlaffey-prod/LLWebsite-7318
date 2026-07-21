@@ -37,6 +37,25 @@ export const audioStatusEnum = pgEnum('audio_status', [
 ]);
 export const voiceGenderEnum = pgEnum('voice_gender', ['male', 'female', 'neutral']);
 export const weatherFormatEnum = pgEnum('weather_format', ['separate', 'integrated']);
+// Written articles (web/newsroom feature). Lifecycle: a draft is generated,
+// the editor reviews/approves it, then it can be published to the station's
+// site. 'failed' covers generation errors.
+export const articleStatusEnum = pgEnum('article_status', [
+  'draft',
+  'approved',
+  'published',
+  'failed',
+]);
+// Where the article's lead image came from. 'source' = the originating news
+// outlet's own image (shown with credit); 'ai' = an AI-generated thematic
+// illustration (must be labeled as such, never presented as a real photo);
+// 'upload' = operator-provided; 'none' = text-only.
+export const articleImageSourceEnum = pgEnum('article_image_source', [
+  'source',
+  'ai',
+  'upload',
+  'none',
+]);
 // pgEnum keeps all four historical values for backwards compatibility with
 // rows written before the UI dropped 'state'/'city'. The app-level Zod and
 // TS types now restrict new writes to ['global', 'country'].
@@ -213,6 +232,12 @@ export interface EmotionBlock {
   duracaoSegundos: number;
 }
 
+/** One structural block of a written article body. */
+export interface ArticleBlock {
+  type: 'heading' | 'paragraph';
+  text: string;
+}
+
 export const generatedAudio = pgTable(
   'generated_audio',
   {
@@ -241,6 +266,51 @@ export const generatedAudio = pgTable(
   },
   (t) => ({
     userIdx: index('generated_audio_user_idx').on(t.userId, t.createdAt),
+  })
+);
+
+/**
+ * Written journalistic articles generated from the same news research that
+ * powers audio bulletins. The body is stored as an ordered array of blocks
+ * (heading / paragraph) so the editor can edit and re-order piece by piece,
+ * and so the WordPress/HTML publisher can render structure faithfully.
+ * `status` gates publication behind human approval (starts 'draft').
+ */
+export const article = pgTable(
+  'article',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    newsSearchId: uuid('news_search_id').references(() => newsSearch.id, {
+      onDelete: 'set null',
+    }),
+    title: text('title').notNull(),
+    // One-line standfirst / dek shown under the headline.
+    lede: text('lede'),
+    // Ordered content blocks: { type: 'heading'|'paragraph', text }.
+    body: jsonb('body').$type<ArticleBlock[]>().notNull(),
+    // Editor's working copy; when null the body above is authoritative.
+    editedBody: jsonb('edited_body').$type<ArticleBlock[]>(),
+    sourceName: text('source_name'),
+    sourceArticleUrl: text('source_article_url'),
+    imageUrl: text('image_url'),
+    imageSource: articleImageSourceEnum('image_source').notNull().default('none'),
+    imageCredit: text('image_credit'),
+    categories: jsonb('categories').$type<string[]>().notNull().default([]),
+    language: localeEnum('language').notNull(),
+    wordCount: integer('word_count').notNull().default(0),
+    status: articleStatusEnum('status').notNull().default('draft'),
+    errorMessage: text('error_message'),
+    // Set when the article is published to an external destination.
+    publishedUrl: text('published_url'),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index('article_user_idx').on(t.userId, t.createdAt),
   })
 );
 
@@ -298,6 +368,7 @@ export type MonthlyMusicUsage = typeof monthlyMusicUsage.$inferSelect;
 export type NewsSource = typeof newsSource.$inferSelect;
 export type NewsSearch = typeof newsSearch.$inferSelect;
 export type GeneratedAudio = typeof generatedAudio.$inferSelect;
+export type Article = typeof article.$inferSelect;
 export type Voice = typeof voice.$inferSelect;
 export type VoicePreference = typeof voicePreference.$inferSelect;
 

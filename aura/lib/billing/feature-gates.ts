@@ -63,6 +63,16 @@ export function canWhiteLabel(tier: PlanTier): boolean {
 }
 
 /**
+ * Whether a tier may generate written articles for web publishing (the
+ * newsroom feature). Pro-only at launch; a paid add-on for lower tiers
+ * is planned as a second wave, at which point this gate also consults
+ * an add-on flag.
+ */
+export function canWriteArticles(tier: PlanTier): boolean {
+  return tier === 'pro';
+}
+
+/**
  * Whether the operator may configure any automated delivery destination
  * (local folder sync, FTP, webhook, email, RSS feed share). Starter has
  * no automation so this is implicitly false; Standard and Pro both can,
