@@ -63,21 +63,62 @@ Goal: never test schema changes on production data.
 - Copy that branch's pooled connection string. It becomes the Preview
   `DATABASE_URL` (step 4). Do not paste it into this repo or into chat.
 
-## 3. Apply `0014` and `0015` to the Preview branch only
+## 3. Apply `0014` then `0015` to the Preview branch — transactionally
 
 Goal: migrate the isolated branch, not production.
 
-- With the **`preview-studio-pro` branch selected** in the Neon SQL Editor,
-  run the two files **in order**, each pasted in full:
-  1. `drizzle/0014_studio_pro_integration.sql`
-  2. `drizzle/0015_studio_pro_licensing.sql`
-- Both are idempotent (`DO $$ … EXCEPTION` / `IF NOT EXISTS`), so re-running
-  is safe.
-- ⚠️ `0015` revokes legacy devices lacking a P-256 identity. On a fresh
-  branch with no Studio devices this is a **no-op** — confirm the affected
-  row count is 0.
-- Verify all expected tables now exist on the branch (re-run the query from
-  step 1 against `preview-studio-pro`; expect all 13 present).
+**Do NOT treat these migrations as blindly repeatable.** The files carry
+`IF NOT EXISTS` / `DO $$ … EXCEPTION` guards, but those are a safety net, not
+a substitute for verification. Apply **each** migration inside an explicit
+transaction with a **preflight** and a **post-verification**; on any
+divergence from the expected state, `ROLLBACK` and stop.
+
+With the **`preview-studio-pro` branch selected** in the Neon SQL Editor, do
+the following for `0014` first, then repeat for `0015`:
+
+1. **Preflight** — confirm the migration hasn't already run (expect the
+   objects it creates to be absent):
+   ```sql
+   -- before 0014:
+   SELECT to_regclass('public.station')              AS station,
+          to_regclass('public.integration_content_request') AS content_req;
+   -- before 0015:
+   SELECT to_regclass('public.studio_license_lease') AS lease,
+          to_regclass('public.studio_entitlement')   AS entitlement;
+   ```
+   If anything is already non-NULL, **stop and reconcile** — do not re-run.
+
+2. **Apply in one transaction** (paste the full file body between the markers):
+   ```sql
+   BEGIN;
+   -- >>> full contents of drizzle/0014_studio_pro_integration.sql
+   -- <<<
+   -- Do NOT COMMIT yet — run the post-verification below in the same session.
+   ```
+
+3. **Post-verification** — run before committing:
+   ```sql
+   -- after 0014 — expect 6:
+   SELECT count(*) FROM information_schema.tables
+   WHERE table_schema='public' AND table_name IN
+     ('organization','station','station_device','device_pairing_code',
+      'integration_content_request','station_event');
+   -- after 0015 — expect 5, and legacy revocation must have touched nothing:
+   SELECT count(*) FROM information_schema.tables
+   WHERE table_schema='public' AND table_name IN
+     ('studio_entitlement','studio_license_challenge','studio_license_lease',
+      'studio_output_lease','studio_license_event');
+   SELECT count(*) AS revoked_legacy FROM station_device WHERE status='revoked';
+   ```
+
+4. **Decide**:
+   - All counts match (6 / 5) **and** `revoked_legacy = 0` → `COMMIT;`
+   - Any mismatch, or `0015` revoked a device on this fresh branch →
+     `ROLLBACK;` and **stop** to investigate before retrying.
+
+> ⚠️ `0015` revokes legacy devices lacking a P-256 identity. On a fresh
+> branch there are none, so `revoked_legacy` must be `0`; a non-zero value
+> means the branch wasn't as expected — roll back.
 
 ## 4. Configure secrets on Preview only
 
@@ -119,7 +160,32 @@ account. Base URL = the Preview deployment URL.
 10. **Download** the authenticated MP3; verify **bytes + SHA-256** match.
 11. Register at least one **`asset_validated`** event.
 12. **Revoke** the device; confirm its credentials stop working.
-13. Confirm the **crons** run: `integration-content` and `studio-licensing`.
+13. **Crons — Preview does NOT fire them automatically.** Vercel only runs the
+    `vercel.json` cron schedules on Production deployments, so on Preview you
+    must invoke both endpoints **manually**, authenticated with the Preview
+    `CRON_SECRET` (`GET` with `Authorization: Bearer <CRON_SECRET>`), and
+    record the JSON response **and** the Vercel function logs for each:
+    ```bash
+    curl -si "$PREVIEW/api/cron/integration-content" \
+      -H "Authorization: Bearer $CRON_SECRET"      # expect 200 {ran:true,...}
+    curl -si "$PREVIEW/api/cron/studio-licensing" \
+      -H "Authorization: Bearer $CRON_SECRET"      # expect 200 {cleanedAt,...}
+    ```
+    Then confirm the negative case — no/incorrect secret must return **`401`**,
+    never `200`:
+    ```bash
+    curl -si "$PREVIEW/api/cron/studio-licensing"  # expect 401
+    ```
+    Save both authenticated responses and the matching logs to the results
+    record.
+
+> **Before production (cron frequency):** `vercel.json` schedules
+> `integration-content` every 5 min and `studio-licensing` every 10 min.
+> Confirm the Vercel **plan on the production project actually permits those
+> frequencies** — cron granularity is plan-limited, and a plan that only
+> allows less-frequent (e.g. daily) crons will silently not run them at the
+> intended cadence. Verify this before promoting; if the plan is too limited,
+> either upgrade or adjust the schedules first.
 
 Also confirm the negative auth case:
 `GET <preview>/api/v1/device` **without** a bearer token returns JSON
@@ -137,15 +203,45 @@ pairing code in any permanent log.
 
 Do **not** start this section until steps 1–5 pass and a human approves.
 
+0. Confirm the Vercel production plan permits the 5-min / 10-min cron
+   frequencies (see the note in step 5). Resolve first if it doesn't.
 1. Create a **recoverable Neon backup/branch/snapshot** of the production
    branch; record its identifier.
-2. Apply `0014` then `0015` to the **production** branch (idempotent; confirm
-   `0015` legacy-revocation count is 0).
+2. Apply `0014` then `0015` to the **production** branch using the **same
+   transactional procedure as step 3** — per-migration `BEGIN` → preflight →
+   paste file body → post-verification → `COMMIT` only if the counts match and
+   `station_device` legacy-revocation count is `0`; otherwise `ROLLBACK` and
+   stop. Do not rely on the files' `IF NOT EXISTS` guards in place of the
+   checks.
 3. Set the Preview-proven env on **Production** (still leaving the Ed25519
    license key unset until the desktop client verifies it).
 4. Promote **the same validated commit** to Production.
-5. Post-promotion check: `GET https://www.aurapress.app/api/v1/device` with no
-   bearer returns JSON `401`.
+5. Post-promotion checks:
+   - `GET https://www.aurapress.app/api/v1/device` with no bearer → JSON `401`.
+   - Manually hit both `/api/cron/*` endpoints once with the production
+     `CRON_SECRET` and confirm `200`, then confirm the scheduled runs appear
+     in the Vercel cron logs at the expected cadence.
 
 Only after all of the above is production considered done — and only if the
 panel generates a usable pairing code and the download passes its checksum.
+
+## Pre-production pending (must be resolved before production)
+
+These are **known gaps** to close before the public launch of Studio Pro.
+They do not block Preview validation (step 1–5), but they **do** block a
+production go-live.
+
+1. **Rate-limit the public pairing exchange.**
+   `POST /api/v1/device-pairings/exchange` is unauthenticated (it accepts the
+   8-character pairing code) and currently has **no throttling**. That invites
+   brute-forcing the code space. Add per-IP and per-station rate limiting with
+   backoff (and consider a short lockout after repeated misses) before
+   production. The code TTL (10 min) and one-time use limit exposure, but are
+   not a substitute for rate limiting.
+
+2. **Purge expired pairing codes.**
+   `device_pairing_code` rows are **never deleted** — the `studio-licensing`
+   cron cleans challenges, output leases and license leases, but not pairing
+   codes. Expired/consumed rows accumulate indefinitely. Add a cleanup of
+   `device_pairing_code WHERE expires_at <= now()` (and consumed codes) to the
+   `studio-licensing` cron (or a dedicated job) before production.
