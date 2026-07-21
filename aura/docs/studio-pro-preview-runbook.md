@@ -432,6 +432,52 @@ Do **not** start this section until steps 1–5 pass and a human approves.
 Only after all of the above is production considered done — and only if the
 panel generates a usable pairing code and the download passes its checksum.
 
+### ✅ Production rollout record — 2026-07-21
+
+The owner explicitly approved the backup, `0012`→`0016` migration and
+promotion. The private Ed25519 license-signing key remained unset.
+
+- **Rollback point:** Neon branch
+  `prod-backup-pre-studio-pro-2026-07-21`
+  (`br-twilight-feather-akpv0dh9`), forked from production with no automatic
+  expiration.
+- **Production branch:** `br-crimson-mode-ak83hbxd`; the migration command was
+  protected by an endpoint allowlist before `drizzle-kit migrate` ran.
+- **Preflight:** Drizzle history had 4 rows (`0000`–`0003`), all 14 target
+  tables from `0012`–`0016` were absent, the guarded `0004`/`0007` objects and
+  `0006 local_folder` enum value were already present, and production held 4
+  users / 1,120 generated-audio rows.
+- **Post-migration:** 14 target tables, 7 Studio Pro enums,
+  `revoked_legacy = 0`, and 17 Drizzle history rows (`0000`–`0016`). The same
+  4 users / 1,120 generated-audio rows remained present.
+- **Secrets:** a new random `DEVICE_TOKEN_PEPPER` was stored as Sensitive and
+  scoped to Production only. Preview retains a different branch-scoped value.
+  The generated value and database connection were cleared from the local
+  clipboard; neither was logged or committed.
+- **Deployment:** validated commit `be1d79a` was rebuilt with Production env
+  and promoted as deployment `3qJRCYhokk3m8yZ4qNSdsnrA7df1`
+  (`aura-l50bykig3-aura-audio.vercel.app`), then aliased to
+  `www.aurapress.app`.
+
+| Production check | Result | Status |
+|---|---|---:|
+| `GET /api/v1/device` without bearer | JSON `invalid_device_token` | 401 |
+| Pairing exchange with an invalid schema | JSON `invalid_input` | 400 |
+| Licensing cron without authorization | JSON `unauthorized` | 401 |
+| Studio Pro settings page | Rendered authenticated panel | 200 |
+| Station bootstrap | Created `ADMIN` station and trial entitlement | 201 |
+| Authorized voices | Returned selectable voices | 200 |
+| Scheduled `integration-content` cron | Vercel Production log | 200 |
+| Scheduled `studio-licensing` cron | Vercel Production log | 200 |
+| Scheduled `automations` cron | Vercel Production log | 200 |
+| Vercel production errors during verification | Error count | 0 |
+
+The account currently has no default voice selected, so the panel correctly
+keeps **Generate pairing code** disabled. The deployment and scheduled jobs
+are live; final operator activation is to choose the desired default voice,
+generate a one-time code, pair the actual Studio Pro installation and verify
+one real AURA download checksum. Do not select a voice on the owner's behalf.
+
 ## Pre-production hardening gates
 
 These controls are implemented by migration `0016` and passed their isolated
