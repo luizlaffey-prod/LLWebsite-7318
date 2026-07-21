@@ -154,6 +154,19 @@ SELECT * FROM drizzle.__drizzle_migrations ORDER BY 1;  -- expect the same 4 row
 - Confirm `drizzle/meta/_journal.json` lists `0000`…`0015` in order with tags
   matching the `.sql` filenames (it does in this PR).
 
+> ### ✅ Preflight APPROVED — 2026-07-21 (branch `studio-pro-preview`)
+>
+> Run in the branch SQL Editor (breadcrumb `production / studio-pro-preview`).
+> Result matched expectations exactly:
+> - `drizzle.__drizzle_migrations` = **4 rows**, hashes match `0000`–`0003`.
+> - `0012`–`0015` tables = **[]** (none present).
+> - `0004`/`0007` objects present (`monthly_music_usage`, `signup_attempt`).
+> - `0006` enum value present (`m0006_localfolder = 1`) → re-apply is a no-op.
+> - Production confirmed untouched.
+>
+> The branch is cleared to run `drizzle-kit migrate` (see step 3.C
+> authorization).
+
 ### B. Re-appliability of `0004`–`0011` (all guarded; validate `0006`)
 
 `drizzle-kit migrate` will re-run `0004`–`0011` against a schema that already
@@ -182,13 +195,30 @@ has those objects. Each is written idempotently, so re-running is a no-op:
 
 ### C. Apply and verify
 
+> ### ✅ AUTHORIZED — `drizzle-kit migrate` on `studio-pro-preview` ONLY
+>
+> Preflight approved (step 3.A). This authorization is **scoped exclusively to
+> the `studio-pro-preview` branch (`br-crimson-hall-akvxaaxy`)**. It does
+> **not** authorize production, promotion, or any secret generation.
+>
+> Before running, re-confirm the connection safety check (host = branch
+> endpoint, not production). Then:
+> ```bash
+> # DATABASE_URL MUST be the studio-pro-preview branch string (verified in 3.A)
+> npx drizzle-kit migrate
+> ```
+> **Watch `0006`** as it runs (step 3.B): the `delivery_type` enum value
+> already exists, so it should be a no-op — but if migrate errors on the
+> `ALTER TYPE … ADD VALUE` inside a transaction, **stop and record it**; do not
+> force past it. Capture the full migrate stdout/stderr for the record.
+
 ```bash
 npx drizzle-kit migrate          # applies 0004→0015 on the BRANCH
 ```
 Then verify on the branch:
 
 ```sql
--- 0012–0015 objects now present — expect 8 tables:
+-- 0012–0015 objects now present — all 13 relevant tables should exist:
 SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
 AND table_name IN ('article','publishing_connection',
   'organization','station','station_device','device_pairing_code',
