@@ -62,7 +62,8 @@
       "copyright": "AURA — Automated Urban Radio Audio",
       "terms": "Terms",
       "privacy": "Privacy",
-      "contact": "Contact"
+      "contact": "Contact",
+      "help": "Help"
     }
   },
   "plans": {
@@ -223,7 +224,6 @@
     "cancel": "Cancel",
     "regenerate": "Regenerate audio",
     "regenerating": "Regenerating...",
-    "editBlock": "Edit block",
     "deleteBlock": "Delete block",
     "unsavedEditsHint": "You have unsaved script edits. Click \"Regenerate audio\" to re-synthesize the bulletin with your changes.",
     "download": "Download MP3",

@@ -10,6 +10,9 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 md:flex-row">
         <p className="text-xs text-text-muted">© {new Date().getFullYear()} {t('copyright')}</p>
         <nav className="flex items-center gap-6 text-xs text-text-secondary">
+          <Link href={`/${locale}/help`} className="hover:text-text-primary">
+            {t('help')}
+          </Link>
           <Link href={`/${locale}/terms`} className="hover:text-text-primary">
             {t('terms')}
           </Link>

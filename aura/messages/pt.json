@@ -62,7 +62,8 @@
       "copyright": "AURA — Áudio de Rádio Urbano Automatizado",
       "terms": "Termos",
       "privacy": "Privacidade",
-      "contact": "Contato"
+      "contact": "Contato",
+      "help": "Ajuda"
     }
   },
   "plans": {
@@ -223,7 +224,6 @@
     "cancel": "Cancelar",
     "regenerate": "Regenerar áudio",
     "regenerating": "Regenerando...",
-    "editBlock": "Editar bloco",
     "deleteBlock": "Excluir bloco",
     "unsavedEditsHint": "Você tem edições no roteiro que ainda não estão no áudio. Clique em \"Regenerar áudio\" pra refazer o boletim com as alterações.",
     "download": "Baixar MP3",
