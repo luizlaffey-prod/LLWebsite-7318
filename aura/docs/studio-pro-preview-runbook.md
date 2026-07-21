@@ -255,14 +255,14 @@ branch (it is disposable) before considering production.
 > clipboard. Cleared to proceed to step 4 (Preview env) and step 5 (smoke
 > tests). The `0006` handling is now **proven** for the eventual production run.
 
-> ### Hardening follow-up — migration `0016`
+> ### ✅ Hardening follow-up COMPLETE — migration `0016` (2026-07-21)
 >
 > The completion record above is the historical `0012`–`0015` validation.
-> Before the hardening Preview can be tested, run the same guarded
-> `drizzle-kit migrate` flow against **only** `studio-pro-preview`; it should
-> add `device_pairing_rate_limit` and bring the branch history to **17 rows
-> (`0000`–`0016`)**. Verify `to_regclass('public.device_pairing_rate_limit')`
-> is non-null. This follow-up does not authorize any production migration.
+> The same endpoint-guarded `drizzle-kit migrate` flow was run against **only**
+> `studio-pro-preview`. Migration `0016` added
+> `device_pairing_rate_limit`; `to_regclass(...)` was non-null and the Drizzle
+> history reached **17 rows (`0000`–`0016`)**. Production was not connected or
+> modified. This record does not authorize any production migration.
 
 ### D. Do NOT hand-baseline `__drizzle_migrations`
 
@@ -371,6 +371,36 @@ never generate.
 Record a results matrix (step → HTTP status → pass/fail). Do not put a real
 pairing code in any permanent log.
 
+### ✅ Pairing hardening Preview result — 2026-07-21
+
+Validated commit: `e5a49d1` (`studio-pro: make pairing retry window exact`).
+Vercel deployment: `aura-7icnh3wwp-aura-audio.vercel.app`, status **Ready**.
+The stable branch alias was also used for the authentication flow so its
+configured origin remained consistent.
+
+| Check | Result | Status |
+|---|---|---:|
+| Readiness: `GET /api/v1/device` without bearer | JSON `invalid_device_token` | 401 |
+| Signed P-256 pairing exchange | Device credentials issued | 201 |
+| Device profile with issued bearer | Profile returned | 200 |
+| Browser-session device revocation | Device revoked | 204 |
+| Reuse bearer after revocation | Token rejected | 401 |
+| Per-code fixed window | Attempts 1–6 reached validation; attempt 7 blocked | 400 × 6, then 429 |
+| Code `Retry-After` / cache policy | `599`, `Cache-Control: no-store` | pass |
+| Per-IP fixed window | Requests through total 20 reached validation; request 21 blocked | 400 through 20, then 429 |
+| IP `Retry-After` / cache policy | `595`, `Cache-Control: no-store` | pass |
+| Per-station atomic policy (isolated DB test) | Attempts 1–10 allowed; attempt 11 blocked, `Retry-After: 600` | pass |
+| Forged `X-Forwarded-For` on Vercel | Did not bypass the active IP bucket | 429 |
+| Licensing cron without authorization | Rejected | 401 |
+| Licensing cron with Preview test secret + isolated DB | Removed an expired code and a stale bucket; both reported in JSON | 200 |
+
+The final end-to-end run used a disposable beta account and never persisted a
+raw pairing code, password, cookie, access token or database connection in
+the test output. After validation, the isolated branch cleanup removed 16
+synthetic rate-limit buckets and 2 consumed/expired pairing codes; the rate
+bucket table was confirmed empty. The database connection was cleared from
+the clipboard. **Production remained untouched.**
+
 ## 6. Only after approval — production backup + migration
 
 Do **not** start this section until steps 1–5 pass and a human approves.
@@ -404,19 +434,19 @@ panel generates a usable pairing code and the download passes its checksum.
 
 ## Pre-production hardening gates
 
-These controls are implemented by migration `0016` and must pass the added
-Preview smoke checks before production approval. Until that validation is
-recorded, they still block production go-live.
+These controls are implemented by migration `0016` and passed their isolated
+Preview smoke checks on 2026-07-21. They no longer block the Preview beta.
+Production still requires the separate human approval, backup, migration and
+post-promotion checks in step 6.
 
-1. **Rate-limit the public pairing exchange — implemented, Preview validation
-   pending.**
+1. **Rate-limit the public pairing exchange — ✅ Preview validated.**
    `POST /api/v1/device-pairings/exchange` is unauthenticated (it accepts the
    8-character pairing code). It now consumes atomic, persistent per-IP,
    per-code and per-station buckets and returns `429` with an exact
    `Retry-After` through the end of the fixed window.
    Bucket identifiers are HMACs; client IPs and raw codes are never stored.
 
-2. **Purge expired pairing codes — implemented, Preview validation pending.**
+2. **Purge expired pairing codes — ✅ Preview validated.**
    The `studio-licensing` cron now deletes all consumed or expired pairing
    codes and rate-limit buckets inactive for 24 hours, and reports both counts
    in its authenticated JSON result.
