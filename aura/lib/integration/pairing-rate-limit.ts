@@ -60,7 +60,7 @@ export async function consumePairingRateLimit(
         WHEN "device_pairing_rate_limit"."window_started_at" <= ${windowCutoff}
           THEN NULL
         WHEN "device_pairing_rate_limit"."attempt_count" + 1 > ${policy.limit}
-          THEN ${now} + (
+          THEN ${now}::timestamptz + (
             LEAST(
               ${policy.maxBackoffSeconds}::double precision,
               ${policy.baseBackoffSeconds}::double precision * POWER(
