@@ -15,43 +15,76 @@ until explicitly approved.
   `studio-pro-licensing-threat-model.md`). Licensing stays inert; the lease
   endpoint returns `503 studio_license_signing_unavailable`, which is fine.
 
-Migrations introduced by this work (already renumbered to avoid colliding
-with `0012_articles` / `0013_publishing`):
+This PR introduces two migrations (renumbered to avoid colliding with the
+pre-existing `0012_articles` / `0013_publishing`):
 
 - `drizzle/0014_studio_pro_integration.sql`
 - `drizzle/0015_studio_pro_licensing.sql`
 
+**Production migration scope is `0012` → `0015`, not just `0014/0015`.** The
+read-only audit (step 1) found that `0012_articles` and `0013_publishing` are
+**also absent** from production — so the migration to bring production current
+must apply all of `0012, 0013, 0014, 0015`.
+
+> ### Production schema ↔ history divergence (must be respected)
+>
+> The audit found production's `drizzle.__drizzle_migrations` records **only
+> `0000`–`0003`**, yet the schema objects for `0004`–`0011` are already present
+> (`monthly_music_usage`, `signup_attempt`, `user.feed_token`,
+> `delivery_type.local_folder`, `automation_schedule.weather_city`,
+> `transition_effects`, `lead_time_minutes`), and the `0008` trial backfill has
+> no pending rows. In other words, `0004`–`0011` were applied **manually** and
+> never recorded in the Drizzle history. `0012`–`0015` and the Studio Pro enums
+> do **not** exist.
+>
+> Consequence: the official `drizzle-kit migrate` flow will re-encounter
+> `0004`–`0011` (which must be safely re-appliable — they are, see step 3) and
+> record them, then apply `0012`–`0015`. This is validated on an **isolated
+> branch first**. We do **not** hand-insert rows into `__drizzle_migrations`
+> to "baseline" the manual migrations without a full schema comparison first
+> (step 3, point D).
+
 ---
 
-## 1. Confirm the real migration history in Neon
+## 1. Confirm the real migration history in Neon — DONE (read-only)
 
-Goal: know exactly which migrations are already live before touching anything.
+A read-only audit of the **production** branch was completed. Findings:
 
-- In the **Neon Console → the production project → the production branch**,
-  open the SQL Editor and inspect what actually exists:
-  - List Studio Pro / articles tables to see what's already applied:
-    ```sql
-    SELECT table_name
-    FROM information_schema.tables
-    WHERE table_schema = 'public'
-      AND table_name IN (
-        'article','publishing_connection',
-        'organization','station','station_device','device_pairing_code',
-        'integration_content_request','station_event','studio_entitlement',
-        'studio_license_challenge','studio_license_lease','studio_output_lease',
-        'studio_license_event'
-      )
-    ORDER BY table_name;
-    ```
-  - If this project also tracks a Drizzle migrations table, check it:
-    ```sql
-    SELECT * FROM drizzle.__drizzle_migrations ORDER BY created_at;  -- if present
-    ```
-- Record the result. Expectation for the Studio Pro tables: **absent** on
-  production today. If any already exist, stop and reconcile before migrating.
+- `drizzle.__drizzle_migrations` exists but records **only 4 rows**, whose
+  hashes match migrations **`0000`–`0003`**.
+- Schema objects for **`0004`–`0011` are already present** (applied manually,
+  never recorded): `monthly_music_usage`, `signup_attempt`, `user.feed_token`,
+  `delivery_type` enum value `local_folder`, `automation_schedule.weather_city`,
+  `automation_schedule.transition_effects`, `automation_schedule.lead_time_minutes`.
+- The `0008` trial backfill has **no pending rows**.
+- **`0012`–`0015` tables do NOT exist**, and the Studio Pro enums do NOT exist.
 
-> Note: this project applies migrations **manually via the Neon SQL editor**,
-> not `drizzle-kit migrate`. `_journal.json` is documentation-level here.
+Conclusion: production has a **schema ↔ Drizzle-history divergence** caused by
+manual migrations. The forward plan (steps 2–5) validates, on an isolated
+branch, that the official Drizzle flow reconciles this cleanly before we ever
+touch production.
+
+The read-only queries used (safe to re-run — `SELECT` only):
+
+```sql
+-- (A) which relevant tables already exist
+SELECT table_name FROM information_schema.tables
+WHERE table_schema='public' AND table_name IN (
+  'article','publishing_connection','organization','organization_member',
+  'station','station_device','device_pairing_code','integration_content_request',
+  'station_event','studio_entitlement','studio_license_challenge',
+  'studio_license_lease','studio_output_lease','studio_license_event')
+ORDER BY table_name;
+-- (B) Studio Pro enums present?
+SELECT t.typname FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace
+WHERE n.nspname='public' AND t.typtype='e' AND t.typname IN (
+  'organization_role','station_device_status','integration_request_status',
+  'station_event_type','studio_entitlement_status','studio_license_lease_status',
+  'studio_license_challenge_purpose') ORDER BY 1;
+-- (C) recorded Drizzle history
+SELECT to_regclass('drizzle.__drizzle_migrations') AS meta;  -- non-null on prod
+SELECT * FROM drizzle.__drizzle_migrations ORDER BY 1;       -- expect 4 rows (0000–0003)
+```
 
 ## 2. Create an isolated database branch for Preview
 
@@ -63,62 +96,108 @@ Goal: never test schema changes on production data.
 - Copy that branch's pooled connection string. It becomes the Preview
   `DATABASE_URL` (step 4). Do not paste it into this repo or into chat.
 
-## 3. Apply `0014` then `0015` to the Preview branch — transactionally
+## 3. Run the official Drizzle flow up to `0015` on the isolated branch
 
-Goal: migrate the isolated branch, not production.
+Goal: bring the isolated branch to `0015` using **`drizzle-kit migrate`** (the
+official flow), not hand-pasted SQL — and prove it reconciles the divergence
+cleanly. Because production records only `0000`–`0003`, migrate will re-run
+`0004`–`0011` (already present in the schema), then apply `0012`–`0015`.
 
-**Do NOT treat these migrations as blindly repeatable.** The files carry
-`IF NOT EXISTS` / `DO $$ … EXCEPTION` guards, but those are a safety net, not
-a substitute for verification. Apply **each** migration inside an explicit
-transaction with a **preflight** and a **post-verification**; on any
-divergence from the expected state, `ROLLBACK` and stop.
+Run everything against the **branch** connection string from step 2 — never
+production:
 
-With the **`preview-studio-pro` branch selected** in the Neon SQL Editor, do
-the following for `0014` first, then repeat for `0015`:
+```bash
+# from aura/ — point drizzle at the ISOLATED branch, not production
+export DATABASE_URL='<preview-studio-pro branch connection string>'
+```
 
-1. **Preflight** — confirm the migration hasn't already run (expect the
-   objects it creates to be absent):
-   ```sql
-   -- before 0014:
-   SELECT to_regclass('public.station')              AS station,
-          to_regclass('public.integration_content_request') AS content_req;
-   -- before 0015:
-   SELECT to_regclass('public.studio_license_lease') AS lease,
-          to_regclass('public.studio_entitlement')   AS entitlement;
-   ```
-   If anything is already non-NULL, **stop and reconcile** — do not re-run.
+### A. Preflight — verify the history is what we expect, no hash drift
 
-2. **Apply in one transaction** (paste the full file body between the markers):
-   ```sql
-   BEGIN;
-   -- >>> full contents of drizzle/0014_studio_pro_integration.sql
-   -- <<<
-   -- Do NOT COMMIT yet — run the post-verification below in the same session.
-   ```
+`drizzle-kit migrate` (v0.30) has **no dry-run/plan mode** — the isolated
+branch *is* the dry run. Before applying, confirm the starting state with
+read-only SQL against the branch:
+```sql
+SELECT * FROM drizzle.__drizzle_migrations ORDER BY 1;  -- expect the same 4 rows (0000–0003)
+```
+- It is hash-based: for each `_journal.json` entry, migrate applies only those
+  whose hash isn't already recorded — so `0004`–`0015` will run, `0000`–`0003`
+  will be skipped. If the recorded hash of `0000`–`0003` no longer matches the
+  current `drizzle/0000_*`…`0003_*` files, migrate **errors on a hash
+  mismatch** — if so, **stop**: an early migration file was edited after being
+  applied, and that must be reconciled first.
+- Confirm `drizzle/meta/_journal.json` lists `0000`…`0015` in order with tags
+  matching the `.sql` filenames (it does in this PR).
 
-3. **Post-verification** — run before committing:
-   ```sql
-   -- after 0014 — expect 6:
-   SELECT count(*) FROM information_schema.tables
-   WHERE table_schema='public' AND table_name IN
-     ('organization','station','station_device','device_pairing_code',
-      'integration_content_request','station_event');
-   -- after 0015 — expect 5, and legacy revocation must have touched nothing:
-   SELECT count(*) FROM information_schema.tables
-   WHERE table_schema='public' AND table_name IN
-     ('studio_entitlement','studio_license_challenge','studio_license_lease',
-      'studio_output_lease','studio_license_event');
-   SELECT count(*) AS revoked_legacy FROM station_device WHERE status='revoked';
-   ```
+### B. Re-appliability of `0004`–`0011` (all guarded; validate `0006`)
 
-4. **Decide**:
-   - All counts match (6 / 5) **and** `revoked_legacy = 0` → `COMMIT;`
-   - Any mismatch, or `0015` revoked a device on this fresh branch →
-     `ROLLBACK;` and **stop** to investigate before retrying.
+`drizzle-kit migrate` will re-run `0004`–`0011` against a schema that already
+has those objects. Each is written idempotently, so re-running is a no-op:
 
-> ⚠️ `0015` revokes legacy devices lacking a P-256 identity. On a fresh
-> branch there are none, so `revoked_legacy` must be `0`; a non-zero value
-> means the branch wasn't as expected — roll back.
+| Migration | Operation | Re-runnable because |
+|---|---|---|
+| 0004 | `CREATE TABLE IF NOT EXISTS`, `CREATE UNIQUE INDEX IF NOT EXISTS` | guarded |
+| 0005 | `ADD COLUMN IF NOT EXISTS`, `CREATE UNIQUE INDEX IF NOT EXISTS` | guarded |
+| **0006** | **`ALTER TYPE "delivery_type" ADD VALUE IF NOT EXISTS 'local_folder'`** | value already exists → no-op |
+| 0007 | `CREATE TABLE/INDEX IF NOT EXISTS` | guarded |
+| 0008 | trial backfill `UPDATE` | no pending rows → no-op |
+| 0009–0011 | `ADD COLUMN IF NOT EXISTS` | guarded |
+
+> ⚠️ **Validate `0006` specifically.** `ALTER TYPE … ADD VALUE` **cannot run
+> inside a transaction block that later uses the value**, and Postgres historically
+> disallowed it in transactions entirely — which is why the file carries the
+> comment "requires ALTER TYPE … ADD VALUE outside of a transaction." Since
+> `local_folder` already exists on the branch, `ADD VALUE IF NOT EXISTS` is a
+> no-op and should pass. But `drizzle-kit migrate` wraps migrations in
+> transactions, so **watch this step**: if migrate errors on `0006`
+> (e.g. "ALTER TYPE ... ADD VALUE cannot run inside a transaction block"),
+> stop and record it — it may need to be applied out-of-band and marked
+> applied, and the same handling must be planned for production. Do not force
+> past it.
+
+### C. Apply and verify
+
+```bash
+npx drizzle-kit migrate          # applies 0004→0015 on the BRANCH
+```
+Then verify on the branch:
+
+```sql
+-- 0012–0015 objects now present — expect 8 tables:
+SELECT count(*) FROM information_schema.tables WHERE table_schema='public'
+AND table_name IN ('article','publishing_connection',
+  'organization','station','station_device','device_pairing_code',
+  'integration_content_request','station_event','studio_entitlement',
+  'studio_license_challenge','studio_license_lease','studio_output_lease',
+  'studio_license_event');                         -- expect 13 total
+-- Studio Pro enums present — expect 7:
+SELECT count(*) FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace
+WHERE n.nspname='public' AND t.typtype='e' AND t.typname IN (
+  'organization_role','station_device_status','integration_request_status',
+  'station_event_type','studio_entitlement_status','studio_license_lease_status',
+  'studio_license_challenge_purpose');
+-- 0015 legacy-device revocation must have touched nothing on a fresh branch:
+SELECT count(*) AS revoked_legacy FROM station_device WHERE status='revoked';  -- expect 0
+-- Drizzle history now records through 0015:
+SELECT count(*) FROM drizzle.__drizzle_migrations;   -- expect 16 (0000–0015)
+```
+If any count is off, or migrate errored, **stop** and investigate on the
+branch (it is disposable) before considering production.
+
+### D. Do NOT hand-baseline `__drizzle_migrations`
+
+An alternative would be to skip re-running `0004`–`0011` by manually inserting
+their hashes into `drizzle.__drizzle_migrations` ("baselining"). **Do not do
+this** without first proving the live schema is byte-for-byte what those
+migrations produce. If you ever consider it, first compare **tables, columns,
+indexes, constraints and defaults** between the isolated branch (after a clean
+migrate) and production — e.g. dump and diff:
+```bash
+pg_dump --schema-only --no-owner "$BRANCH_URL" > branch.sql
+pg_dump --schema-only --no-owner "$PROD_URL"   > prod.sql
+diff -u prod.sql branch.sql            # must be understood line-by-line
+```
+Only an empty/explained diff justifies baselining. The default and safer path
+is letting migrate re-run the guarded `0004`–`0011` as no-ops.
 
 ## 4. Configure secrets on Preview only
 
@@ -207,12 +286,16 @@ Do **not** start this section until steps 1–5 pass and a human approves.
    frequencies (see the note in step 5). Resolve first if it doesn't.
 1. Create a **recoverable Neon backup/branch/snapshot** of the production
    branch; record its identifier.
-2. Apply `0014` then `0015` to the **production** branch using the **same
-   transactional procedure as step 3** — per-migration `BEGIN` → preflight →
-   paste file body → post-verification → `COMMIT` only if the counts match and
-   `station_device` legacy-revocation count is `0`; otherwise `ROLLBACK` and
-   stop. Do not rely on the files' `IF NOT EXISTS` guards in place of the
-   checks.
+2. Bring production current with the **same official Drizzle flow proven on
+   the branch in step 3** — `drizzle-kit migrate` against production, which
+   re-runs the guarded `0004`–`0011` as no-ops and applies `0012`–`0015`
+   (scope is `0012`→`0015`, since articles/publishing are also absent). Apply
+   the exact `0006` handling that step 3.B established on the branch (if
+   migrate cannot run the enum `ADD VALUE` in-transaction, use the same
+   out-of-band procedure validated there — do not improvise on production).
+   Then run the step 3.C verification queries against production (expect 13
+   tables, 7 enums, `revoked_legacy = 0`, history through `0015`). Do **not**
+   hand-insert `__drizzle_migrations` rows (step 3.D).
 3. Set the Preview-proven env on **Production** (still leaving the Ed25519
    license key unset until the desktop client verifies it).
 4. Promote **the same validated commit** to Production.
