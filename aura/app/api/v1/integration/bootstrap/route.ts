@@ -10,6 +10,11 @@ import {
 } from '@/lib/db/schema';
 import { StationBootstrapSchema, slugify } from '@/lib/integration/contracts';
 import { ensureStudioEntitlement } from '@/lib/integration/licensing';
+import { resolveAuthorizedVoice } from '@/lib/integration/voice-authorization';
+import {
+  integrationErrorResponse,
+  IntegrationHttpError,
+} from '@/lib/integration/authorization';
 
 export const runtime = 'nodejs';
 
@@ -83,6 +88,18 @@ export async function POST(req: Request) {
       userId: session.user.id,
       role: 'owner',
     });
+  }
+
+  // Authorize a caller-supplied default voice against this organization
+  // before pinning it to the station — never accept a voice owned outside
+  // the org, even at bootstrap.
+  if (parsed.data.defaultVoiceId) {
+    try {
+      await resolveAuthorizedVoice(parsed.data.defaultVoiceId, org.id);
+    } catch (error) {
+      if (error instanceof IntegrationHttpError) return integrationErrorResponse(error);
+      throw error;
+    }
   }
 
   const [createdStation] = await db

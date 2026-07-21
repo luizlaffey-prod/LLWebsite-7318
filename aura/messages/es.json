@@ -861,9 +861,9 @@
     "error_device_activation_limit_reached": "Alcanzaste el límite de dispositivos. Revoca uno primero.",
     "error_studio_license_inactive": "Tu licencia de Studio Pro no está activa. Revisa tu suscripción.",
     "error_station_not_found": "Emisora no encontrada, o no tienes permiso.",
-    "error_invalid_default_voice": "Esa voz no está disponible. Elige otra.",
     "error_forbidden": "Solo el propietario de la emisora o un admin puede hacer esto.",
     "error_unauthorized": "Inicia sesión de nuevo.",
-    "error_unknown": "Algo salió mal. Inténtalo de nuevo."
+    "error_unknown": "Algo salió mal. Inténtalo de nuevo.",
+    "error_voice_not_authorized": "Esa voz no está disponible para tu emisora. Elige una voz del catálogo o una tuya."
   }
 }

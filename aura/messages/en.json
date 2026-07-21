@@ -861,9 +861,9 @@
     "error_device_activation_limit_reached": "You've reached your device limit. Revoke a device first.",
     "error_studio_license_inactive": "Your Studio Pro license isn't active. Check your subscription.",
     "error_station_not_found": "Station not found, or you don't have permission.",
-    "error_invalid_default_voice": "That voice isn't available. Pick another.",
     "error_forbidden": "Only the station owner or an admin can do this.",
     "error_unauthorized": "Please sign in again.",
-    "error_unknown": "Something went wrong. Please try again."
+    "error_unknown": "Something went wrong. Please try again.",
+    "error_voice_not_authorized": "That voice isn't available to your station. Pick a catalog voice or one of your own."
   }
 }

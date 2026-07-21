@@ -861,9 +861,9 @@
     "error_device_activation_limit_reached": "Você atingiu o limite de dispositivos. Revogue um primeiro.",
     "error_studio_license_inactive": "Sua licença do Estúdio Pro não está ativa. Verifique a assinatura.",
     "error_station_not_found": "Estação não encontrada, ou você não tem permissão.",
-    "error_invalid_default_voice": "Essa voz não está disponível. Escolha outra.",
     "error_forbidden": "Só o dono da estação ou um admin pode fazer isso.",
     "error_unauthorized": "Faça login novamente.",
-    "error_unknown": "Algo deu errado. Tente novamente."
+    "error_unknown": "Algo deu errado. Tente novamente.",
+    "error_voice_not_authorized": "Essa voz não está disponível para a sua estação. Escolha uma voz do catálogo ou uma sua."
   }
 }

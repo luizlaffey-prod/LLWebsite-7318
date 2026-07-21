@@ -7,9 +7,9 @@ import {
   integrationContentRequest,
   organization,
   station,
-  voice as voiceTable,
   type IntegrationSourceReference,
 } from '@/lib/db/schema';
+import { resolveAuthorizedVoice } from '@/lib/integration/voice-authorization';
 import { getQuota, incrementUsage } from '@/lib/billing/quota';
 import {
   canRequestDuration,
@@ -88,12 +88,15 @@ export async function processContentRequest(requestId: string): Promise<void> {
 
     const voiceId = input.voiceId ?? context.station.defaultVoiceId;
     if (!voiceId) throw new ContentProcessingError('no_voice_configured');
-    const [chosenVoice] = await db
-      .select()
-      .from(voiceTable)
-      .where(eq(voiceTable.id, voiceId))
-      .limit(1);
-    if (!chosenVoice) throw new ContentProcessingError('voice_not_found');
+    // Authorize the voice against the *station's organization*, not just the
+    // tier — a device must never synthesize with a voice owned outside its
+    // own organization, whichever voiceId it supplies.
+    let chosenVoice;
+    try {
+      chosenVoice = await resolveAuthorizedVoice(voiceId, context.organization.id);
+    } catch {
+      throw new ContentProcessingError('voice_not_authorized');
+    }
     if (!canUseVoice(quota.tier, chosenVoice)) {
       throw new ContentProcessingError('voice_not_allowed');
     }

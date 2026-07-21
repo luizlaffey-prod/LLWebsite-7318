@@ -1,13 +1,13 @@
-import { and, eq, isNull, or } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { station, voice } from '@/lib/db/schema';
+import { station } from '@/lib/db/schema';
 import {
   integrationErrorResponse,
   requireStationMember,
-  IntegrationHttpError,
 } from '@/lib/integration/authorization';
+import { resolveAuthorizedVoice } from '@/lib/integration/voice-authorization';
 
 export const runtime = 'nodejs';
 
@@ -52,7 +52,10 @@ export async function PATCH(
       return Response.json({ error: 'unauthorized' }, { status: 401 });
     }
     const { stationId } = await ctx.params;
-    await requireStationMember(stationId, session.user.id, ['owner', 'admin']);
+    const member = await requireStationMember(stationId, session.user.id, [
+      'owner',
+      'admin',
+    ]);
 
     const body = await req.json().catch(() => ({}));
     const parsed = StationUpdateSchema.safeParse(body);
@@ -63,23 +66,13 @@ export async function PATCH(
       );
     }
 
-    // Validate the voice belongs to the catalog or to this user before
-    // pinning it — never let a station point at someone else's cloned voice.
+    // Authorize the voice against the station's organization before pinning
+    // it — never let a station point at a voice owned outside the org.
     if (parsed.data.defaultVoiceId) {
-      const [v] = await db
-        .select({ id: voice.id })
-        .from(voice)
-        .where(
-          and(
-            eq(voice.id, parsed.data.defaultVoiceId),
-            eq(voice.enabled, true),
-            or(isNull(voice.ownerUserId), eq(voice.ownerUserId, session.user.id))
-          )
-        )
-        .limit(1);
-      if (!v) {
-        throw new IntegrationHttpError(400, 'invalid_default_voice');
-      }
+      await resolveAuthorizedVoice(
+        parsed.data.defaultVoiceId,
+        member.organization.id
+      );
     }
 
     const update: Partial<typeof station.$inferInsert> = { updatedAt: new Date() };

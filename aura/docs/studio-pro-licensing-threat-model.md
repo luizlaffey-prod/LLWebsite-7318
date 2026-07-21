@@ -3,6 +3,29 @@
 Status: server foundation implemented; desktop enforcement and production key
 ceremony remain required before launch.
 
+> ## ⚠️ Implementation status (2026-07) — licensing NOT yet enforced
+>
+> The Ed25519 offline-licensing scheme described below is **implemented on the
+> server only**. The Studio Pro **desktop client does not yet verify license
+> leases or signatures** — there is currently no client-side enforcement path.
+>
+> Consequences for operations, until the desktop client ships verification:
+>
+> - **Do NOT generate or install the production `STUDIO_LICENSE_PRIVATE_KEY`.**
+>   Creating and deploying it now would imply an active protection that does
+>   not exist. Leave it unset.
+> - With the key unset, `POST /api/v1/stations/{stationId}/license` (lease
+>   issuance) returns `503 studio_license_signing_unavailable`. That is the
+>   **correct, safe state for now** — device pairing, content requests and
+>   authenticated downloads all work without it; only the offline-license
+>   feature is inert.
+> - The private-key ceremony (generate outside the repo → store only as a
+>   Vercel secret → hand the public key + `keyId` to the desktop team) must be
+>   done **together with** the client change that consumes it, not before.
+>
+> This banner should be removed only once the desktop client verifies signed
+> leases end-to-end.
+
 ## Security objective
 
 No desktop application can make piracy mathematically impossible after an
