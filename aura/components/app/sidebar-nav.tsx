@@ -13,6 +13,7 @@ import {
   LogOut,
   MessageSquare,
   BookOpen,
+  Newspaper,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth/client';
@@ -34,6 +35,7 @@ export interface SidebarNavProps {
 const ITEMS = [
   { key: 'news', icon: Search, href: '/news' },
   { key: 'audios', icon: Headphones, href: '/audios' },
+  { key: 'articles', icon: Newspaper, href: '/articles' },
   { key: 'voices', icon: Mic, href: '/voices' },
   { key: 'automations', icon: CalendarClock, href: '/automations' },
   { key: 'analytics', icon: BarChart3, href: '/analytics' },
