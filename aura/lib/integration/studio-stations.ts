@@ -9,6 +9,7 @@ import {
 } from '@/lib/db/schema';
 import { ensureStudioEntitlement } from '@/lib/integration/licensing';
 import { slugify } from '@/lib/integration/contracts';
+import { studioBootstrapOrgSlug } from '@/lib/integration/studio-bootstrap';
 
 export interface ManageableStation {
   organizationId: string;
@@ -68,22 +69,34 @@ export async function getOrCreateManageableStations(
   const fallback = account?.radioName || account?.name || 'My station';
 
   // Idempotent bootstrap. neon-http has no interactive transactions, so each
-  // step is made concurrency-safe by an existing unique constraint: a
-  // deterministic per-user org slug + ON CONFLICT means two concurrent loads
-  // converge on the SAME organization (never a duplicate org or trial), the
-  // membership is unique per (org, user), and the trial entitlement is unique
-  // per org via ensureStudioEntitlement's ON CONFLICT.
-  const orgSlug = `studio-${slugify(userId)}`.slice(0, 64);
+  // step is made concurrency-safe by an existing unique constraint.
+  //
+  // The organization identity is a COLLISION-RESISTANT hash of the user id
+  // (not a human/name-derived slug), so two different users can never map to
+  // the same tenant. ON CONFLICT means concurrent loads converge on the SAME
+  // organization. We then VERIFY ownership: if the slug somehow already
+  // belongs to another billing user, we refuse rather than attach this user
+  // as an owner of someone else's organization.
+  const orgSlug = studioBootstrapOrgSlug(userId);
   await db
     .insert(organization)
     .values({ name: fallback, slug: orgSlug, billingUserId: userId })
     .onConflictDoNothing({ target: organization.slug });
   const [org] = await db
-    .select({ id: organization.id, name: organization.name })
+    .select({
+      id: organization.id,
+      name: organization.name,
+      billingUserId: organization.billingUserId,
+    })
     .from(organization)
     .where(eq(organization.slug, orgSlug))
     .limit(1);
   if (!org) throw new Error('studio_bootstrap_failed');
+  if (org.billingUserId !== userId) {
+    // Cross-tenant safety net — never grant membership/entitlement on an org
+    // owned by a different account.
+    throw new Error('studio_bootstrap_org_conflict');
+  }
 
   await db
     .insert(organizationMember)
@@ -94,25 +107,20 @@ export async function getOrCreateManageableStations(
 
   await ensureStudioEntitlement(org.id);
 
-  // Create the default station only if the org has none yet. (The org is now
-  // shared across concurrent loads, so this check-then-insert is a very narrow
-  // window — a rooted follow-up is a unique index on station(organization_id)
-  // for the default station; not added here to avoid touching existing prod
-  // station rows.)
-  const [existingStation] = await db
-    .select({ id: station.id })
-    .from(station)
-    .where(eq(station.organizationId, org.id))
-    .limit(1);
-  if (!existingStation) {
-    await db.insert(station).values({
+  // Default station: deterministic slug + ON CONFLICT on the existing unique
+  // (organization_id, slug) index makes this fully idempotent — both
+  // concurrent requests converge on one station, no SELECT→INSERT race.
+  const stationSlug = slugify(fallback);
+  await db
+    .insert(station)
+    .values({
       organizationId: org.id,
       name: fallback,
-      slug: slugify(fallback),
+      slug: stationSlug,
       timezone: account?.timezone ?? 'UTC',
       defaultLanguage: account?.locale ?? 'en',
-    });
-  }
+    })
+    .onConflictDoNothing({ target: [station.organizationId, station.slug] });
 
   return getManageableStations(userId);
 }
