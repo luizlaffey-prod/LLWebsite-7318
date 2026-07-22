@@ -4,6 +4,7 @@ import {
 } from '@/lib/integration/contracts';
 import { deviceKeyFingerprint } from '@/lib/integration/license-crypto';
 import {
+  canonicalizeRedirectUri,
   isValidCodeChallenge,
   isValidLoopbackRedirectUri,
   STUDIO_PRO_CLIENT_ID,
@@ -18,6 +19,11 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const CONSENT_LOCALES = ['en', 'pt', 'es'] as const;
+
+// Bumped whenever this route's redirect handling changes, and returned as a
+// response header so a deployed bundle can be identified unambiguously (rules
+// out a stale build/cache when diagnosing).
+const POLICY_VERSION = 'redirect-v4-canonical';
 
 /**
  * OAuth authorize entry point the desktop opens in the system browser. It
@@ -49,10 +55,17 @@ export async function GET(req: Request) {
     if (p.client_id !== STUDIO_PRO_CLIENT_ID) {
       return errorPage('invalid_client', 'Unknown client.');
     }
-    if (!isValidLoopbackRedirectUri(p.redirect_uri)) {
+    // Canonicalize first: some proxy/runtime paths deliver the query value
+    // still percent-encoded. The strict loopback check is applied to the
+    // canonical form, and the canonical form is what we forward downstream.
+    const redirectUri = canonicalizeRedirectUri(p.redirect_uri);
+    if (!isValidLoopbackRedirectUri(redirectUri)) {
       return errorPage(
         'invalid_redirect_uri',
-        'The redirect URI is not an allowed loopback callback.'
+        'The redirect URI is not an allowed loopback callback.',
+        // Safe echo (the redirect URI is a public, client-supplied loopback
+        // address — never a secret) so the deployed value can be inspected.
+        `received=${JSON.stringify(p.redirect_uri)} len=${p.redirect_uri.length} canonical=${JSON.stringify(redirectUri)}`
       );
     }
     if (!isValidCodeChallenge(p.code_challenge)) {
@@ -81,7 +94,7 @@ export async function GET(req: Request) {
 
     const forward = new URLSearchParams({
       client_id: p.client_id,
-      redirect_uri: p.redirect_uri,
+      redirect_uri: redirectUri,
       state: p.state,
       code_challenge: p.code_challenge,
       code_challenge_method: p.code_challenge_method,
@@ -95,30 +108,39 @@ export async function GET(req: Request) {
 
     const dest = new URL(`/${locale}/studio-connect`, url.origin);
     dest.search = forward.toString();
-    return Response.redirect(dest.toString(), 302);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: dest.toString(),
+        'Cache-Control': 'no-store',
+        'X-Studio-Auth-Policy': POLICY_VERSION,
+      },
+    });
   } catch (error) {
     return integrationErrorResponse(error);
   }
 }
 
-function errorPage(code: string, message: string): Response {
+function errorPage(code: string, message: string, debug?: string): Response {
   const esc = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const debugHtml = debug ? `<p><code>${esc(debug)}</code></p>` : '';
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sign in with AURA</title>
 <style>body{font-family:system-ui,sans-serif;background:#06080F;color:#e8eaf0;
 display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
-.card{max-width:28rem;padding:2rem;text-align:center}
-code{color:#00E5C8}</style></head>
+.card{max-width:32rem;padding:2rem;text-align:center}
+code{color:#00E5C8;word-break:break-all}</style></head>
 <body><div class="card"><h1>Couldn't start sign-in</h1>
-<p>${esc(message)}</p><p><code>${esc(code)}</code></p>
+<p>${esc(message)}</p><p><code>${esc(code)}</code></p>${debugHtml}
 <p>Close this window and try again from Studio Pro.</p></div></body></html>`;
   return new Response(html, {
     status: 400,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-store',
+      'X-Studio-Auth-Policy': POLICY_VERSION,
     },
   });
 }

@@ -105,7 +105,15 @@ async function main() {
   {
     const r = await fetch(authorizeUrl(), { redirect: 'manual' });
     const loc = r.headers.get('location') || '';
-    record('authorize valid → 302 to /studio-connect', r.status === 302 && /\/studio-connect/.test(loc), `HTTP ${r.status} → ${loc.slice(0, 60)}`);
+    const policy = r.headers.get('x-studio-auth-policy') || '?';
+    const ok = r.status === 302 && /\/studio-connect/.test(loc);
+    let detail = `HTTP ${r.status} policy=${policy} → ${loc.slice(0, 60)}`;
+    if (!ok) {
+      // Surface the deployed error so the received redirect_uri can be inspected.
+      const body = await r.text().catch(() => '');
+      detail += ` body=${body.replace(/\s+/g, ' ').slice(0, 400)}`;
+    }
+    record('authorize valid → 302 to /studio-connect', ok, detail);
   }
 
   // 4. token — malformed body → 400 invalid_request.

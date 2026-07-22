@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { randomBytes } from 'node:crypto';
 import {
   AUTH_CODE_TTL_MS,
+  canonicalizeRedirectUri,
   isValidCodeChallenge,
   isValidCodeVerifier,
   isValidLoopbackRedirectUri,
@@ -66,6 +67,31 @@ describe('Studio Pro OAuth — loopback redirect URI (strict)', () => {
     ]) {
       expect(isValidLoopbackRedirectUri(bad), bad).toBe(false);
     }
+  });
+});
+
+describe('Studio Pro OAuth — redirect canonicalization', () => {
+  const valid = 'http://127.0.0.1:49721/aura/callback';
+
+  it('is a no-op for an already-clean loopback URI', () => {
+    expect(canonicalizeRedirectUri(valid)).toBe(valid);
+    expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(valid))).toBe(true);
+  });
+
+  it('decodes a percent-encoded value so validation still accepts it', () => {
+    const once = encodeURIComponent(valid); // http%3A%2F%2F127.0.0.1%3A49721...
+    const twice = encodeURIComponent(once); // doubly encoded
+    expect(canonicalizeRedirectUri(once)).toBe(valid);
+    expect(canonicalizeRedirectUri(twice)).toBe(valid);
+    expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(once))).toBe(true);
+    expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(twice))).toBe(true);
+  });
+
+  it('cannot widen acceptance — a decoded external URL still fails', () => {
+    const externalEncoded = encodeURIComponent('http://evil.com/aura/callback');
+    expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(externalEncoded))).toBe(
+      false
+    );
   });
 });
 

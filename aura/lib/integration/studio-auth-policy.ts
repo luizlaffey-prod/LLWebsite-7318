@@ -85,6 +85,30 @@ export function isValidLoopbackRedirectUri(uri: unknown): uri is string {
 }
 
 /**
+ * Canonicalizes a redirect_uri that may still be percent-encoded when it
+ * reaches the route (some proxy/runtime combinations deliver the query value
+ * still or doubly encoded, e.g. `http%3A%2F%2F127.0.0.1%3A...`). Decodes up to
+ * two passes, stopping when stable or when there's nothing left to decode.
+ * Validation stays the strict regex above, so canonicalizing cannot widen what
+ * is accepted — a decoded external URL still fails the loopback check.
+ */
+export function canonicalizeRedirectUri(raw: string): string {
+  let v = raw;
+  for (let i = 0; i < 2; i += 1) {
+    if (!v.includes('%')) break;
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(v);
+    } catch {
+      break;
+    }
+    if (decoded === v) break;
+    v = decoded;
+  }
+  return v;
+}
+
+/**
  * The message the desktop signs (P-256/ES256) at the token step to prove it
  * holds the private key matching the public key bound to the grant. Binding
  * the client id, redirect URI, code and device fingerprint stops a stolen
