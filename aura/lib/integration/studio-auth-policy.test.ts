@@ -93,6 +93,39 @@ describe('Studio Pro OAuth — redirect canonicalization', () => {
       false
     );
   });
+
+  it('rewrites the exact localhost alias to the numeric loopback', () => {
+    // Platform substitutes 127.0.0.1 → localhost before the route sees it.
+    for (const port of ['1', '49152', '49721', '65535']) {
+      const alias = `http://localhost:${port}/aura/callback`;
+      const canonical = canonicalizeRedirectUri(alias);
+      expect(canonical).toBe(`http://127.0.0.1:${port}/aura/callback`);
+      expect(isValidLoopbackRedirectUri(canonical)).toBe(true);
+    }
+    // …even when the alias arrives percent-encoded.
+    expect(
+      canonicalizeRedirectUri(encodeURIComponent('http://localhost:49721/aura/callback'))
+    ).toBe('http://127.0.0.1:49721/aura/callback');
+  });
+
+  it('does NOT rewrite localhost look-alikes or out-of-range ports', () => {
+    for (const notAlias of [
+      'http://localhost.evil.com:49721/aura/callback',
+      'http://localhost:49721@evil.com/aura/callback',
+      'http://user:pass@localhost:49721/aura/callback',
+      'https://localhost:49721/aura/callback',
+      'http://localhost:0/aura/callback',
+      'http://localhost:99999/aura/callback',
+      'http://localhost:49721/evil',
+      'http://localhost:49721/aura/callback?x=1',
+    ]) {
+      // Either passes through unchanged or (for the bad-port cases) stays
+      // localhost — in all cases the strict numeric check then rejects it.
+      expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(notAlias)), notAlias).toBe(
+        false
+      );
+    }
+  });
 });
 
 describe('Studio Pro OAuth — device proof binding', () => {

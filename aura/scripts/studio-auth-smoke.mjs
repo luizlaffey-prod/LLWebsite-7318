@@ -88,8 +88,14 @@ async function main() {
   }
 
   // 2. authorize — invalid redirect URIs → 400, no redirect.
+  // NB: a plain `http://localhost:{port}/aura/callback` is intentionally NOT
+  // here — the platform may substitute the legitimate numeric loopback with
+  // `localhost`, so it is accepted and canonicalized back to 127.0.0.1. Only
+  // look-alikes are rejected.
   for (const bad of [
-    'http://localhost:49721/aura/callback',
+    'http://localhost.evil.com:49721/aura/callback',
+    'http://user:pass@localhost:49721/aura/callback',
+    'http://localhost:0/aura/callback',
     'http://[::1]:49721/aura/callback',
     'https://127.0.0.1:49721/aura/callback',
     'http://127.0.0.1:49721/evil',

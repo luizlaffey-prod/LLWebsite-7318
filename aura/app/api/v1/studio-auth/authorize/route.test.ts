@@ -50,9 +50,27 @@ describe('GET /api/v1/studio-auth/authorize (route boundary)', () => {
     }
   });
 
+  it('accepts the exact localhost alias and redirects to the NUMERIC loopback', async () => {
+    // Simulates the platform substituting 127.0.0.1 → localhost. The 302
+    // Location must carry the encoded numeric callback and never `localhost`.
+    const res = await GET(
+      buildRequest({ redirect_uri: 'http://localhost:49721/aura/callback' })
+    );
+    expect(res.status).toBe(302);
+    const loc = res.headers.get('location') ?? '';
+    expect(loc).toContain('%2F%2F127.0.0.1%3A49721%2Faura%2Fcallback');
+    expect(loc).not.toContain('localhost');
+  });
+
   it('keeps the rejection matrix intact (400, no redirect)', async () => {
     const bad = [
-      'http://localhost:49721/aura/callback',
+      // NB: a plain `http://localhost:{port}/aura/callback` is now accepted and
+      // canonicalized to the numeric form (see the test above) — it is no
+      // longer in the reject matrix. Look-alikes must still be rejected:
+      'http://localhost.evil.com:49721/aura/callback',
+      'http://user:pass@localhost:49721/aura/callback',
+      'http://localhost:0/aura/callback', // port 0
+      'http://localhost:99999/aura/callback', // out of range
       'http://[::1]:49721/aura/callback',
       'https://127.0.0.1:49721/aura/callback',
       'http://127.0.0.1/aura/callback', // missing port

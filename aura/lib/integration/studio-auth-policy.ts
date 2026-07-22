@@ -84,13 +84,28 @@ export function isValidLoopbackRedirectUri(uri: unknown): uri is string {
   return port >= 1 && port <= 65535;
 }
 
+// The exact `localhost` alias of the loopback callback. Some deployment
+// runtimes substitute the numeric loopback host `127.0.0.1` with `localhost`
+// in the query value before the route sees it, so a legitimate numeric request
+// is observed as this alias. Only this EXACT shape is accepted (anchored, same
+// port rules) — `localhost.evil`, credentials, IPv6, https, alternate paths,
+// query and fragments never match.
+const LOCALHOST_ALIAS_RE =
+  /^http:\/\/localhost:([1-9][0-9]{0,4})\/aura\/callback$/;
+
 /**
- * Canonicalizes a redirect_uri that may still be percent-encoded when it
- * reaches the route (some proxy/runtime combinations deliver the query value
- * still or doubly encoded, e.g. `http%3A%2F%2F127.0.0.1%3A...`). Decodes up to
- * two passes, stopping when stable or when there's nothing left to decode.
- * Validation stays the strict regex above, so canonicalizing cannot widen what
- * is accepted — a decoded external URL still fails the loopback check.
+ * Canonicalizes a redirect_uri before validation so the strict numeric
+ * loopback check accepts the real request regardless of platform quirks:
+ *  1. Decodes up to two percent-encoding passes (some runtimes deliver the
+ *     value still/doubly encoded).
+ *  2. Rewrites the exact `localhost` loopback alias back to the numeric
+ *     `127.0.0.1` form (see above).
+ *
+ * The output is always the numeric loopback for a valid input, so callers
+ * forward/redirect/store only `http://127.0.0.1:{port}/aura/callback` — never
+ * `localhost`. Canonicalizing cannot widen acceptance: anything that isn't the
+ * exact numeric or exact localhost-alias shape passes through unchanged and
+ * then fails `isValidLoopbackRedirectUri`.
  */
 export function canonicalizeRedirectUri(raw: string): string {
   let v = raw;
@@ -104,6 +119,13 @@ export function canonicalizeRedirectUri(raw: string): string {
     }
     if (decoded === v) break;
     v = decoded;
+  }
+  const alias = LOCALHOST_ALIAS_RE.exec(v);
+  if (alias) {
+    const port = Number(alias[1]);
+    if (port >= 1 && port <= 65535) {
+      return `http://127.0.0.1:${port}/aura/callback`;
+    }
   }
   return v;
 }

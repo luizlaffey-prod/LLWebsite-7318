@@ -7,6 +7,7 @@ import { issueDeviceCredentials } from '@/lib/integration/device-credentials';
 import { verifyDeviceSignature } from '@/lib/integration/license-crypto';
 import { requireUsableStudioEntitlement } from '@/lib/integration/licensing';
 import {
+  canonicalizeRedirectUri,
   STUDIO_PRO_CLIENT_ID,
   studioAuthProofMessage,
   verifyPkceS256,
@@ -52,7 +53,9 @@ export async function POST(req: Request) {
     if (
       !grant ||
       grant.clientId !== input.client_id ||
-      grant.redirectUri !== input.redirect_uri
+      // Compare canonical forms so a platform-substituted `localhost` (or an
+      // encoded value) matches the stored numeric loopback the grant holds.
+      grant.redirectUri !== canonicalizeRedirectUri(input.redirect_uri)
     ) {
       return oauthError('invalid_grant', 400);
     }

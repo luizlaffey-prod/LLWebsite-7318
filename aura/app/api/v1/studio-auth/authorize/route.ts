@@ -60,12 +60,16 @@ export async function GET(req: Request) {
     // canonical form, and the canonical form is what we forward downstream.
     const redirectUri = canonicalizeRedirectUri(p.redirect_uri);
     if (!isValidLoopbackRedirectUri(redirectUri)) {
+      // Echo the received/canonical values ONLY outside production (Preview
+      // debugging) — production must not reflect arbitrary client URI text.
+      const debug =
+        process.env.VERCEL_ENV !== 'production'
+          ? `received=${JSON.stringify(p.redirect_uri)} len=${p.redirect_uri.length} canonical=${JSON.stringify(redirectUri)}`
+          : undefined;
       return errorPage(
         'invalid_redirect_uri',
         'The redirect URI is not an allowed loopback callback.',
-        // Safe echo (the redirect URI is a public, client-supplied loopback
-        // address — never a secret) so the deployed value can be inspected.
-        `received=${JSON.stringify(p.redirect_uri)} len=${p.redirect_uri.length} canonical=${JSON.stringify(redirectUri)}`
+        debug
       );
     }
     if (!isValidCodeChallenge(p.code_challenge)) {

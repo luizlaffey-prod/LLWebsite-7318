@@ -6,6 +6,7 @@ import { getOrCreateManageableStations } from '@/lib/integration/studio-stations
 import { StudioAuthorizeParamsSchema } from '@/lib/integration/contracts';
 import { deviceKeyFingerprint } from '@/lib/integration/license-crypto';
 import {
+  canonicalizeRedirectUri,
   isValidCodeChallenge,
   isValidLoopbackRedirectUri,
   STUDIO_PRO_CLIENT_ID,
@@ -43,15 +44,20 @@ export default async function StudioConnectPage({
   const t = await getTranslations('studioConnectPage');
 
   const parsed = StudioAuthorizeParamsSchema.safeParse(sp);
+  // Canonicalize first (platform may substitute 127.0.0.1 → localhost or leave
+  // the value encoded on this request too); validate + use the numeric form.
+  const redirectUri = parsed.success
+    ? canonicalizeRedirectUri(parsed.data.redirect_uri)
+    : '';
   if (
     !parsed.success ||
     parsed.data.client_id !== STUDIO_PRO_CLIENT_ID ||
-    !isValidLoopbackRedirectUri(parsed.data.redirect_uri) ||
+    !isValidLoopbackRedirectUri(redirectUri) ||
     !isValidCodeChallenge(parsed.data.code_challenge)
   ) {
     return <ErrorView message={t('invalidRequest')} />;
   }
-  const p = parsed.data;
+  const p = { ...parsed.data, redirect_uri: redirectUri };
   try {
     deviceKeyFingerprint(p.device_public_key);
   } catch {

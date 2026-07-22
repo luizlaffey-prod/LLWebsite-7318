@@ -10,6 +10,7 @@ import {
 import { requireUsableStudioEntitlement } from '@/lib/integration/licensing';
 import { deviceKeyFingerprint } from '@/lib/integration/license-crypto';
 import {
+  canonicalizeRedirectUri,
   isValidCodeChallenge,
   isValidLoopbackRedirectUri,
   STUDIO_PRO_CLIENT_ID,
@@ -36,7 +37,9 @@ export async function authorizeStudioConnect(
 
   const get = (k: string) => (formData.get(k) ?? '').toString();
   const clientId = get('client_id');
-  const redirectUri = get('redirect_uri');
+  // Canonicalize (localhost alias → numeric, decode) before validating/storing
+  // so the grant always holds the numeric loopback the token step compares to.
+  const redirectUri = canonicalizeRedirectUri(get('redirect_uri'));
   const state = get('state');
   const codeChallenge = get('code_challenge');
   const codeChallengeMethod = get('code_challenge_method');
