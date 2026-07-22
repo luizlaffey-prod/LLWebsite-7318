@@ -4,15 +4,22 @@ import type { Locale } from '@/i18n';
 import { SignupForm } from './signup-form';
 import { LanguageSwitcher } from '@/components/site/language-switcher';
 import { isGoogleAuthConfigured } from '@/lib/auth/config';
+import { safeCallbackPath } from '@/lib/auth/callback-url';
 
 export default async function SignupPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: Locale }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale } = await params;
+  const sp = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations('auth');
+  const callbackURL = safeCallbackPath(
+    typeof sp.callbackURL === 'string' ? sp.callbackURL : null
+  );
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -51,7 +58,11 @@ export default async function SignupPage({
           </h1>
           <p className="mt-2 text-sm text-text-secondary">{t('signupSubtitle')}</p>
           <div className="mt-8">
-            <SignupForm locale={locale} showGoogle={isGoogleAuthConfigured()} />
+            <SignupForm
+              locale={locale}
+              showGoogle={isGoogleAuthConfigured()}
+              callbackURL={callbackURL}
+            />
           </div>
         </div>
       </div>

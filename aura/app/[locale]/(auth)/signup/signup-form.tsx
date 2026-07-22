@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth/client';
 import { signupSchema } from '@/lib/auth/schemas';
-import { safeCallbackPath } from '@/lib/auth/callback-url';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,13 +16,12 @@ import type { Locale } from '@/i18n';
 interface SignupFormProps {
   locale: Locale;
   showGoogle?: boolean;
+  callbackURL?: string | null;
 }
 
-export function SignupForm({ locale, showGoogle }: SignupFormProps) {
+export function SignupForm({ locale, showGoogle, callbackURL }: SignupFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackURL = safeCallbackPath(searchParams.get('callbackURL'));
   const [pending, setPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [topError, setTopError] = useState<string | null>(null);
