@@ -45,6 +45,7 @@ interface Params {
   device_platform: string;
   device_public_key: string;
   device_key_algorithm: string;
+  scope?: string;
 }
 
 export function ConsentClient({
@@ -167,9 +168,11 @@ export function ConsentClient({
 
           {/* Authorize form */}
           <form action={formAction} className="mt-5 space-y-2">
-            {Object.entries(params).map(([k, v]) => (
-              <input key={k} type="hidden" name={k} value={v} />
-            ))}
+            {Object.entries(params)
+              .filter(([, v]) => v != null)
+              .map(([k, v]) => (
+                <input key={k} type="hidden" name={k} value={v} />
+              ))}
             <input type="hidden" name="station_id" value={stationId} />
             <Button
               type="submit"

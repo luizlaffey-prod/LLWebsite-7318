@@ -146,6 +146,16 @@ async function main() {
     record('token rate limit → 429', got429, got429 ? 'hit 429' : 'no 429 within 40 calls');
   }
 
+  // 9. rate limit — authorize 60/min/IP → 429 within ~80 rapid calls.
+  {
+    let got429 = false;
+    for (let i = 0; i < 80 && !got429; i += 1) {
+      const r = await fetch(authorizeUrl(), { redirect: 'manual' });
+      if (r.status === 429) got429 = true;
+    }
+    record('authorize rate limit → 429', got429, got429 ? 'hit 429' : 'no 429 within 80 calls');
+  }
+
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} checks passed.`);
   process.exit(failed.length ? 1 : 0);

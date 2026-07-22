@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/server';
+import { normalizeRequestedScopes } from '@/lib/integration/contracts';
 import {
   IntegrationHttpError,
   requireStationMember,
@@ -44,6 +45,7 @@ export async function authorizeStudioConnect(
   const devicePublicKey = get('device_public_key');
   const deviceKeyAlgorithm = get('device_key_algorithm');
   const stationId = get('station_id');
+  const scopeRaw = get('scope');
 
   // Re-validate everything server-side; never trust the hidden fields.
   if (clientId !== STUDIO_PRO_CLIENT_ID) return { error: 'invalid_client' };
@@ -68,6 +70,11 @@ export async function authorizeStudioConnect(
     return { error: 'invalid_device_key' };
   }
 
+  // Bind the requested scope subset to the grant (never widen it). An
+  // unsupported scope is rejected rather than escalated to the defaults.
+  const scopes = normalizeRequestedScopes(scopeRaw || undefined);
+  if (scopes === null) return { error: 'invalid_scope' };
+
   let redirectTarget: string;
   try {
     // The user must own/admin the chosen station, and the entitlement must be
@@ -91,6 +98,7 @@ export async function authorizeStudioConnect(
       devicePublicKey,
       deviceKeyAlgorithm,
       deviceFingerprint: fingerprint,
+      scopes,
     });
 
     const dest = new URL(redirectUri);

@@ -1127,7 +1127,7 @@ export type StationEvent = typeof stationEvent.$inferSelect;
 
 // --- Studio Pro in-app login (OAuth 2.0 Authorization Code + PKCE) ---
 // Short-lived, single-use authorization grants for the "Sign in with AURA"
-// desktop flow. See drizzle/0016_studio_auth_grant.sql.
+// desktop flow. See drizzle/0017_studio_auth_grant.sql.
 export const studioAuthGrant = pgTable(
   'studio_auth_grant',
   {

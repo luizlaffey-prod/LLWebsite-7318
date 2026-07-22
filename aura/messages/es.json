@@ -893,6 +893,7 @@
     "error_invalid_device_key": "Studio Pro envió una clave de dispositivo no válida.",
     "error_entitlement_inactive": "El acceso a Studio Pro de esta emisora está inactivo. Revisa tu suscripción.",
     "error_forbidden": "No tienes permiso para conectar un ordenador a esta emisora.",
-    "error_unknown": "Algo salió mal. Inténtalo de nuevo."
+    "error_unknown": "Algo salió mal. Inténtalo de nuevo.",
+    "error_invalid_scope": "Los permisos solicitados no están permitidos."
   }
 }

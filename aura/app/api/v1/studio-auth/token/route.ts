@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { station, stationDevice } from '@/lib/db/schema';
 import { integrationErrorResponse } from '@/lib/integration/authorization';
@@ -11,10 +11,7 @@ import {
   studioAuthProofMessage,
   verifyPkceS256,
 } from '@/lib/integration/studio-auth-policy';
-import {
-  consumeGrant,
-  findActiveGrantByCode,
-} from '@/lib/integration/studio-auth';
+import { findActiveGrantByCode } from '@/lib/integration/studio-auth';
 import {
   enforceRateLimit,
   rateLimitClientKey,
@@ -120,61 +117,94 @@ export async function POST(req: Request) {
       return oauthError('device_key_already_registered', 409);
     }
 
-    // Atomically consume the code — first winner only; a replay gets false.
-    const consumed = await consumeGrant(grant.id, now);
-    if (!consumed) {
+    // Consume the code AND register the device in ONE atomic statement.
+    // neon-http has no interactive transactions, so this is a single CTE:
+    // the grant is consumed only if it is still unconsumed AND a free
+    // activation slot exists, and the device row is inserted in the same
+    // statement. A concurrent replay finds the grant already consumed; any
+    // failure (e.g. a slot unique-violation race) aborts the whole statement,
+    // so the code is never burned without a device being created.
+    const credentials = issueDeviceCredentials(now);
+    const maxDevices = entitlement.maxDevicesPerStation;
+    const result = await db.execute(sql`
+      WITH g AS (
+        SELECT station_id, device_name, device_platform, device_public_key,
+               device_key_algorithm, device_fingerprint, scopes
+        FROM studio_auth_grant
+        WHERE id = ${grant.id} AND consumed_at IS NULL AND expires_at > ${now}
+      ),
+      slot AS (
+        SELECT n FROM generate_series(1, ${maxDevices}) AS n
+        WHERE NOT EXISTS (
+          SELECT 1 FROM station_device d
+          WHERE d.station_id = (SELECT station_id FROM g)
+            AND d.activation_slot = n AND d.status = 'active'
+        )
+        ORDER BY n LIMIT 1
+      ),
+      consumed AS (
+        UPDATE studio_auth_grant SET consumed_at = ${now}
+        WHERE id = ${grant.id} AND consumed_at IS NULL AND expires_at > ${now}
+          AND EXISTS (SELECT 1 FROM slot)
+        RETURNING id
+      ),
+      ins AS (
+        INSERT INTO station_device (
+          station_id, name, platform, activation_slot, scopes,
+          device_key_algorithm, device_public_key, device_key_fingerprint,
+          access_token_hash, access_token_prefix, access_token_expires_at,
+          refresh_token_hash, refresh_token_expires_at, last_seen_at
+        )
+        SELECT g.station_id, g.device_name, g.device_platform,
+               (SELECT n FROM slot), g.scopes, g.device_key_algorithm,
+               g.device_public_key, g.device_fingerprint,
+               ${credentials.accessTokenHash}, ${credentials.accessTokenPrefix},
+               ${credentials.accessTokenExpiresAt}, ${credentials.refreshTokenHash},
+               ${credentials.refreshTokenExpiresAt}, ${now}
+        FROM g
+        WHERE EXISTS (SELECT 1 FROM consumed)
+        RETURNING id, name, platform, activation_slot, scopes, device_key_fingerprint
+      )
+      SELECT id, name, platform, activation_slot, scopes, device_key_fingerprint FROM ins
+    `);
+
+    const rows = result.rows as Array<{
+      id: string;
+      name: string;
+      platform: string;
+      activation_slot: number | null;
+      scopes: string[];
+      device_key_fingerprint: string;
+    }>;
+    const r = rows[0] ?? null;
+
+    if (!r) {
+      // Nothing registered: either the code was already consumed/expired
+      // (replay) or the station is at its device limit. Distinguish so the
+      // desktop gets the right error.
+      const active = await db
+        .select({ id: stationDevice.id })
+        .from(stationDevice)
+        .where(
+          and(
+            eq(stationDevice.stationId, grant.stationId),
+            eq(stationDevice.status, 'active')
+          )
+        );
+      if (active.length >= maxDevices) {
+        return oauthError('device_activation_limit_reached', 409, { limit: maxDevices });
+      }
       return oauthError('invalid_grant', 400);
     }
 
-    // Register the device into the first free activation slot.
-    const credentials = issueDeviceCredentials(now);
-    let device:
-      | {
-          id: string;
-          name: string;
-          platform: string;
-          activationSlot: number | null;
-          scopes: string[];
-          deviceKeyFingerprint: string;
-        }
-      | undefined;
-
-    for (let slot = 1; slot <= entitlement.maxDevicesPerStation; slot += 1) {
-      [device] = await db
-        .insert(stationDevice)
-        .values({
-          stationId: grant.stationId,
-          name: grant.deviceName,
-          platform: grant.devicePlatform,
-          activationSlot: slot,
-          scopes: grant.scopes,
-          deviceKeyAlgorithm: grant.deviceKeyAlgorithm,
-          devicePublicKey: grant.devicePublicKey,
-          deviceKeyFingerprint: grant.deviceFingerprint,
-          accessTokenHash: credentials.accessTokenHash,
-          accessTokenPrefix: credentials.accessTokenPrefix,
-          accessTokenExpiresAt: credentials.accessTokenExpiresAt,
-          refreshTokenHash: credentials.refreshTokenHash,
-          refreshTokenExpiresAt: credentials.refreshTokenExpiresAt,
-          lastSeenAt: now,
-        })
-        .onConflictDoNothing()
-        .returning({
-          id: stationDevice.id,
-          name: stationDevice.name,
-          platform: stationDevice.platform,
-          activationSlot: stationDevice.activationSlot,
-          scopes: stationDevice.scopes,
-          deviceKeyFingerprint: stationDevice.deviceKeyFingerprint,
-        });
-      if (device) break;
-    }
-
-    if (!device) {
-      return oauthError('device_activation_limit_reached', 409, {
-        limit: entitlement.maxDevicesPerStation,
-      });
-    }
+    const device = {
+      id: r.id,
+      name: r.name,
+      platform: r.platform,
+      activationSlot: r.activation_slot,
+      scopes: r.scopes,
+      deviceKeyFingerprint: r.device_key_fingerprint,
+    };
 
     // Same PairingResponse shape as the code-pairing flow. No web session.
     return Response.json(

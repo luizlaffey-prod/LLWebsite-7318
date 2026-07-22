@@ -893,6 +893,7 @@
     "error_invalid_device_key": "O Estúdio Pro enviou uma chave de dispositivo inválida.",
     "error_entitlement_inactive": "O acesso Estúdio Pro desta estação está inativo. Verifique a assinatura.",
     "error_forbidden": "Você não tem permissão para conectar um computador a esta estação.",
-    "error_unknown": "Algo deu errado. Tente novamente."
+    "error_unknown": "Algo deu errado. Tente novamente.",
+    "error_invalid_scope": "As permissões solicitadas não são permitidas."
   }
 }

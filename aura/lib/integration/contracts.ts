@@ -14,6 +14,24 @@ export const DEFAULT_DEVICE_SCOPES = [
 
 export const DeviceScopeSchema = z.enum(DEFAULT_DEVICE_SCOPES);
 
+/**
+ * Normalizes a requested OAuth `scope` string for the Studio Pro desktop
+ * client. Returns the requested subset (in canonical order) when every entry
+ * is an allowed device scope; the full default set when none is requested;
+ * and `null` when any requested scope is not allowed (caller → invalid_scope).
+ * This prevents silently escalating a requested subset to all default scopes.
+ */
+export function normalizeRequestedScopes(
+  raw: string | null | undefined
+): string[] | null {
+  if (!raw || !raw.trim()) return [...DEFAULT_DEVICE_SCOPES];
+  const requested = raw.trim().split(/\s+/);
+  const allowed = new Set<string>(DEFAULT_DEVICE_SCOPES);
+  for (const s of requested) if (!allowed.has(s)) return null;
+  const wanted = new Set(requested);
+  return DEFAULT_DEVICE_SCOPES.filter((s) => wanted.has(s));
+}
+
 const ArticleSourceSchema = z.object({
   mode: z.literal('article'),
   title: z.string().trim().min(1).max(300),

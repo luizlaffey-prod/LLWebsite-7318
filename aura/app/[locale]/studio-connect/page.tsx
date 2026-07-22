@@ -111,6 +111,7 @@ export default async function StudioConnectPage({
         device_platform: p.device_platform,
         device_public_key: p.device_public_key,
         device_key_algorithm: p.device_key_algorithm,
+        ...(p.scope ? { scope: p.scope } : {}),
       }}
       stations={stationOptions}
     />

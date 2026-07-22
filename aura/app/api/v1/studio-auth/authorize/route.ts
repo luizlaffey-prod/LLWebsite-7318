@@ -1,4 +1,7 @@
-import { StudioAuthorizeParamsSchema } from '@/lib/integration/contracts';
+import {
+  StudioAuthorizeParamsSchema,
+  normalizeRequestedScopes,
+} from '@/lib/integration/contracts';
 import { deviceKeyFingerprint } from '@/lib/integration/license-crypto';
 import {
   isValidCodeChallenge,
@@ -61,6 +64,12 @@ export async function GET(req: Request) {
     } catch {
       return errorPage('invalid_request', 'Invalid device public key.');
     }
+    // A requested scope must be a subset of the allowed device scopes — a
+    // request for anything else is refused rather than silently widened.
+    const requestedScopes = normalizeRequestedScopes(p.scope);
+    if (requestedScopes === null) {
+      return errorPage('invalid_scope', 'Requested scope is not allowed.');
+    }
 
     // Forward the validated params to the consent page.
     const locale =
@@ -81,7 +90,8 @@ export async function GET(req: Request) {
       device_public_key: p.device_public_key,
       device_key_algorithm: p.device_key_algorithm,
     });
-    if (p.scope) forward.set('scope', p.scope);
+    // Forward the validated subset (canonical order) when a scope was asked for.
+    if (p.scope) forward.set('scope', requestedScopes.join(' '));
 
     const dest = new URL(`/${locale}/studio-connect`, url.origin);
     dest.search = forward.toString();
