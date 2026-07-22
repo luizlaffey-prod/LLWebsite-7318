@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth/client';
 import { signupSchema } from '@/lib/auth/schemas';
+import { safeCallbackPath } from '@/lib/auth/callback-url';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +22,8 @@ interface SignupFormProps {
 export function SignupForm({ locale, showGoogle }: SignupFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackURL = safeCallbackPath(searchParams.get('callbackURL'));
   const [pending, setPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [topError, setTopError] = useState<string | null>(null);
@@ -98,7 +101,9 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
         return;
       }
 
-      router.push(`/${locale}/plan`);
+      // A new account created inside the Studio Pro sign-in flow returns to
+      // the consent screen; otherwise continue to plan selection.
+      router.push(callbackURL ?? `/${locale}/plan`);
     } catch {
       setTopError(t('errors.generic'));
       setPending(false);
@@ -200,7 +205,14 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
 
       <p className="pt-2 text-center text-sm text-text-secondary">
         {t('hasAccount')}{' '}
-        <Link href={`/${locale}/login`} className="text-teal hover:underline">
+        <Link
+          href={
+            callbackURL
+              ? `/${locale}/login?callbackURL=${encodeURIComponent(callbackURL)}`
+              : `/${locale}/login`
+          }
+          className="text-teal hover:underline"
+        >
           {t('loginCta')}
         </Link>
       </p>
