@@ -66,22 +66,22 @@ export function verifyPkceS256(verifier: string, storedChallenge: string): boole
  * fragment, embedded credentials, and out-of-range ports. This closes open-
  * redirect and SSRF-style abuse — there is no wildcard matching.
  */
+// A strict, anchored pattern — deterministic across every JS runtime. We match
+// the literal shape rather than parsing with `new URL`, whose IPv4/port
+// normalization can differ between the local Node and the deployed serverless
+// runtime (which caused valid loopback URIs to be rejected in Preview). The
+// port digits (1–5, no leading zero) are range-checked to ≤ 65535 below;
+// anything else — https, localhost, `::1`, credentials, an extra path, query
+// or fragment, an external host — simply fails to match.
+const LOOPBACK_CALLBACK_RE =
+  /^http:\/\/127\.0\.0\.1:([1-9][0-9]{0,4})\/aura\/callback$/;
+
 export function isValidLoopbackRedirectUri(uri: unknown): uri is string {
   if (typeof uri !== 'string' || uri.length > 2048) return false;
-  let u: URL;
-  try {
-    u = new URL(uri);
-  } catch {
-    return false;
-  }
-  if (u.protocol !== 'http:') return false;
-  if (u.hostname !== '127.0.0.1') return false;
-  if (u.pathname !== '/aura/callback') return false;
-  if (u.search !== '' || u.hash !== '') return false;
-  if (u.username !== '' || u.password !== '') return false;
-  if (u.port === '') return false; // an explicit port is required
-  const port = Number(u.port);
-  return Number.isInteger(port) && port >= 1 && port <= 65535;
+  const m = LOOPBACK_CALLBACK_RE.exec(uri);
+  if (!m) return false;
+  const port = Number(m[1]);
+  return port >= 1 && port <= 65535;
 }
 
 /**
