@@ -120,6 +120,13 @@
       "when": 1784671562000,
       "tag": "0016_studio_pro_pairing_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1784675100000,
+      "tag": "0017_studio_auth_grant",
+      "breakpoints": true
     }
   ]
 }

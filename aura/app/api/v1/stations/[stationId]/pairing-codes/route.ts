@@ -16,6 +16,7 @@ import {
   requireStationMember,
 } from '@/lib/integration/authorization';
 import { requireUsableStudioEntitlement } from '@/lib/integration/licensing';
+import { stationEligibleForPairing } from '@/lib/integration/studio-auth-policy';
 
 export const runtime = 'nodejs';
 
@@ -36,6 +37,12 @@ export async function POST(
     const entitlement = await requireUsableStudioEntitlement(
       member.organization.id
     );
+    // A station needs a default voice before pairing (same gate the OAuth
+    // consent flow enforces) — server-side so the panel's disabled button
+    // can't be bypassed.
+    if (!stationEligibleForPairing(member.station)) {
+      return Response.json({ error: 'no_default_voice' }, { status: 409 });
+    }
     const activeDevices = await db
       .select({ id: stationDevice.id })
       .from(stationDevice)

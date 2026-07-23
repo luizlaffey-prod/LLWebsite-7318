@@ -1124,3 +1124,59 @@ export type StudioOutputLease = typeof studioOutputLease.$inferSelect;
 export type StudioLicenseEvent = typeof studioLicenseEvent.$inferSelect;
 export type IntegrationContentRequest = typeof integrationContentRequest.$inferSelect;
 export type StationEvent = typeof stationEvent.$inferSelect;
+
+// --- Studio Pro in-app login (OAuth 2.0 Authorization Code + PKCE) ---
+// Short-lived, single-use authorization grants for the "Sign in with AURA"
+// desktop flow. See drizzle/0017_studio_auth_grant.sql.
+export const studioAuthGrant = pgTable(
+  'studio_auth_grant',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // Keyed hash of the authorization code — the plaintext code is never stored.
+    codeHash: text('code_hash').notNull().unique(),
+    clientId: text('client_id').notNull(),
+    redirectUri: text('redirect_uri').notNull(),
+    pkceChallenge: text('pkce_challenge').notNull(),
+    pkceMethod: text('pkce_method').notNull().default('S256'),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    stationId: uuid('station_id')
+      .notNull()
+      .references(() => station.id, { onDelete: 'cascade' }),
+    deviceName: text('device_name').notNull(),
+    devicePlatform: text('device_platform').notNull(),
+    devicePublicKey: text('device_public_key').notNull(),
+    deviceKeyAlgorithm: text('device_key_algorithm').notNull().default('ES256'),
+    deviceFingerprint: text('device_fingerprint').notNull(),
+    scopes: jsonb('scopes').$type<string[]>().notNull().default([]),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    // Set exactly once, atomically, when the code is exchanged (replay guard).
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    expiresIdx: index('studio_auth_grant_expires_idx').on(t.expiresAt),
+  })
+);
+
+export type StudioAuthGrant = typeof studioAuthGrant.$inferSelect;
+
+// Generic fixed-window rate limiter for public routes. One row per
+// (key, window); `expiresAt` lets a cleanup job purge stale rows.
+export const rateLimit = pgTable(
+  'rate_limit',
+  {
+    bucket: text('bucket').primaryKey(),
+    count: integer('count').notNull().default(0),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (t) => ({
+    expiresIdx: index('rate_limit_expires_idx').on(t.expiresAt),
+  })
+);
+
+export type RateLimit = typeof rateLimit.$inferSelect;

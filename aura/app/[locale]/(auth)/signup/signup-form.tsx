@@ -16,9 +16,10 @@ import type { Locale } from '@/i18n';
 interface SignupFormProps {
   locale: Locale;
   showGoogle?: boolean;
+  callbackURL?: string | null;
 }
 
-export function SignupForm({ locale, showGoogle }: SignupFormProps) {
+export function SignupForm({ locale, showGoogle, callbackURL }: SignupFormProps) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -98,7 +99,9 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
         return;
       }
 
-      router.push(`/${locale}/plan`);
+      // A new account created inside the Studio Pro sign-in flow returns to
+      // the consent screen; otherwise continue to plan selection.
+      router.push(callbackURL ?? `/${locale}/plan`);
     } catch {
       setTopError(t('errors.generic'));
       setPending(false);
@@ -115,7 +118,7 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
 
       {showGoogle && (
         <>
-          <GoogleAuthButton locale={locale} />
+          <GoogleAuthButton locale={locale} callbackURL={callbackURL} />
           <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
@@ -200,7 +203,14 @@ export function SignupForm({ locale, showGoogle }: SignupFormProps) {
 
       <p className="pt-2 text-center text-sm text-text-secondary">
         {t('hasAccount')}{' '}
-        <Link href={`/${locale}/login`} className="text-teal hover:underline">
+        <Link
+          href={
+            callbackURL
+              ? `/${locale}/login?callbackURL=${encodeURIComponent(callbackURL)}`
+              : `/${locale}/login`
+          }
+          className="text-teal hover:underline"
+        >
           {t('loginCta')}
         </Link>
       </p>

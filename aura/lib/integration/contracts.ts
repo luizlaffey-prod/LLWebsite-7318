@@ -14,6 +14,24 @@ export const DEFAULT_DEVICE_SCOPES = [
 
 export const DeviceScopeSchema = z.enum(DEFAULT_DEVICE_SCOPES);
 
+/**
+ * Normalizes a requested OAuth `scope` string for the Studio Pro desktop
+ * client. Returns the requested subset (in canonical order) when every entry
+ * is an allowed device scope; the full default set when none is requested;
+ * and `null` when any requested scope is not allowed (caller → invalid_scope).
+ * This prevents silently escalating a requested subset to all default scopes.
+ */
+export function normalizeRequestedScopes(
+  raw: string | null | undefined
+): string[] | null {
+  if (!raw || !raw.trim()) return [...DEFAULT_DEVICE_SCOPES];
+  const requested = raw.trim().split(/\s+/);
+  const allowed = new Set<string>(DEFAULT_DEVICE_SCOPES);
+  for (const s of requested) if (!allowed.has(s)) return null;
+  const wanted = new Set(requested);
+  return DEFAULT_DEVICE_SCOPES.filter((s) => wanted.has(s));
+}
+
 const ArticleSourceSchema = z.object({
   mode: z.literal('article'),
   title: z.string().trim().min(1).max(300),
@@ -62,6 +80,41 @@ export const PairingExchangeSchema = z.object({
 export const RefreshTokenSchema = z.object({
   refreshToken: z.string().min(32).max(256),
   refreshProof: z.string().trim().regex(/^[A-Za-z0-9_-]+$/).min(64).max(256),
+});
+
+// --- Studio Pro in-app login (OAuth 2.0 Authorization Code + PKCE) ---
+
+/** Query params the desktop opens `/api/v1/studio-auth/authorize` with. The
+ * exact client_id and loopback redirect_uri are checked in the route via the
+ * policy module (not here) so OAuth-specific errors can be returned. */
+export const StudioAuthorizeParamsSchema = z.object({
+  client_id: z.string().trim().min(1).max(64),
+  redirect_uri: z.string().trim().min(1).max(2048),
+  state: z.string().trim().min(8).max(512),
+  code_challenge: z.string().trim().min(43).max(128),
+  code_challenge_method: z.literal('S256'),
+  device_name: z.string().trim().min(1).max(120),
+  device_platform: z.enum(['windows', 'macos']),
+  device_public_key: z.string().trim().min(80).max(1024),
+  device_key_algorithm: z.literal('ES256'),
+  scope: z.string().trim().max(256).optional(),
+});
+
+/** Body for `POST /api/v1/studio-auth/token`. Never includes a password or a
+ * client secret. `device_proof` is the ES256 signature proving possession of
+ * the device key bound to the grant. */
+export const StudioTokenExchangeSchema = z.object({
+  grant_type: z.literal('authorization_code'),
+  client_id: z.string().trim().min(1).max(64),
+  code: z.string().trim().min(20).max(200),
+  redirect_uri: z.string().trim().min(1).max(2048),
+  code_verifier: z.string().trim().min(43).max(128),
+  device_proof: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .min(64)
+    .max(256),
 });
 
 export const StationBootstrapSchema = z.object({

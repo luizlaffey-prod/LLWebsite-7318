@@ -1,0 +1,162 @@
+import { describe, expect, it } from 'vitest';
+import { randomBytes } from 'node:crypto';
+import {
+  AUTH_CODE_TTL_MS,
+  canonicalizeRedirectUri,
+  isValidCodeChallenge,
+  isValidCodeVerifier,
+  isValidLoopbackRedirectUri,
+  pkceChallengeFromVerifier,
+  stationEligibleForPairing,
+  STUDIO_PRO_CLIENT_ID,
+  studioAuthProofMessage,
+  verifyPkceS256,
+} from './studio-auth-policy';
+
+describe('Studio Pro OAuth — client + code TTL', () => {
+  it('exposes the stable public client id and a ≤5-minute code TTL', () => {
+    expect(STUDIO_PRO_CLIENT_ID).toBe('studio-pro-desktop');
+    expect(AUTH_CODE_TTL_MS).toBeLessThanOrEqual(5 * 60 * 1000);
+    expect(AUTH_CODE_TTL_MS).toBeGreaterThan(0);
+  });
+});
+
+describe('Studio Pro OAuth — PKCE S256', () => {
+  const verifier = randomBytes(32).toString('base64url'); // 43 chars
+
+  it('accepts a valid verifier/challenge pair', () => {
+    const challenge = pkceChallengeFromVerifier(verifier);
+    expect(isValidCodeVerifier(verifier)).toBe(true);
+    expect(isValidCodeChallenge(challenge)).toBe(true);
+    expect(verifyPkceS256(verifier, challenge)).toBe(true);
+  });
+
+  it('rejects an incorrect code_verifier', () => {
+    const challenge = pkceChallengeFromVerifier(verifier);
+    const wrong = randomBytes(32).toString('base64url');
+    expect(verifyPkceS256(wrong, challenge)).toBe(false);
+  });
+
+  it('rejects a malformed verifier and never throws', () => {
+    const challenge = pkceChallengeFromVerifier(verifier);
+    expect(verifyPkceS256('too-short', challenge)).toBe(false);
+    expect(verifyPkceS256(verifier, 'not-the-challenge')).toBe(false);
+    expect(isValidCodeVerifier('x'.repeat(200))).toBe(false);
+  });
+});
+
+describe('Studio Pro OAuth — loopback redirect URI (strict)', () => {
+  it('accepts only http://127.0.0.1:{port}/aura/callback', () => {
+    expect(isValidLoopbackRedirectUri('http://127.0.0.1:49152/aura/callback')).toBe(true);
+    expect(isValidLoopbackRedirectUri('http://127.0.0.1:1/aura/callback')).toBe(true);
+  });
+
+  it('rejects localhost, IPv6 loopback, external hosts and https', () => {
+    for (const bad of [
+      'http://localhost:49152/aura/callback',
+      'http://[::1]:49152/aura/callback',
+      'http://127.0.0.1:49152/evil',
+      'http://127.0.0.1/aura/callback', // no port
+      'http://127.0.0.1:49152/aura/callback?x=1', // query
+      'http://127.0.0.1:49152/aura/callback#f', // fragment
+      'https://127.0.0.1:49152/aura/callback', // https
+      'http://attacker.com/aura/callback',
+      'http://user:pass@127.0.0.1:49152/aura/callback',
+      'http://127.0.0.1:99999/aura/callback', // out of range
+      'not a url',
+      '',
+    ]) {
+      expect(isValidLoopbackRedirectUri(bad), bad).toBe(false);
+    }
+  });
+});
+
+describe('Studio Pro OAuth — redirect canonicalization', () => {
+  const valid = 'http://127.0.0.1:49721/aura/callback';
+
+  it('is a no-op for an already-clean loopback URI', () => {
+    expect(canonicalizeRedirectUri(valid)).toBe(valid);
+    expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(valid))).toBe(true);
+  });
+
+  it('decodes a percent-encoded value so validation still accepts it', () => {
+    const once = encodeURIComponent(valid); // http%3A%2F%2F127.0.0.1%3A49721...
+    const twice = encodeURIComponent(once); // doubly encoded
+    expect(canonicalizeRedirectUri(once)).toBe(valid);
+    expect(canonicalizeRedirectUri(twice)).toBe(valid);
+    expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(once))).toBe(true);
+    expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(twice))).toBe(true);
+  });
+
+  it('cannot widen acceptance — a decoded external URL still fails', () => {
+    const externalEncoded = encodeURIComponent('http://evil.com/aura/callback');
+    expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(externalEncoded))).toBe(
+      false
+    );
+  });
+
+  it('rewrites the exact localhost alias to the numeric loopback', () => {
+    // Platform substitutes 127.0.0.1 → localhost before the route sees it.
+    for (const port of ['1', '49152', '49721', '65535']) {
+      const alias = `http://localhost:${port}/aura/callback`;
+      const canonical = canonicalizeRedirectUri(alias);
+      expect(canonical).toBe(`http://127.0.0.1:${port}/aura/callback`);
+      expect(isValidLoopbackRedirectUri(canonical)).toBe(true);
+    }
+    // …even when the alias arrives percent-encoded.
+    expect(
+      canonicalizeRedirectUri(encodeURIComponent('http://localhost:49721/aura/callback'))
+    ).toBe('http://127.0.0.1:49721/aura/callback');
+  });
+
+  it('does NOT rewrite localhost look-alikes or out-of-range ports', () => {
+    for (const notAlias of [
+      'http://localhost.evil.com:49721/aura/callback',
+      'http://localhost:49721@evil.com/aura/callback',
+      'http://user:pass@localhost:49721/aura/callback',
+      'https://localhost:49721/aura/callback',
+      'http://localhost:0/aura/callback',
+      'http://localhost:99999/aura/callback',
+      'http://localhost:49721/evil',
+      'http://localhost:49721/aura/callback?x=1',
+    ]) {
+      // Either passes through unchanged or (for the bad-port cases) stays
+      // localhost — in all cases the strict numeric check then rejects it.
+      expect(isValidLoopbackRedirectUri(canonicalizeRedirectUri(notAlias)), notAlias).toBe(
+        false
+      );
+    }
+  });
+});
+
+describe('Studio Pro — default-voice pairing gate', () => {
+  it('a station without a default voice is ineligible for pairing', () => {
+    expect(stationEligibleForPairing({ defaultVoiceId: null })).toBe(false);
+  });
+  it('a station with a default voice is eligible', () => {
+    expect(stationEligibleForPairing({ defaultVoiceId: 'voice-uuid' })).toBe(true);
+  });
+});
+
+describe('Studio Pro OAuth — device proof binding', () => {
+  it('binds client id, redirect uri, code and fingerprint (order-stable)', () => {
+    const msg = studioAuthProofMessage({
+      clientId: 'studio-pro-desktop',
+      redirectUri: 'http://127.0.0.1:5000/aura/callback',
+      code: 'aura_ac_abc',
+      deviceFingerprint: 'ff00',
+    });
+    expect(msg).toBe(
+      'studio-pro-auth-code-v1\nstudio-pro-desktop\nhttp://127.0.0.1:5000/aura/callback\naura_ac_abc\nff00'
+    );
+    // Changing any bound field changes the message (so a stolen code can't be
+    // redeemed by a different device/client/redirect).
+    const other = studioAuthProofMessage({
+      clientId: 'studio-pro-desktop',
+      redirectUri: 'http://127.0.0.1:5000/aura/callback',
+      code: 'aura_ac_abc',
+      deviceFingerprint: 'ee11',
+    });
+    expect(other).not.toBe(msg);
+  });
+});

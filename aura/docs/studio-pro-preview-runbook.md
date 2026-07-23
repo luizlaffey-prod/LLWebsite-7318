@@ -496,3 +496,58 @@ post-promotion checks in step 6.
    The `studio-licensing` cron now deletes all consumed or expired pairing
    codes and rate-limit buckets inactive for 24 hours, and reports both counts
    in its authenticated JSON result.
+
+## 7. In-app login (PR #3) — migration `0017` + OAuth smoke tests
+
+The "Sign in with AURA" flow (PR #3) adds one migration,
+`0017_studio_auth_grant` (the `studio_auth_grant` + generic `rate_limit`
+tables). It rebases on top of the pairing-hardening `0016`. Validate it on the
+**same isolated branch** (`studio-pro-preview`), never production.
+
+1. **Migrate the branch to `0017`** with the official Drizzle flow and the same
+   connection-safety checks as step 3 (branch endpoint only):
+   ```bash
+   export DATABASE_URL='<studio-pro-preview branch connection string>'
+   npx drizzle-kit migrate      # applies any missing migration up to 0017 on the BRANCH
+   ```
+   Verify:
+   ```sql
+   SELECT to_regclass('public.studio_auth_grant') AS grant,
+          to_regclass('public.rate_limit')         AS ratelimit;   -- both non-null
+   SELECT count(*) FROM drizzle.__drizzle_migrations;               -- expect 18 (0000–0017)
+   ```
+2. **Redeploy Preview** from PR #3's validated commit (Preview env already
+   points at the branch and has `DEVICE_TOKEN_PEPPER`).
+3. **OAuth end-to-end smoke tests** (the DB-dependent cases). Use a beta
+   account and a P-256 test key:
+   - **Existing-account login** and **new-account creation** both reach the
+     consent screen and return to the loopback callback with `code`+`state`.
+   - **Station selection** appears when the account manages >1 station.
+   - **PKCE happy path**: token exchange with the correct `code_verifier` →
+     `201` + PairingResponse; device appears in the AURA panel.
+   - **Wrong `code_verifier`** → `400 invalid_grant`.
+   - **`state`** preserved end-to-end (desktop aborts on mismatch).
+   - **Expired code** (> 5 min) → `400 invalid_grant`.
+   - **Code reuse / replay** → `400 invalid_grant`.
+   - **Invalid redirect URI** (`localhost`, external, `https`, query, fragment,
+     bad port) at `/authorize` → error page, **no redirect**.
+   - **Valid P-256 proof** succeeds; **invalid proof** → `400 invalid_grant`.
+   - **Station isolation**: cannot register against a station in an org the
+     user doesn't belong to (`404 station_not_found`).
+   - **No admin permission** (viewer/operator) → consent action forbidden.
+   - **Missing/inactive entitlement** → `entitlement_inactive` (no code issued).
+   - **Device registration** → `station_device` row created.
+   - **Refresh rotation** via `/api/v1/device-tokens/refresh`; old token dies.
+   - **Revocation** in the panel invalidates the device's tokens.
+   - **Rate limit**: `POST /studio-auth/token` past 30/min/IP and `/authorize`
+     past 60/min/IP → `429 rate_limited`.
+   - **No secrets in logs**: no code, token, verifier, proof, password, cookie
+     or key in the Vercel function logs.
+   - **Old 8-char pairing** flow still works unchanged.
+   - **Cleanup cron** (`studio-licensing`) runs and reports the new
+     `deletedAuthGrants` / `deletedRateLimitRows` counts.
+
+   The repo's unit tests cover the pure security decisions
+   (`npx vitest run`); the list above is the DB/deployment half only a running
+   Preview can exercise. Record a pass/fail matrix. **No production migration or
+   promotion for PR #3 without separate explicit approval.**
