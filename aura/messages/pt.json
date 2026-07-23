@@ -894,6 +894,9 @@
     "error_entitlement_inactive": "O acesso Estúdio Pro desta estação está inativo. Verifique a assinatura.",
     "error_forbidden": "Você não tem permissão para conectar um computador a esta estação.",
     "error_unknown": "Algo deu errado. Tente novamente.",
-    "error_invalid_scope": "As permissões solicitadas não são permitidas."
+    "error_invalid_scope": "As permissões solicitadas não são permitidas.",
+    "error_no_default_voice": "Defina uma voz padrão para esta estação antes de parear.",
+    "needDefaultVoice": "Esta estação precisa de uma voz AURA padrão antes de conectar um computador.",
+    "openStudioProSettings": "Definir voz padrão"
   }
 }

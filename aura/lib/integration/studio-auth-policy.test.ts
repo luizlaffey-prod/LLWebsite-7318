@@ -7,6 +7,7 @@ import {
   isValidCodeVerifier,
   isValidLoopbackRedirectUri,
   pkceChallengeFromVerifier,
+  stationEligibleForPairing,
   STUDIO_PRO_CLIENT_ID,
   studioAuthProofMessage,
   verifyPkceS256,
@@ -125,6 +126,15 @@ describe('Studio Pro OAuth — redirect canonicalization', () => {
         false
       );
     }
+  });
+});
+
+describe('Studio Pro — default-voice pairing gate', () => {
+  it('a station without a default voice is ineligible for pairing', () => {
+    expect(stationEligibleForPairing({ defaultVoiceId: null })).toBe(false);
+  });
+  it('a station with a default voice is eligible', () => {
+    expect(stationEligibleForPairing({ defaultVoiceId: 'voice-uuid' })).toBe(true);
   });
 });
 

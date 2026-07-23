@@ -92,6 +92,7 @@ export default async function StudioConnectPage({
       stationId: s.stationId,
       stationName: s.stationName,
       organizationName: s.organizationName,
+      hasDefaultVoice: s.defaultVoiceId != null,
       entitlement: {
         status: e.status,
         planCode: e.planCode,

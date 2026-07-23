@@ -33,6 +33,7 @@ interface StationOption {
   stationId: string;
   stationName: string;
   organizationName: string;
+  hasDefaultVoice: boolean;
   entitlement: Entitlement;
 }
 interface Params {
@@ -67,6 +68,7 @@ export function ConsentClient({
   const [stationId, setStationId] = useState(stations[0]?.stationId ?? '');
   const selected = stations.find((s) => s.stationId === stationId) ?? stations[0];
   const ent = selected?.entitlement;
+  const eligible = selected?.hasDefaultVoice ?? false;
 
   const errText = (code?: string) =>
     code && t.has(`error_${code}`) ? t(`error_${code}`) : t('error_unknown');
@@ -166,6 +168,23 @@ export function ConsentClient({
             </div>
           )}
 
+          {/* Default-voice gate: the selected station must have a default
+              voice before it can pair (same rule as the code-pairing flow). */}
+          {!eligible && (
+            <div className="mt-4 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-text-secondary">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+              <span>
+                {t('needDefaultVoice')}{' '}
+                <a
+                  href={`/${locale}/settings/studio-pro`}
+                  className="text-teal hover:underline"
+                >
+                  {t('openStudioProSettings')}
+                </a>
+              </span>
+            </div>
+          )}
+
           {/* Authorize form */}
           <form action={formAction} className="mt-5 space-y-2">
             {Object.entries(params)
@@ -176,7 +195,7 @@ export function ConsentClient({
             <input type="hidden" name="station_id" value={stationId} />
             <Button
               type="submit"
-              disabled={pending || !stationId}
+              disabled={pending || !stationId || !eligible}
               className="w-full bg-teal text-base hover:bg-teal/90 active:bg-teal/80"
             >
               {pending ? (

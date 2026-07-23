@@ -894,6 +894,9 @@
     "error_entitlement_inactive": "This station's Studio Pro access is inactive. Check your subscription.",
     "error_forbidden": "You don't have permission to connect a computer to this station.",
     "error_unknown": "Something went wrong. Please try again.",
-    "error_invalid_scope": "The requested permissions aren't allowed."
+    "error_invalid_scope": "The requested permissions aren't allowed.",
+    "error_no_default_voice": "Set a default voice for this station before pairing.",
+    "needDefaultVoice": "This station needs a default AURA voice before you can connect a computer.",
+    "openStudioProSettings": "Set a default voice"
   }
 }

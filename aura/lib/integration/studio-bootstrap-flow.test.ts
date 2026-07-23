@@ -42,6 +42,7 @@ class FakeStore implements StudioBootstrapStore {
             stationId: st.id,
             stationName: st.name,
             role: 'owner',
+            defaultVoiceId: null,
           });
         }
       }

@@ -27,6 +27,7 @@ export async function getManageableStations(
       stationId: station.id,
       stationName: station.name,
       role: organizationMember.role,
+      defaultVoiceId: station.defaultVoiceId,
     })
     .from(organizationMember)
     .innerJoin(organization, eq(organization.id, organizationMember.organizationId))

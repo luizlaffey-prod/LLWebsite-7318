@@ -894,6 +894,9 @@
     "error_entitlement_inactive": "El acceso a Studio Pro de esta emisora está inactivo. Revisa tu suscripción.",
     "error_forbidden": "No tienes permiso para conectar un ordenador a esta emisora.",
     "error_unknown": "Algo salió mal. Inténtalo de nuevo.",
-    "error_invalid_scope": "Los permisos solicitados no están permitidos."
+    "error_invalid_scope": "Los permisos solicitados no están permitidos.",
+    "error_no_default_voice": "Define una voz predeterminada para esta emisora antes de vincular.",
+    "needDefaultVoice": "Esta emisora necesita una voz AURA predeterminada antes de conectar un ordenador.",
+    "openStudioProSettings": "Definir voz predeterminada"
   }
 }

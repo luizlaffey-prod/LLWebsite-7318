@@ -131,6 +131,18 @@ export function canonicalizeRedirectUri(raw: string): string {
 }
 
 /**
+ * A station may be paired (code flow or OAuth) only once it has a default AURA
+ * voice — otherwise an integrated content request without an explicit voiceId
+ * falls through to `no_voice_configured`. Enforced server-side in both pairing
+ * paths so the UI gate can't be bypassed via hidden fields / direct actions.
+ */
+export function stationEligibleForPairing(station: {
+  defaultVoiceId: string | null;
+}): boolean {
+  return station.defaultVoiceId != null;
+}
+
+/**
  * The message the desktop signs (P-256/ES256) at the token step to prove it
  * holds the private key matching the public key bound to the grant. Binding
  * the client id, redirect URI, code and device fingerprint stops a stolen

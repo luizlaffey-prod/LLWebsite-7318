@@ -29,6 +29,7 @@ export interface ManageableStation {
   stationId: string;
   stationName: string;
   role: string;
+  defaultVoiceId: string | null;
 }
 
 export interface BootstrapAccount {

@@ -13,6 +13,7 @@ import {
   canonicalizeRedirectUri,
   isValidCodeChallenge,
   isValidLoopbackRedirectUri,
+  stationEligibleForPairing,
   STUDIO_PRO_CLIENT_ID,
 } from '@/lib/integration/studio-auth-policy';
 import { issueStudioAuthGrant } from '@/lib/integration/studio-auth';
@@ -87,6 +88,13 @@ export async function authorizeStudioConnect(
       'admin',
     ]);
     await requireUsableStudioEntitlement(member.organization.id);
+
+    // Same gate as the code-pairing flow: a station needs a default voice
+    // before any device is paired. Enforced here (not just in the UI) so a
+    // hidden-field / direct-action call can't bypass it.
+    if (!stationEligibleForPairing(member.station)) {
+      return { error: 'no_default_voice' };
+    }
 
     const { code } = await issueStudioAuthGrant({
       clientId,
