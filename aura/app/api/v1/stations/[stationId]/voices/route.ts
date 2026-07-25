@@ -69,10 +69,16 @@ export async function GET(
     }
 
     const voices = [...byProviderId.values()]
-      .map(({ tierRequired: _tierRequired, ownerUserId, elevenLabsVoiceId: _providerId, ...voice }) => ({
-        ...voice,
+      .map((voice) => ({
+        id: voice.id,
+        name: voice.name,
+        description: voice.description,
+        languages: voice.languages,
+        gender: voice.gender,
+        accent: voice.accent,
+        style: voice.style,
         isDefault: voice.id === defaultVoiceId,
-        isMine: ownerUserId === billingUserId,
+        isMine: voice.ownerUserId === billingUserId,
       }))
       .sort((left, right) => {
         if (left.isDefault !== right.isDefault) return left.isDefault ? -1 : 1;
