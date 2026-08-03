@@ -102,7 +102,15 @@ export async function generateScript(
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const userPrompt = buildUserPrompt(input, correction);
-    const text = await provider.complete({ systemPrompt, userPrompt });
+    const text = await provider.complete({
+      systemPrompt,
+      userPrompt,
+      // Gemini 2.5 counts internal reasoning inside maxOutputTokens. Reserve a
+      // bounded thinking budget so a successful response still has enough
+      // capacity to emit the bulletin JSON.
+      maxTokens: 4_096,
+      thinkingBudget: 512,
+    });
     blocks = parseResponse(text);
 
     const total = totalDuration(blocks);
