@@ -65,6 +65,47 @@ describe('voice link generator', () => {
     expect(provider.complete).toHaveBeenCalledTimes(2);
   });
 
+  it('retries when an explicitly requested slogan is missing', async () => {
+    provider.complete
+      .mockResolvedValueOnce(
+        '{"texto":"Você ouviu Aurora Urbana. Agora vem Ecos do Sul."}',
+      )
+      .mockResolvedValueOnce(
+        '{"texto":"Você ouviu Aurora Urbana. Radio Collection, the best on the web. Agora vem Ecos do Sul."}',
+      );
+
+    const result = await generateVoiceLinkDraft({
+      ...input,
+      maxDurationSeconds: 15,
+      customInstruction:
+        'Use exatamente o slogan: “Radio Collection, the best on the web”.',
+    });
+
+    expect(result.scriptText).toContain(
+      'Radio Collection, the best on the web',
+    );
+    expect(provider.complete).toHaveBeenCalledTimes(2);
+    expect(provider.complete.mock.calls[1]?.[0].userPrompt).toContain(
+      'Radio Collection, the best on the web',
+    );
+  });
+
+  it('fails closed when a required slogan is omitted twice', async () => {
+    provider.complete.mockResolvedValue(
+      '{"texto":"Você ouviu Aurora Urbana. Agora vem Ecos do Sul."}',
+    );
+
+    await expect(
+      generateVoiceLinkDraft({
+        ...input,
+        maxDurationSeconds: 15,
+        customInstruction:
+          'Use exatamente o slogan: "Radio Collection, the best on the web".',
+      }),
+    ).rejects.toThrow('voice_link_draft_missing_required_phrase');
+    expect(provider.complete).toHaveBeenCalledTimes(2);
+  });
+
   it('fails closed when both drafts exceed the limit', async () => {
     const oversized = `{"texto":"${Array.from(
       { length: 30 },
