@@ -44,5 +44,11 @@ export interface LlmProvider {
     userPrompt: string;
     maxTokens?: number;
     temperature?: number;
+    /**
+     * Optional reasoning-token budget for providers that support it.
+     * Gemini 2.5 counts thinking tokens inside maxOutputTokens, so short
+     * latency-sensitive tasks must be able to reserve a small explicit budget.
+     */
+    thinkingBudget?: number;
   }): Promise<string>;
 }

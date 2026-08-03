@@ -41,6 +41,12 @@ describe('voice link generator', () => {
     expect(result.scriptText).toContain('Aurora Urbana');
     expect(result.estimatedDurationSeconds).toBeLessThanOrEqual(8);
     expect(provider.complete).toHaveBeenCalledTimes(1);
+    expect(provider.complete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxTokens: 512,
+        thinkingBudget: 128,
+      }),
+    );
   });
 
   it('asks for one shorter revision when the first draft is too long', async () => {
