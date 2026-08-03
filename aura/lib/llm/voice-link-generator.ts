@@ -28,6 +28,32 @@ function requiredPhrases(customInstruction?: string): string[] {
   return [...new Set(phrases)];
 }
 
+function asSentence(text: string): string {
+  return /[.!?]$/u.test(text) ? text : `${text}.`;
+}
+
+function compactFallbackScript(
+  input: VoiceLinkDraftInput,
+  phrases: string[],
+): string {
+  const nextTrack = input.nextTracks[0];
+  if (!nextTrack) throw new Error('voice_link_draft_empty');
+
+  const current =
+    input.language === 'en'
+      ? `${input.currentTrack.title} by ${input.currentTrack.artist}.`
+      : `${input.currentTrack.title}, de ${input.currentTrack.artist}.`;
+  const next =
+    input.language === 'en'
+      ? `Next, ${nextTrack.title} by ${nextTrack.artist}.`
+      : input.language === 'es'
+        ? `A continuación, ${nextTrack.title}, de ${nextTrack.artist}.`
+        : `A seguir, ${nextTrack.title}, de ${nextTrack.artist}.`;
+  const required = phrases.map(asSentence);
+
+  return [current, ...required, next].join(' ');
+}
+
 export function estimateVoiceLinkDurationSeconds(text: string): number {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 2.35));
@@ -60,7 +86,7 @@ function buildUserPrompt(
     .join('\n');
   const correctionLines = [
     correction?.estimatedSeconds
-      ? `The previous draft was estimated at ${correction.estimatedSeconds} seconds. Make this version shorter.`
+      ? `The previous draft was estimated at ${correction.estimatedSeconds} seconds. Make this version shorter and use at most ${Math.floor(input.maxDurationSeconds * 2.35)} words.`
       : '',
     correction?.missingPhrases?.length
       ? `The previous draft omitted required wording. Include each of these exact phrases once: ${JSON.stringify(correction.missingPhrases)}.`
@@ -132,12 +158,28 @@ export async function generateVoiceLinkDraft(
   }
 
   if (!latest) throw new Error('voice_link_draft_empty');
-  if (latestMissingPhrases.length > 0) {
+  const fallbackScriptText = compactFallbackScript(input, phrases);
+  const fallback = {
+    scriptText: fallbackScriptText,
+    estimatedDurationSeconds:
+      estimateVoiceLinkDurationSeconds(fallbackScriptText),
+  };
+  const fallbackMissingPhrases = phrases.filter(
+    (phrase) => !fallbackScriptText.includes(phrase),
+  );
+  if (
+    fallback.estimatedDurationSeconds <= input.maxDurationSeconds &&
+    fallbackMissingPhrases.length === 0
+  ) {
+    return fallback;
+  }
+
+  if (fallbackMissingPhrases.length > 0) {
     throw new Error(
-      `voice_link_draft_missing_required_phrase:${latestMissingPhrases.join('|')}`,
+      `voice_link_draft_missing_required_phrase:${fallbackMissingPhrases.join('|')}`,
     );
   }
   throw new Error(
-    `voice_link_draft_too_long:${latest.estimatedDurationSeconds}>${input.maxDurationSeconds}`,
+    `voice_link_draft_too_long:${fallback.estimatedDurationSeconds}>${input.maxDurationSeconds}`,
   );
 }

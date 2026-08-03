@@ -90,23 +90,51 @@ describe('voice link generator', () => {
     );
   });
 
-  it('fails closed when a required slogan is omitted twice', async () => {
+  it('uses a compact fallback when a required slogan is omitted twice', async () => {
     provider.complete.mockResolvedValue(
       '{"texto":"Você ouviu Aurora Urbana. Agora vem Ecos do Sul."}',
     );
 
-    await expect(
-      generateVoiceLinkDraft({
-        ...input,
-        maxDurationSeconds: 15,
-        customInstruction:
-          'Use exatamente o slogan: "Radio Collection, the best on the web".',
-      }),
-    ).rejects.toThrow('voice_link_draft_missing_required_phrase');
+    const result = await generateVoiceLinkDraft({
+      ...input,
+      maxDurationSeconds: 15,
+      customInstruction:
+        'Use exatamente o slogan: "Radio Collection, the best on the web".',
+    });
+
+    expect(result.scriptText).toContain(
+      'Radio Collection, the best on the web',
+    );
+    expect(result.estimatedDurationSeconds).toBeLessThanOrEqual(15);
     expect(provider.complete).toHaveBeenCalledTimes(2);
   });
 
-  it('fails closed when both drafts exceed the limit', async () => {
+  it('uses a compact fallback when both model drafts exceed the limit', async () => {
+    const oversized = `{"texto":"${Array.from(
+      { length: 36 },
+      () => 'word',
+    ).join(' ')}"}`;
+    provider.complete.mockResolvedValue(oversized);
+
+    const result = await generateVoiceLinkDraft({
+      mode: 'between_songs',
+      currentTrack: { title: 'SD Boom', artist: 'Teste' },
+      nextTracks: [{ title: 'Waiting', artist: 'Teste' }],
+      language: 'en',
+      tone: 'energetic',
+      maxDurationSeconds: 15,
+      customInstruction:
+        'Use exactly the slogan: "Radio Collection, the best on the web".',
+    });
+
+    expect(result.scriptText).toBe(
+      'SD Boom by Teste. Radio Collection, the best on the web. Next, Waiting by Teste.',
+    );
+    expect(result.estimatedDurationSeconds).toBeLessThanOrEqual(15);
+    expect(provider.complete).toHaveBeenCalledTimes(2);
+  });
+
+  it('fails closed when the compact fallback also exceeds the limit', async () => {
     const oversized = `{"texto":"${Array.from(
       { length: 30 },
       () => 'palavra',
@@ -114,7 +142,20 @@ describe('voice link generator', () => {
     provider.complete.mockResolvedValue(oversized);
 
     await expect(
-      generateVoiceLinkDraft({ ...input, maxDurationSeconds: 5 }),
+      generateVoiceLinkDraft({
+        ...input,
+        currentTrack: {
+          title: Array.from({ length: 20 }, () => 'música').join(' '),
+          artist: Array.from({ length: 10 }, () => 'artista').join(' '),
+        },
+        nextTracks: [
+          {
+            title: Array.from({ length: 20 }, () => 'próxima').join(' '),
+            artist: Array.from({ length: 10 }, () => 'cantor').join(' '),
+          },
+        ],
+        maxDurationSeconds: 4,
+      }),
     ).rejects.toThrow('voice_link_draft_too_long');
     expect(provider.complete).toHaveBeenCalledTimes(2);
   });
