@@ -82,7 +82,10 @@ export async function generateVoiceLinkDraft(
     const raw = await provider.complete({
       systemPrompt: buildSystemPrompt(),
       userPrompt: buildUserPrompt(input, correction),
-      maxTokens: 300,
+      // Gemini 2.5 includes internal reasoning in maxOutputTokens. A 300-token
+      // cap can therefore finish before emitting the short JSON response.
+      maxTokens: 512,
+      thinkingBudget: 128,
       temperature: 0.4,
     });
     const scriptText = parseDraft(raw);

@@ -10,7 +10,13 @@ export function createGeminiProvider(): LlmProvider {
 
   return {
     id: 'gemini',
-    async complete({ systemPrompt, userPrompt, maxTokens, temperature }) {
+    async complete({
+      systemPrompt,
+      userPrompt,
+      maxTokens,
+      temperature,
+      thinkingBudget,
+    }) {
       const url = `${BASE}/models/${model}:generateContent?key=${key}`;
       const payload = {
         // Gemini treats system instructions as a separate field. Falls back
@@ -21,6 +27,9 @@ export function createGeminiProvider(): LlmProvider {
           temperature: temperature ?? 1.0,
           responseMimeType: 'application/json',
           maxOutputTokens: maxTokens ?? 2048,
+          ...(thinkingBudget !== undefined && model.startsWith('gemini-2.5-')
+            ? { thinkingConfig: { thinkingBudget } }
+            : {}),
         },
       };
 
@@ -42,10 +51,32 @@ export function createGeminiProvider(): LlmProvider {
           }
         );
         const data = (await res.json()) as {
-          candidates?: { content?: { parts?: { text?: string }[] } }[];
+          candidates?: {
+            content?: { parts?: { text?: string; thought?: boolean }[] };
+            finishReason?: string;
+            finishMessage?: string;
+          }[];
+          promptFeedback?: { blockReason?: string };
+          usageMetadata?: {
+            candidatesTokenCount?: number;
+            thoughtsTokenCount?: number;
+            totalTokenCount?: number;
+          };
         };
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-        if (!text) throw new Error('gemini_empty_response');
+        const candidate = data.candidates?.[0];
+        const text = (candidate?.content?.parts ?? [])
+          .filter((part) => part.thought !== true && part.text)
+          .map((part) => part.text)
+          .join('');
+        if (!text) {
+          const finish = candidate?.finishReason ?? 'none';
+          const blocked = data.promptFeedback?.blockReason ?? 'none';
+          const thoughts = data.usageMetadata?.thoughtsTokenCount ?? 0;
+          const output = data.usageMetadata?.candidatesTokenCount ?? 0;
+          throw new Error(
+            `gemini_empty_response:finish=${finish}:blocked=${blocked}:thoughts=${thoughts}:output=${output}`,
+          );
+        }
         return text;
       } catch (err) {
         if (err instanceof FetchError) {
