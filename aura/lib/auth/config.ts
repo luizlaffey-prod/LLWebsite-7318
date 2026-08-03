@@ -3,6 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/lib/db/client';
 import * as schema from '@/lib/db/schema';
 import { TRIAL_DAYS } from '@/lib/billing/plans';
+import { getTrustedOrigins } from '@/lib/auth/trusted-origins';
 
 /**
  * Returns whether Google OAuth is plumbed in. Used by the auth UI to
@@ -95,6 +96,7 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
   },
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  trustedOrigins: getTrustedOrigins(),
   secret: process.env.BETTER_AUTH_SECRET!,
   user: {
     additionalFields: {
