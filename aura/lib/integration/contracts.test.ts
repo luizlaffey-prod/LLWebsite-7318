@@ -4,6 +4,7 @@ import {
   LicenseHeartbeatRequestSchema,
   PairingExchangeSchema,
   RefreshTokenSchema,
+  VoiceLinkDraftInputSchema,
   requestFingerprint,
   slugify,
 } from './contracts';
@@ -21,6 +22,7 @@ describe('Studio Pro integration contracts', () => {
     });
 
     expect(parsed.kind).toBe('news_bulletin');
+    if (parsed.kind !== 'news_bulletin') throw new Error('unexpected request kind');
     expect(parsed.speed).toBe(1);
     expect(parsed.includeWeather).toBe(false);
     expect(parsed.validForSeconds).toBe(86_400);
@@ -33,6 +35,38 @@ describe('Studio Pro integration contracts', () => {
       language: 'en',
       validForSeconds: 60,
     });
+    expect(result.success).toBe(false);
+  });
+
+  it('normalizes a valid between-song voice link request', () => {
+    const parsed = ContentRequestInputSchema.parse({
+      kind: 'voice_link',
+      mode: 'between_songs',
+      scriptText: 'Você ouviu Luz do Mar. Agora, Céu em Movimento.',
+      currentTrack: { title: 'Luz do Mar', artist: 'Aurora Urbana' },
+      nextTracks: [{ title: 'Céu em Movimento', artist: 'Ecos do Sul' }],
+      durationSeconds: 8,
+      language: 'pt',
+    });
+
+    expect(parsed.kind).toBe('voice_link');
+    if (parsed.kind !== 'voice_link') throw new Error('unexpected request kind');
+    expect(parsed.tone).toBe('natural');
+    expect(parsed.speed).toBe(1);
+    expect(parsed.validForSeconds).toBe(86_400);
+  });
+
+  it('limits a voice link draft to four upcoming tracks', () => {
+    const result = VoiceLinkDraftInputSchema.safeParse({
+      mode: 'between_songs',
+      currentTrack: { title: 'Atual', artist: 'Artista atual' },
+      nextTracks: Array.from({ length: 5 }, (_, index) => ({
+        title: `Próxima ${index + 1}`,
+        artist: `Artista ${index + 1}`,
+      })),
+      language: 'pt',
+    });
+
     expect(result.success).toBe(false);
   });
 

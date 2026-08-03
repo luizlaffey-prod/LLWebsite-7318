@@ -994,7 +994,7 @@ export const studioLicenseEvent = pgTable(
   })
 );
 
-export interface IntegrationContentInput {
+export interface IntegrationNewsBulletinInput {
   kind: 'news_bulletin';
   source:
     | {
@@ -1023,6 +1023,31 @@ export interface IntegrationContentInput {
   scheduledFor?: string;
   validForSeconds: number;
 }
+
+export interface IntegrationVoiceLinkInput {
+  kind: 'voice_link';
+  mode: 'between_songs';
+  scriptText: string;
+  currentTrack: {
+    title: string;
+    artist: string;
+  };
+  nextTracks: Array<{
+    title: string;
+    artist: string;
+  }>;
+  durationSeconds: number;
+  language: 'en' | 'pt' | 'es';
+  tone: 'natural' | 'energetic' | 'warm' | 'institutional';
+  voiceId?: string;
+  speed: number;
+  scheduledFor?: string;
+  validForSeconds: number;
+}
+
+export type IntegrationContentInput =
+  | IntegrationNewsBulletinInput
+  | IntegrationVoiceLinkInput;
 
 export interface IntegrationSourceReference {
   title: string;
