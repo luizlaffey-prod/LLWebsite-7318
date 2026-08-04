@@ -21,37 +21,61 @@ function toneInstruction(tone: VoiceLinkDraftInput['tone']): string {
 
 function requiredPhrases(customInstruction?: string): string[] {
   if (!customInstruction) return [];
-  const phrases = Array.from(
+  const quoted = Array.from(
     customInstruction.matchAll(/["“”]([^"“”]{2,160})["“”]/gu),
     (match) => match[1]?.trim() ?? '',
   ).filter(Boolean);
-  return [...new Set(phrases)];
+  const labeled = customInstruction
+    .split(/[\r\n;]+/u)
+    .map((line) => line.match(/\b(?:slogan|eslogan)\s*:\s*(.+)$/iu)?.[1] ?? '')
+    .map((phrase) => {
+      const trimmed = phrase.trim();
+      return trimmed.match(/^["“”]([^"“”]{2,160})["“”]/u)?.[1]?.trim() ??
+        trimmed;
+    })
+    .filter((phrase) => phrase.length >= 2 && phrase.length <= 160);
+  return [...new Set([...quoted, ...labeled])];
 }
 
 function asSentence(text: string): string {
   return /[.!?]$/u.test(text) ? text : `${text}.`;
 }
 
-function compactFallbackScript(
+function compactFallbackScripts(
   input: VoiceLinkDraftInput,
   phrases: string[],
-): string {
+): string[] {
   const nextTrack = input.nextTracks[0];
   if (!nextTrack) throw new Error('voice_link_draft_empty');
 
-  const current =
+  const currentWithArtist =
     input.language === 'en'
       ? `${input.currentTrack.title} by ${input.currentTrack.artist}.`
       : `${input.currentTrack.title}, de ${input.currentTrack.artist}.`;
-  const next =
+  const nextWithArtist =
     input.language === 'en'
       ? `Next, ${nextTrack.title} by ${nextTrack.artist}.`
       : input.language === 'es'
         ? `A continuación, ${nextTrack.title}, de ${nextTrack.artist}.`
         : `A seguir, ${nextTrack.title}, de ${nextTrack.artist}.`;
+  const currentTitle = asSentence(input.currentTrack.title);
+  const nextTitle =
+    input.language === 'en'
+      ? `Next, ${asSentence(nextTrack.title)}`
+      : input.language === 'es'
+        ? `A continuación, ${asSentence(nextTrack.title)}`
+        : `A seguir, ${asSentence(nextTrack.title)}`;
   const required = phrases.map(asSentence);
 
-  return [current, ...required, next].join(' ');
+  const candidates = [
+    [currentWithArtist, ...required, nextWithArtist].join(' '),
+    [currentTitle, ...required, nextTitle].join(' '),
+    phrases.length > 0
+      ? [...required, nextTitle].join(' ')
+      : [currentTitle, nextTitle].join(' '),
+  ];
+
+  return [...new Set(candidates)];
 }
 
 export function estimateVoiceLinkDurationSeconds(text: string): number {
@@ -158,28 +182,39 @@ export async function generateVoiceLinkDraft(
   }
 
   if (!latest) throw new Error('voice_link_draft_empty');
-  const fallbackScriptText = compactFallbackScript(input, phrases);
-  const fallback = {
-    scriptText: fallbackScriptText,
-    estimatedDurationSeconds:
-      estimateVoiceLinkDurationSeconds(fallbackScriptText),
-  };
-  const fallbackMissingPhrases = phrases.filter(
-    (phrase) => !fallbackScriptText.includes(phrase),
+  const fallbacks = compactFallbackScripts(input, phrases).map(
+    (scriptText) => ({
+      scriptText,
+      estimatedDurationSeconds:
+        estimateVoiceLinkDurationSeconds(scriptText),
+      missingPhrases: phrases.filter(
+        (phrase) => !scriptText.includes(phrase),
+      ),
+    }),
   );
-  if (
-    fallback.estimatedDurationSeconds <= input.maxDurationSeconds &&
-    fallbackMissingPhrases.length === 0
-  ) {
-    return fallback;
+  const fittingFallback = fallbacks.find(
+    (fallback) =>
+      fallback.estimatedDurationSeconds <= input.maxDurationSeconds &&
+      fallback.missingPhrases.length === 0,
+  );
+  if (fittingFallback) {
+    return {
+      scriptText: fittingFallback.scriptText,
+      estimatedDurationSeconds: fittingFallback.estimatedDurationSeconds,
+    };
   }
 
-  if (fallbackMissingPhrases.length > 0) {
+  const shortestFallback = fallbacks.reduce((shortest, fallback) =>
+    fallback.estimatedDurationSeconds < shortest.estimatedDurationSeconds
+      ? fallback
+      : shortest,
+  );
+  if (shortestFallback.missingPhrases.length > 0) {
     throw new Error(
-      `voice_link_draft_missing_required_phrase:${fallbackMissingPhrases.join('|')}`,
+      `voice_link_draft_missing_required_phrase:${shortestFallback.missingPhrases.join('|')}`,
     );
   }
   throw new Error(
-    `voice_link_draft_too_long:${fallback.estimatedDurationSeconds}>${input.maxDurationSeconds}`,
+    `voice_link_draft_too_long:${shortestFallback.estimatedDurationSeconds}>${input.maxDurationSeconds}`,
   );
 }
