@@ -134,6 +134,41 @@ describe('voice link generator', () => {
     expect(provider.complete).toHaveBeenCalledTimes(2);
   });
 
+  it('fits long track titles and an unquoted labeled slogan into ten seconds', async () => {
+    const oversized = `{"texto":"${Array.from(
+      { length: 30 },
+      () => 'word',
+    ).join(' ')}"}`;
+    provider.complete.mockResolvedValue(oversized);
+
+    const result = await generateVoiceLinkDraft({
+      mode: 'between_songs',
+      currentTrack: {
+        title: 'What Goes Around Comes Around Interlude',
+        artist: 'Teste',
+      },
+      nextTracks: [
+        {
+          title: 'How do you get water in stranded deep',
+          artist: 'Teste',
+        },
+      ],
+      language: 'en',
+      tone: 'energetic',
+      maxDurationSeconds: 10,
+      customInstruction: 'Slogan: Radio Collection, the best on the web',
+    });
+
+    expect(result.scriptText).toContain(
+      'Radio Collection, the best on the web',
+    );
+    expect(result.scriptText).toContain(
+      'How do you get water in stranded deep',
+    );
+    expect(result.estimatedDurationSeconds).toBeLessThanOrEqual(10);
+    expect(provider.complete).toHaveBeenCalledTimes(2);
+  });
+
   it('fails closed when the compact fallback also exceeds the limit', async () => {
     const oversized = `{"texto":"${Array.from(
       { length: 30 },
