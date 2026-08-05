@@ -78,7 +78,7 @@ export async function processContentRequest(requestId: string): Promise<void> {
     const input = ContentRequestInputSchema.parse(context.request.input);
     const billingUserId = context.organization.billingUserId;
     const quota = await getQuota(billingUserId);
-    if (quota.remaining <= 0) {
+    if (!quota.unlimited && quota.remaining <= 0) {
       throw new ContentProcessingError('quota_exceeded');
     }
     if (!canRequestDuration(quota.tier, input.durationSeconds)) {
