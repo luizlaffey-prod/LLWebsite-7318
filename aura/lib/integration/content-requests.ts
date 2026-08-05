@@ -266,7 +266,10 @@ async function resolveNewsBulletinContent(
 function resolveVoiceLinkContent(input: VoiceLinkContentInput): ResolvedContent {
   const current = input.currentTrack;
   const next = input.nextTracks[0];
-  const title = `Locução: ${current.artist} — ${current.title}`;
+  const trackLabel = (track: VoiceLinkContentInput['currentTrack']) => (
+    track.artist ? `${track.artist} — ${track.title}` : track.title
+  );
+  const title = `Locução: ${trackLabel(current)}`;
   const references: IntegrationSourceReference[] = [
     {
       title: current.title,
@@ -280,7 +283,7 @@ function resolveVoiceLinkContent(input: VoiceLinkContentInput): ResolvedContent 
 
   return {
     title: next
-      ? `${title} → ${next.artist} — ${next.title}`
+      ? `${title} → ${trackLabel(next)}`
       : title,
     references,
     script: [

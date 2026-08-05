@@ -50,7 +50,15 @@ const SearchSourceSchema = z.object({
 
 const TrackMetadataSchema = z.object({
   title: z.string().trim().min(1).max(300),
-  artist: z.string().trim().min(1).max(200),
+  artist: z.string().trim().min(1).max(200).optional(),
+});
+
+const VerifiedFactSchema = z.object({
+  text: z.string().trim().min(1).max(500),
+  sources: z.array(z.object({
+    title: z.string().trim().min(1).max(300),
+    url: z.string().url().max(2_000),
+  })).min(1).max(3),
 });
 
 const VoiceLinkBaseSchema = z.object({
@@ -61,6 +69,16 @@ const VoiceLinkBaseSchema = z.object({
   tone: z.enum(['natural', 'energetic', 'warm', 'institutional']).default('natural'),
   maxDurationSeconds: z.number().int().min(4).max(20).default(10),
   customInstruction: z.string().trim().max(500).optional(),
+  factMode: z.enum(['off', 'verified']).default('off'),
+  verifiedFact: VerifiedFactSchema.optional(),
+}).superRefine((value, ctx) => {
+  if (value.factMode === 'off' && value.verifiedFact) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'verifiedFact requires factMode=verified',
+      path: ['verifiedFact'],
+    });
+  }
 });
 
 export const VoiceLinkDraftInputSchema = VoiceLinkBaseSchema;
@@ -81,9 +99,11 @@ export const NewsBulletinInputSchema = z.object({
   validForSeconds: z.number().int().min(300).max(7 * 24 * 60 * 60).default(24 * 60 * 60),
 });
 
-export const VoiceLinkContentInputSchema = VoiceLinkBaseSchema.omit({
+export const VoiceLinkContentInputSchema = VoiceLinkBaseSchema.innerType().omit({
   maxDurationSeconds: true,
   customInstruction: true,
+  factMode: true,
+  verifiedFact: true,
 }).extend({
   kind: z.literal('voice_link'),
   scriptText: z.string().trim().min(1).max(1_000),
