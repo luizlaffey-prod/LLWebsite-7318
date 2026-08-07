@@ -56,6 +56,42 @@ describe('Studio Pro integration contracts', () => {
     expect(parsed.validForSeconds).toBe(86_400);
   });
 
+  it('accepts a song without artist metadata', () => {
+    const parsed = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      currentTrack: { title: 'Nothing Is Gonna Change My Love for You' },
+      nextTracks: [{ title: 'Slave to Love', artist: 'Bryan Ferry' }],
+      language: 'en',
+    });
+
+    expect(parsed.currentTrack.artist).toBeUndefined();
+    expect(parsed.nextTracks[0]?.artist).toBe('Bryan Ferry');
+    expect(parsed.factMode).toBe('off');
+  });
+
+  it('accepts a cited verified fact only when verified mode is enabled', () => {
+    const parsed = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      currentTrack: { title: 'Crazy for You', artist: 'Madonna' },
+      nextTracks: [{ title: 'Slave to Love', artist: 'Bryan Ferry' }],
+      language: 'en',
+      factMode: 'verified',
+      verifiedFact: {
+        text: 'The song was written for the 1985 film Vision Quest.',
+        sources: [{
+          title: 'Official soundtrack notes',
+          url: 'https://example.com/source',
+        }],
+      },
+    });
+
+    expect(parsed.verifiedFact?.sources).toHaveLength(1);
+    expect(VoiceLinkDraftInputSchema.safeParse({
+      ...parsed,
+      factMode: 'off',
+    }).success).toBe(false);
+  });
+
   it('limits a voice link draft to four upcoming tracks', () => {
     const result = VoiceLinkDraftInputSchema.safeParse({
       mode: 'between_songs',

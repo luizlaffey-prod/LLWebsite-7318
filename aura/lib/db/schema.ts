@@ -1030,11 +1030,11 @@ export interface IntegrationVoiceLinkInput {
   scriptText: string;
   currentTrack: {
     title: string;
-    artist: string;
+    artist?: string;
   };
   nextTracks: Array<{
     title: string;
-    artist: string;
+    artist?: string;
   }>;
   durationSeconds: number;
   language: 'en' | 'pt' | 'es';

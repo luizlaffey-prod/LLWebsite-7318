@@ -20,6 +20,7 @@ const input = {
   language: 'pt' as const,
   tone: 'natural' as const,
   maxDurationSeconds: 8,
+  factMode: 'off' as const,
 };
 
 describe('voice link generator', () => {
@@ -123,6 +124,7 @@ describe('voice link generator', () => {
       language: 'en',
       tone: 'energetic',
       maxDurationSeconds: 15,
+      factMode: 'off',
       customInstruction:
         'Use exactly the slogan: "Radio Collection, the best on the web".',
     });
@@ -132,6 +134,32 @@ describe('voice link generator', () => {
     );
     expect(result.estimatedDurationSeconds).toBeLessThanOrEqual(15);
     expect(provider.complete).toHaveBeenCalledTimes(2);
+  });
+
+  it('announces only the title when the artist is missing', async () => {
+    const oversized = `{"texto":"${Array.from(
+      { length: 36 },
+      () => 'word',
+    ).join(' ')}"}`;
+    provider.complete.mockResolvedValue(oversized);
+
+    const result = await generateVoiceLinkDraft({
+      mode: 'between_songs',
+      currentTrack: { title: 'Nothing Is Gonna Change My Love for You' },
+      nextTracks: [{ title: 'Slave to Love', artist: 'Bryan Ferry' }],
+      language: 'en',
+      tone: 'warm',
+      maxDurationSeconds: 10,
+      factMode: 'off',
+    });
+
+    expect(result.scriptText).toBe(
+      'Nothing Is Gonna Change My Love for You. Next, Slave to Love by Bryan Ferry.',
+    );
+    expect(result.scriptText).not.toMatch(/unknown|missing|not provided/iu);
+    expect(provider.complete.mock.calls[0]?.[0].systemPrompt).toContain(
+      'mention only that song title',
+    );
   });
 
   it('fits long track titles and an unquoted labeled slogan into ten seconds', async () => {
@@ -156,6 +184,7 @@ describe('voice link generator', () => {
       language: 'en',
       tone: 'energetic',
       maxDurationSeconds: 10,
+      factMode: 'off',
       customInstruction: 'Slogan: Radio Collection, the best on the web',
     });
 
@@ -193,5 +222,60 @@ describe('voice link generator', () => {
       }),
     ).rejects.toThrow('voice_link_draft_too_long');
     expect(provider.complete).toHaveBeenCalledTimes(2);
+  });
+
+  it('starts with the required slogan and includes only the supplied verified fact', async () => {
+    const fact = {
+      text: 'The song was written for the 1985 film Vision Quest.',
+      sources: [{
+        title: 'Official soundtrack notes',
+        url: 'https://example.com/source',
+      }],
+    };
+    provider.complete.mockResolvedValueOnce(
+      '{"texto":"Radio Collection, the best on the web. Crazy for You by Madonna. The song was written for the 1985 film Vision Quest. Next, Slave to Love by Bryan Ferry."}',
+    );
+
+    const result = await generateVoiceLinkDraft({
+      mode: 'between_songs',
+      currentTrack: { title: 'Crazy for You', artist: 'Madonna' },
+      nextTracks: [{ title: 'Slave to Love', artist: 'Bryan Ferry' }],
+      language: 'en',
+      tone: 'warm',
+      maxDurationSeconds: 20,
+      factMode: 'verified',
+      customInstruction:
+        'Start with the slogan: "Radio Collection, the best on the web".',
+    }, fact);
+
+    expect(result.scriptText.startsWith(
+      'Radio Collection, the best on the web.',
+    )).toBe(true);
+    expect(result.verifiedFactIncluded).toBe(true);
+    expect(result.verifiedFact?.sources).toEqual(fact.sources);
+    expect(provider.complete.mock.calls[0]?.[0].userPrompt).toContain(
+      fact.text,
+    );
+  });
+
+  it('drops the fact but keeps the link when verified trivia cannot fit', async () => {
+    const oversized = `{"texto":"${Array.from(
+      { length: 60 },
+      () => 'word',
+    ).join(' ')}"}`;
+    provider.complete.mockResolvedValue(oversized);
+
+    const result = await generateVoiceLinkDraft({
+      ...input,
+      maxDurationSeconds: 8,
+      factMode: 'verified',
+    }, {
+      text: 'This deliberately long verified sentence cannot fit inside the very short configured voice link duration.',
+      sources: [{ title: 'Source', url: 'https://example.com/source' }],
+    });
+
+    expect(result.estimatedDurationSeconds).toBeLessThanOrEqual(8);
+    expect(result.verifiedFactIncluded).toBe(false);
+    expect(result.scriptText).not.toContain('deliberately long');
   });
 });

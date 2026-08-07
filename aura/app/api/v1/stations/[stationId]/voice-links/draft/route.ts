@@ -31,7 +31,10 @@ export async function POST(
       );
     }
 
-    const draft = await generateVoiceLinkDraft(parsed.data);
+    const draft = await generateVoiceLinkDraft(
+      parsed.data,
+      parsed.data.verifiedFact,
+    );
     return Response.json(
       { draft },
       { headers: { 'Cache-Control': 'no-store' } },
