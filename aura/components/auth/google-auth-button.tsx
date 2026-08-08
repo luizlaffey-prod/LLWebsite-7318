@@ -5,10 +5,14 @@ import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth/client';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { resolveSocialCallbackURL } from '@/lib/auth/social-callback';
 import type { Locale } from '@/i18n';
 
 interface GoogleAuthButtonProps {
   locale: Locale;
+  /** Validated internal path to return to after Google auth (e.g. the Studio
+   * Pro consent screen). Falls back to the dashboard when absent. */
+  callbackURL?: string | null;
 }
 
 /**
@@ -18,7 +22,7 @@ interface GoogleAuthButtonProps {
  * provider side. Render only when isGoogleAuthConfigured() is true on
  * the server.
  */
-export function GoogleAuthButton({ locale }: GoogleAuthButtonProps) {
+export function GoogleAuthButton({ locale, callbackURL }: GoogleAuthButtonProps) {
   const t = useTranslations('auth');
   const [pending, setPending] = useState(false);
 
@@ -27,7 +31,7 @@ export function GoogleAuthButton({ locale }: GoogleAuthButtonProps) {
     try {
       await authClient.signIn.social({
         provider: 'google',
-        callbackURL: `/${locale}/dashboard`,
+        callbackURL: resolveSocialCallbackURL(callbackURL, locale),
       });
       // signIn.social triggers a full-page redirect — we don't usually
       // get past this point. If we DO (e.g. popup mode), the auth

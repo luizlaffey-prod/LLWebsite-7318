@@ -1,0 +1,470 @@
+openapi: 3.1.0
+info:
+  title: AURA Studio Pro Integration API
+  version: 1.0.0
+  description: Versioned device API for AURA-generated assets and Studio Pro playout events.
+servers:
+  - url: https://www.aurapress.app
+security:
+  - deviceBearer: []
+paths:
+  /api/v1/integration/bootstrap:
+    post:
+      summary: Bootstrap the signed-in user's first organization and station
+      security:
+        - browserSession: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationBootstrap'
+      responses:
+        '200': { description: Existing station }
+        '201': { description: Station created }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/stations/{stationId}/pairing-codes:
+    post:
+      summary: Create a one-time Studio Pro pairing code
+      security:
+        - browserSession: []
+      parameters:
+        - $ref: '#/components/parameters/StationId'
+      responses:
+        '201':
+          description: Pairing code created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [code, stationId, expiresAt, scopes]
+                properties:
+                  code: { type: string, example: ABCD-EFGH }
+                  stationId: { type: string, format: uuid }
+                  expiresAt: { type: string, format: date-time }
+                  scopes:
+                    type: array
+                    items: { type: string }
+  /api/v1/stations/{stationId}/license:
+    get:
+      summary: Inspect entitlement, activation/output usage and recent license events
+      security:
+        - browserSession: []
+      parameters:
+        - $ref: '#/components/parameters/StationId'
+      responses:
+        '200': { description: Owner/admin license dashboard data }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/device-pairings/exchange:
+    post:
+      summary: Exchange a one-time code for device credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, deviceName, platform, deviceKeyAlgorithm, devicePublicKey, pairingProof]
+              properties:
+                code: { type: string }
+                deviceName: { type: string }
+                platform: { type: string, enum: [windows, macos] }
+                deviceKeyAlgorithm: { type: string, const: ES256 }
+                devicePublicKey:
+                  type: string
+                  description: Base64-encoded P-256 SubjectPublicKeyInfo DER
+                pairingProof:
+                  type: string
+                  description: Base64url ECDSA signature over the canonical pairing message
+      responses:
+        '201':
+          description: Device paired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCredentials'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429':
+          description: Pairing attempts are temporarily rate-limited
+          headers:
+            Retry-After:
+              description: Seconds before the caller should try again
+              schema: { type: integer, minimum: 1 }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error, retryAfterSeconds]
+                properties:
+                  error: { type: string, const: pairing_rate_limited }
+                  retryAfterSeconds: { type: integer, minimum: 1 }
+  /api/v1/device-tokens/refresh:
+    post:
+      summary: Rotate access and refresh credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken, refreshProof]
+              properties:
+                refreshToken: { type: string }
+                refreshProof:
+                  type: string
+                  description: Device-key signature binding this refresh to the registered device
+      responses:
+        '200':
+          description: Rotated credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCredentials'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/device:
+    get:
+      summary: Describe the authenticated device and station
+      responses:
+        '200': { description: Device context }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/licenses/challenge:
+    post:
+      summary: Create a five-minute, one-use proof-of-possession challenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [purpose]
+              properties:
+                purpose: { type: string, enum: [lease, heartbeat, deactivate] }
+      responses:
+        '201':
+          description: Challenge created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [challengeId, challenge, purpose, expiresAt]
+                properties:
+                  challengeId: { type: string, format: uuid }
+                  challenge: { type: string }
+                  purpose: { type: string }
+                  expiresAt: { type: string, format: date-time }
+  /api/v1/licenses/lease:
+    post:
+      summary: Issue a device-bound, Ed25519-signed offline license lease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LicenseLeaseRequest' }
+      responses:
+        '200':
+          description: Signed license lease
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LicenseLeaseResponse' }
+        '402': { $ref: '#/components/responses/LicenseInactive' }
+  /api/v1/licenses/heartbeat:
+    post:
+      summary: Acquire, renew or release a licensed on-air output slot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LicenseHeartbeatRequest' }
+      responses:
+        '200': { description: Heartbeat accepted or output released }
+        '402': { $ref: '#/components/responses/LicenseInactive' }
+        '409':
+          description: Concurrent output limit reached or challenge replayed
+  /api/v1/licenses/status:
+    get:
+      summary: Read the authenticated device's entitlement and latest lease status
+      responses:
+        '200': { description: Current entitlement and lease state }
+  /api/v1/licenses/deactivate:
+    post:
+      summary: Cryptographically prove and deactivate this device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LicenseDeactivateRequest' }
+      responses:
+        '204': { description: Device, credentials, leases and output slot revoked }
+  /api/v1/stations/{stationId}/content-requests:
+    post:
+      summary: Request an AURA content asset
+      parameters:
+        - $ref: '#/components/parameters/StationId'
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 8, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentRequestInput'
+      responses:
+        '202':
+          description: Request accepted or replayed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request: { $ref: '#/components/schemas/ContentRequestResource' }
+                  idempotentReplay: { type: boolean }
+        '409': { description: Idempotency key reused with another payload }
+    get:
+      summary: Incrementally list station content requests
+      parameters:
+        - $ref: '#/components/parameters/StationId'
+        - name: updatedAfter
+          in: query
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        '200': { description: Content request page }
+  /api/v1/stations/{stationId}/content-requests/{requestId}:
+    get:
+      summary: Get one content request
+      parameters:
+        - $ref: '#/components/parameters/StationId'
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Content request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request: { $ref: '#/components/schemas/ContentRequestResource' }
+        '404': { description: Request not found }
+  /api/v1/stations/{stationId}/assets/{audioId}/download:
+    get:
+      summary: Download and verify a ready AURA asset
+      parameters:
+        - $ref: '#/components/parameters/StationId'
+        - name: audioId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: MP3 bytes
+          headers:
+            X-Content-SHA256:
+              schema: { type: string }
+          content:
+            audio/mpeg:
+              schema: { type: string, contentEncoding: binary }
+        '404': { description: Asset not found }
+  /api/v1/stations/{stationId}/events:
+    post:
+      summary: Record a Studio Pro asset lifecycle or playout event
+      parameters:
+        - $ref: '#/components/parameters/StationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StationEvent'
+      responses:
+        '201': { description: Event recorded }
+components:
+  securitySchemes:
+    deviceBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+    browserSession:
+      type: apiKey
+      in: cookie
+      name: better-auth.session_token
+  parameters:
+    StationId:
+      name: stationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    Unauthorized:
+      description: Missing, invalid, expired or revoked credential
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    LicenseInactive:
+      description: Studio Pro trial, subscription or payment grace is inactive
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Problem:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        message: { type: string }
+        details: { type: array, items: {} }
+    StationBootstrap:
+      type: object
+      properties:
+        organizationName: { type: string }
+        stationName: { type: string }
+        timezone: { type: string, example: America/Sao_Paulo }
+        defaultLanguage: { type: string, enum: [en, pt, es] }
+        defaultVoiceId: { type: string, format: uuid }
+    DeviceCredentials:
+      type: object
+      required: [tokenType, accessToken, accessTokenExpiresAt, refreshToken, refreshTokenExpiresAt]
+      properties:
+        tokenType: { type: string, const: Bearer }
+        accessToken: { type: string }
+        accessTokenExpiresAt: { type: string, format: date-time }
+        refreshToken: { type: string }
+        refreshTokenExpiresAt: { type: string, format: date-time }
+    DeviceProof:
+      type: object
+      required: [challengeId, challenge, signature]
+      properties:
+        challengeId: { type: string, format: uuid }
+        challenge: { type: string, minLength: 43, maxLength: 43 }
+        signature:
+          type: string
+          description: Base64url ECDSA P-256/SHA-256 signature in DER form
+    LicenseLeaseRequest:
+      type: object
+      required: [appVersion, proof]
+      properties:
+        appVersion: { type: string }
+        buildChannel: { type: string, enum: [stable, beta], default: stable }
+        clientTime: { type: string, format: date-time }
+        proof: { $ref: '#/components/schemas/DeviceProof' }
+    LicenseLeaseResponse:
+      type: object
+      required: [licenseToken, keyId, leaseId, onlineExpiresAt, offlineGraceUntil, serverTime]
+      properties:
+        licenseToken:
+          type: string
+          description: Compact Ed25519-signed token; Studio Pro verifies it locally
+        keyId: { type: string }
+        leaseId: { type: string, format: uuid }
+        onlineExpiresAt: { type: string, format: date-time }
+        offlineGraceUntil: { type: string, format: date-time }
+        serverTime: { type: string, format: date-time }
+        clockSkewSeconds: { type: [integer, 'null'] }
+    LicenseHeartbeatRequest:
+      type: object
+      required: [leaseId, sessionId, outputId, state, appVersion, proof]
+      properties:
+        leaseId: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        outputId: { type: string }
+        state: { type: string, enum: [on_air, standby, released] }
+        appVersion: { type: string }
+        clientTime: { type: string, format: date-time }
+        proof: { $ref: '#/components/schemas/DeviceProof' }
+    LicenseDeactivateRequest:
+      type: object
+      required: [proof]
+      properties:
+        reason: { type: string, default: self_service }
+        proof: { $ref: '#/components/schemas/DeviceProof' }
+    ArticleSource:
+      type: object
+      required: [mode, title, description]
+      properties:
+        mode: { type: string, const: article }
+        title: { type: string }
+        description: { type: string }
+        source: { type: string }
+        url: { type: string, format: uri }
+    SearchSource:
+      type: object
+      required: [mode, categories]
+      properties:
+        mode: { type: string, const: search }
+        categories:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items: { type: string }
+        bias: { type: string, enum: [left, center, right, mixed], default: center }
+        geographicScope: { type: string, enum: [global, country], default: global }
+        location: { type: string }
+    ContentRequestInput:
+      type: object
+      required: [source, durationSeconds, language]
+      properties:
+        kind: { type: string, const: news_bulletin, default: news_bulletin }
+        source:
+          oneOf:
+            - $ref: '#/components/schemas/ArticleSource'
+            - $ref: '#/components/schemas/SearchSource'
+        title: { type: string }
+        durationSeconds: { type: integer, minimum: 15, maximum: 600 }
+        language: { type: string, enum: [en, pt, es] }
+        voiceId: { type: string, format: uuid }
+        speed: { type: number, minimum: 0.8, maximum: 1.5, default: 1 }
+        includeWeather: { type: boolean, default: false }
+        weatherFormat: { type: string, enum: [separate, integrated], default: separate }
+        weatherLocation: { type: string }
+        transitionEffects: { type: boolean, default: false }
+        scheduledFor: { type: string, format: date-time }
+        validForSeconds: { type: integer, minimum: 300, maximum: 604800, default: 86400 }
+    ContentRequestResource:
+      type: object
+      required: [id, stationId, kind, status, input, expiresAt, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        stationId: { type: string, format: uuid }
+        kind: { type: string }
+        status: { type: string, enum: [pending, processing, ready, failed, expired, canceled] }
+        input: { $ref: '#/components/schemas/ContentRequestInput' }
+        sourceReferences: { type: array, items: { type: object } }
+        scheduledFor: { type: [string, 'null'], format: date-time }
+        validFrom: { type: [string, 'null'], format: date-time }
+        expiresAt: { type: string, format: date-time }
+        asset:
+          oneOf:
+            - type: 'null'
+            - type: object
+              properties:
+                audioId: { type: string, format: uuid }
+                sha256: { type: string }
+                bytes: { type: integer }
+                contentType: { type: string }
+                downloadUrl: { type: string }
+        error: { type: [object, 'null'] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        completedAt: { type: [string, 'null'], format: date-time }
+    StationEvent:
+      type: object
+      required: [idempotencyKey, type, occurredAt]
+      anyOf:
+        - required: [contentRequestId]
+        - required: [audioId]
+      properties:
+        idempotencyKey: { type: string, minLength: 8, maxLength: 128 }
+        type:
+          type: string
+          enum: [asset_downloaded, asset_validated, asset_queued, asset_aired, asset_skipped, asset_failed]
+        contentRequestId: { type: string, format: uuid }
+        audioId: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+        payload: { type: object, additionalProperties: true }

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import Link from 'next/link';
-import { ArrowRight, CreditCard, Server, Palette, Activity, Users, Globe } from 'lucide-react';
+import { ArrowRight, CreditCard, Server, Palette, Activity, Users, Globe, MonitorSmartphone } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -105,6 +105,25 @@ export default async function SettingsPage({
             <Button asChild variant="secondary">
               <Link href={`/${locale}/settings/publishing`}>
                 <Globe className="h-4 w-4" /> {t('openPublishing')}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="mt-6 p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-text-muted">
+                {t('studioProSection')}
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">
+                {t('studioProHint')}
+              </p>
+            </div>
+            <Button asChild variant="secondary">
+              <Link href={`/${locale}/settings/studio-pro`}>
+                <MonitorSmartphone className="h-4 w-4" /> {t('openStudioPro')}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>

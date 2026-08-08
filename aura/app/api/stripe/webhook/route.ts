@@ -8,6 +8,10 @@ import { TRIAL_DAYS, TRIAL_TIER, TRIAL_DOWNGRADE_TO } from '@/lib/billing/plans'
 import type { PlanTier } from '@/lib/billing/plans';
 import { sendWelcomeEmail } from '@/lib/email/send';
 import type { Locale } from '@/i18n';
+import {
+  isStudioProStripeSubscription,
+  syncStudioEntitlementsFromStripe,
+} from '@/lib/integration/stripe-entitlements';
 
 export const runtime = 'nodejs';
 
@@ -30,6 +34,12 @@ function subscriptionStatusOf(sub: Stripe.Subscription) {
 }
 
 async function upsertSubscription(sub: Stripe.Subscription) {
+  // Studio Pro subscriptions drive device entitlements, not the AURA plan.
+  if (isStudioProStripeSubscription(sub)) {
+    await syncStudioEntitlementsFromStripe(sub);
+    return;
+  }
+
   const stripeUserId = sub.metadata?.user_id;
   if (!stripeUserId) {
     console.warn('[stripe-webhook] subscription missing user_id metadata', sub.id);

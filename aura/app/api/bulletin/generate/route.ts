@@ -63,7 +63,7 @@ export async function POST(req: Request) {
   const stationTimezone = u?.timezone ?? 'UTC';
   let usingOverage = false;
 
-  if (quota.remaining <= 0) {
+  if (!quota.unlimited && quota.remaining <= 0) {
     // Trial users cannot buy overage — they must upgrade.
     const overageAvailable = !isTrial;
     if (!parsed.data.acceptOverage || !overageAvailable) {

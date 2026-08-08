@@ -1,7 +1,8 @@
 import { createAuthClient } from 'better-auth/react';
 
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-});
+// Let Better Auth resolve the current browser origin. A build-time absolute
+// URL breaks Vercel previews because their login form would post to production
+// or, when the variable is absent, to an operator's localhost.
+export const authClient = createAuthClient();
 
 export const { signIn, signUp, signOut, useSession } = authClient;

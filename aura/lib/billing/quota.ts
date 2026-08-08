@@ -2,11 +2,12 @@ import { and, eq, gte } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { user, usagePeriod } from '@/lib/db/schema';
 import {
-  PLANS,
-  TRIAL_BULLETINS_PER_DAY,
-  TRIAL_TIER,
-  type PlanTier,
-} from './plans';
+  quotaSnapshotForAccount,
+  type QuotaSnapshot,
+} from './quota-policy';
+
+export { effectiveTier } from './quota-policy';
+export type { QuotaSnapshot } from './quota-policy';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -16,33 +17,23 @@ function startOfDay(d: Date): Date {
   return x;
 }
 
-/** Effective tier for quota purposes — trial gets Pro limits. */
-export function effectiveTier(plan: string | null | undefined): PlanTier {
-  if (plan === 'trial') return TRIAL_TIER;
-  if (plan === 'starter' || plan === 'standard' || plan === 'pro') return plan;
-  return 'starter';
-}
-
-export interface QuotaSnapshot {
-  tier: PlanTier;
-  used: number;
-  limit: number;
-  remaining: number;
+function unmeteredGenerationEmails(): Set<string> {
+  return new Set(
+    (process.env.UNMETERED_GENERATION_EMAILS ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean)
+  );
 }
 
 export async function getQuota(userId: string): Promise<QuotaSnapshot> {
   const dbUser = (
-    await db.select().from(user).where(eq(user.id, userId)).limit(1)
+    await db
+      .select({ email: user.email, plan: user.plan })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1)
   )[0];
-  const tier = effectiveTier(dbUser?.plan);
-  // Trial accounts get every Pro FEATURE (so they can evaluate the
-  // upper tier) but a tighter daily VOLUME cap so a 14-day trial
-  // can't burn through more ElevenLabs cost than a paying month.
-  // After conversion the limit reverts to the chosen tier's value.
-  const limit =
-    dbUser?.plan === 'trial'
-      ? TRIAL_BULLETINS_PER_DAY
-      : PLANS[tier].bulletinsPerDay;
   const today = startOfDay(new Date());
 
   const period = (
@@ -54,11 +45,20 @@ export async function getQuota(userId: string): Promise<QuotaSnapshot> {
   )[0];
 
   const used = period?.bulletinsUsed ?? 0;
-  return { tier, used, limit, remaining: Math.max(0, limit - used) };
+  return quotaSnapshotForAccount({
+    plan: dbUser?.plan,
+    used,
+    unlimited:
+      Boolean(dbUser?.email) &&
+      unmeteredGenerationEmails().has(dbUser!.email.toLowerCase()),
+  });
 }
 
 export async function incrementUsage(userId: string): Promise<QuotaSnapshot> {
-  const { tier, limit } = await getQuota(userId);
+  const current = await getQuota(userId);
+  if (current.unlimited) return current;
+
+  const { tier, limit } = current;
   const today = startOfDay(new Date());
   const tomorrow = new Date(today.getTime() + DAY_MS);
 
@@ -87,5 +87,11 @@ export async function incrementUsage(userId: string): Promise<QuotaSnapshot> {
       bulletinsLimit: limit,
     });
   }
-  return { tier, used: nextUsed, limit, remaining: Math.max(0, limit - nextUsed) };
+  return {
+    tier,
+    used: nextUsed,
+    limit,
+    remaining: Math.max(0, limit - nextUsed),
+    unlimited: false,
+  };
 }

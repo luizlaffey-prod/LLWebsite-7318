@@ -16,9 +16,11 @@ import type { Locale } from '@/i18n';
 export function LoginForm({
   locale,
   showGoogle,
+  callbackURL,
 }: {
   locale: Locale;
   showGoogle?: boolean;
+  callbackURL?: string | null;
 }) {
   const t = useTranslations('auth');
   const router = useRouter();
@@ -63,7 +65,7 @@ export function LoginForm({
         return;
       }
 
-      router.push(`/${locale}/dashboard`);
+      router.push(callbackURL ?? `/${locale}/dashboard`);
     } catch {
       setTopError(t('errors.generic'));
       setPending(false);
@@ -80,7 +82,7 @@ export function LoginForm({
 
       {showGoogle && (
         <>
-          <GoogleAuthButton locale={locale} />
+          <GoogleAuthButton locale={locale} callbackURL={callbackURL} />
           <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
@@ -135,7 +137,14 @@ export function LoginForm({
 
       <p className="pt-2 text-center text-sm text-text-secondary">
         {t('noAccount')}{' '}
-        <Link href={`/${locale}/signup`} className="text-teal hover:underline">
+        <Link
+          href={
+            callbackURL
+              ? `/${locale}/signup?callbackURL=${encodeURIComponent(callbackURL)}`
+              : `/${locale}/signup`
+          }
+          className="text-teal hover:underline"
+        >
           {t('signupCta')}
         </Link>
       </p>
