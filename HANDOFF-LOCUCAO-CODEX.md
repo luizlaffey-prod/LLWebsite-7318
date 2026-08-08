@@ -2,6 +2,10 @@
 
 > **Status:** o deploy do endpoint **já foi feito e está funcionando**. Falta
 > **um único passo**: liberar a cota de geração da conta operadora.
+>
+> **➡️ AÇÃO PARA O CODEX:** executar a seção **3. TAREFA PARA O CODEX EXECUTAR**.
+> O operador autorizou. Nada mais precisa ser alterado no código — nem do backend
+> AURA, nem do StudioPro AI Lab.
 
 ---
 
@@ -69,14 +73,67 @@ unlimited:
 
 ---
 
-## 3. O passo que falta (Vercel)
+## 3. TAREFA PARA O CODEX EXECUTAR — liberar a cota
 
-- [ ] Vercel → projeto do aurapress → **Settings → Environment Variables → Production**
-- [ ] `UNMETERED_GENERATION_EMAILS` = e-mail da conta AURA do operador
-      (separar por vírgula se houver mais de um)
-- [ ] **Redeploy** da produção
-- [ ] Validar: gerar uma locução pelo StudioPro e confirmar que não aparece mais
-      `quota_exceeded` no painel "Problemas e saúde"
+> O operador autorizou o Codex a executar este passo sozinho.
+
+### 3.1. Descobrir o e-mail da conta operadora
+
+Não invente o e-mail. Use uma destas fontes, nesta ordem:
+
+1. O valor já configurado em `ADMIN_EMAILS` na produção da Vercel (é a conta do
+   dono do projeto):
+   ```bash
+   vercel env pull .env.vercel.production --environment=production
+   grep '^ADMIN_EMAILS=' .env.vercel.production
+   ```
+2. Ou consultar a conta da estação no banco (tabela `user`, coluna `email`) — é o
+   `billingUserId` da organização que aparece em `getQuota()`.
+
+Se houver mais de um e-mail em `ADMIN_EMAILS`, inclua todos (o operador é um
+deles) — a variável aceita lista separada por vírgula.
+
+### 3.2. Definir a variável em produção
+
+```bash
+# valor: e-mail(s) do passo 3.1, separados por vírgula, sem espaços
+vercel env add UNMETERED_GENERATION_EMAILS production
+```
+
+Se a variável já existir com valor errado/vazio, remova e recrie:
+
+```bash
+vercel env rm UNMETERED_GENERATION_EMAILS production
+vercel env add UNMETERED_GENERATION_EMAILS production
+```
+
+⚠️ Não remova nem altere `ADMIN_EMAILS` — são variáveis diferentes e ambas devem
+existir.
+
+### 3.3. Redeploy da produção
+
+```bash
+vercel --prod
+```
+
+(ou "Redeploy" no painel do deployment de produção)
+
+### 3.4. Validar (obrigatório)
+
+1. O endpoint continua respondendo JSON:
+   ```bash
+   curl -sS -o /dev/null -w "%{http_code} %{content_type}\n" -X POST \
+     "https://www.aurapress.app/api/v1/stations/test/voice-links/draft" \
+     -H "Content-Type: application/json" -d '{}'
+   # esperado: 400 application/json  (nunca 404 text/html)
+   ```
+2. No StudioPro AI Lab, com a rádio tocando e a automação de locução ativa:
+   - a locução deve entrar na fila como **"Locução IA entre músicas"**;
+   - o painel **"Problemas e saúde"** **não** pode mais mostrar
+     `cota diária de geração do AURA foi esgotada`.
+3. Se ainda aparecer `quota_exceeded`, confira se o e-mail usado é exatamente o
+   da conta que está pareada com a estação (comparação é `toLowerCase()`, então
+   maiúsculas não importam, mas o endereço precisa ser idêntico).
 
 **Alternativas** (não recomendadas para operação contínua): esperar o reset
 diário (esgota de novo) ou subir de plano (Pro ainda é só 20/dia).
