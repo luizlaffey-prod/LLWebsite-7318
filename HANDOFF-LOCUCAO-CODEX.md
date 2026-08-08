@@ -1,124 +1,103 @@
-# Handoff — Finalizar a Locução (voice-links) do AURA em produção
+# Handoff — Locução do AURA: último passo (cota)
 
-> **Objetivo:** publicar o endpoint de locução do AURA em produção para que a
-> **locução automática do StudioPro AI Lab** volte a funcionar de ponta a ponta.
->
-> **Resumo em uma frase:** o código da locução já está **pronto, testado e
-> commitado**; falta apenas **fazer o deploy em produção** (decisão de branch +
-> Vercel) — nada precisa mudar no app StudioPro.
+> **Status:** o deploy do endpoint **já foi feito e está funcionando**. Falta
+> **um único passo**: liberar a cota de geração da conta operadora.
 
 ---
 
-## 1. Diagnóstico (confirmado)
+## 1. O que já está resolvido ✅
 
-A locução automática do StudioPro chama:
+- **Endpoint publicado em produção.** `POST /api/v1/stations/{stationId}/voice-links/draft`
+  em `https://www.aurapress.app` responde **JSON** (ex.: `400 invalid_station_id`
+  para entrada inválida). Antes respondia `404 text/html`.
+- **Código da locução** commitado e no GitHub (branch `codex/aura-ai-voice-link`,
+  commit `e0b7213`), com 21 testes passando.
+- **App StudioPro AI Lab**: conectado ao AURA, cadência de locução disparando,
+  fila correta. Verificado por instrumentação em runtime.
+
+---
+
+## 2. O que ainda bloqueia ⛔ — cota diária esgotada
+
+O app recebe do AURA:
 
 ```
-POST /api/v1/stations/{stationId}/voice-links/draft
+O AURA não conseguiu concluir locução: quota_exceeded
 ```
 
-Em **produção (`https://www.aurapress.app`)** esse endpoint responde **HTTP 404 com
-`content-type: text/html`** (a página 404 do Next.js). O StudioPro interpreta
-"404 + HTML" como *endpoint não publicado* e mostra:
+Origem (`aura/lib/integration/content-requests.ts`):
 
-> "AURA respondeu com HTTP 404: endpoint_not_available. Esta função ainda não
-> está publicada no servidor AURA configurado."
+```ts
+const quota = await getQuota(billingUserId);
+if (!quota.unlimited && quota.remaining <= 0) {
+  throw new ContentProcessingError('quota_exceeded');
+}
+```
 
-Evidências coletadas:
-- `POST www.aurapress.app/api/v1/device` → **405** (a API base funciona).
-- `POST www.aurapress.app/api/v1/stations/test/voice-links/draft` → **404 text/html**
-  (a rota de locução **não está** no build de produção atual).
-- O StudioPro aponta para produção por padrão (não há flag
-  `VITE_STUDIOPRO_EXPERIMENTAL_WINDOW=preview-test`), então a URL de preview no
-  `.env.local` do app é **inerte** — o app sempre fala com `www.aurapress.app`.
+### Por que esgota tão rápido
 
-**Conclusão:** o app está correto. A rota existe no código deste repositório, mas
-**não está publicada em produção**.
+Limites **por dia** (`aura/lib/billing/plans.ts`):
 
----
+| Plano | Gerações/dia |
+|---|---|
+| starter | 5 |
+| standard | 10 |
+| pro | 20 |
+| trial | 10 |
 
-## 2. O que já foi feito
+**Locuções e boletins consomem o mesmo contador diário** (`bulletinsUsed`). Uma
+rádio com locução a cada 2–3 músicas esgota até o limite Pro (20) em menos de
+uma hora. A cota foi desenhada para boletins ocasionais, não para locução
+contínua.
 
-- A rota `voice-links/draft` está **implementada e completa**:
-  - `aura/app/api/v1/stations/[stationId]/voice-links/draft/route.ts`
-  - `aura/lib/llm/voice-link-generator.ts` (gerador; trata faixa sem artista,
-    "verified facts", slogans phrase-first)
-  - `aura/lib/integration/contracts.ts` (adiciona `VerifiedTrackFact`, `artist`
-    opcional)
-- **Testes passando:** 21 (`voice-link-generator.test.ts` + `contracts.test.ts`).
-- **Commit:** `e0b7213` — *"feat(aura): finalize voice-link draft endpoint with
-  verified facts"*.
-- **Branch:** `codex/aura-ai-voice-link` — **já com push** para o remote `handoff`
-  (`github.com/luizlaffey-prod/LLWebsite-7318`).
-- **Sem migração de banco:** a mudança em `aura/lib/db/schema.ts` foi apenas
-  tornar `artist` **opcional** (tipo), não há alteração de coluna.
+### ⚠️ Ser admin NÃO dá cota ilimitada
 
----
+São duas variáveis independentes:
 
-## 3. O que falta finalizar (checklist para o Codex)
+| Variável | Efeito |
+|---|---|
+| `ADMIN_EMAILS` | Acesso a rotas de admin (`/api/admin/*`) e health checks. **Nenhum efeito na cota.** |
+| `UNMETERED_GENERATION_EMAILS` | **A única** que define `unlimited: true` em `getQuota()` |
 
-- [ ] **Confirmar a branch de produção da Vercel**
-      (Vercel → projeto do aurapress → Settings → Git → *Production Branch*).
-      Descobrir de qual branch `www.aurapress.app` faz deploy.
-- [ ] **Levar a `codex/aura-ai-voice-link` para produção.**
-      - ⚠️ **Atenção:** a `main` está **~184 commits atrás** dessa branch
-        (364 arquivos de diferença). Mergear a branch inteira na `main` sobe
-        **muito mais** do que a locução. Avaliar:
-        - o caminho seguro (merge completo é intencional? ou um caminho mais
-          cirúrgico — cherry-pick só dos commits da locução para a branch de
-          produção?);
-        - impacto no site comercial ao vivo (pagamentos Stripe/PayPal, banco,
-          e-mail, storage).
-      - PR já comparável:
-        `github.com/luizlaffey-prod/LLWebsite-7318/compare/main...codex/aura-ai-voice-link`
-- [ ] **Confirmar as env vars de produção** no projeto Vercel (ver
-      `aura/.env.example`). As essenciais para a locução:
-      `DATABASE_URL`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `ELEVENLABS_API_KEY`
-      (além de auth/licensing já existentes).
-- [ ] **Publicar** (deploy de produção via merge na branch de produção ou
-      *Promote to Production* na Vercel).
-- [ ] **Validar em produção:**
-      ```
-      POST https://www.aurapress.app/api/v1/stations/{stationId}/voice-links/draft
-      ```
-      Deve responder **JSON** (ex.: `401` sem bearer, `400` com body inválido, ou
-      `200` com `{ draft }`) — **nunca** mais `404 text/html`.
+Referência (`aura/lib/billing/quota.ts`):
+
+```ts
+unlimited:
+  Boolean(dbUser?.email) &&
+  unmeteredGenerationEmails().has(dbUser!.email.toLowerCase()),
+```
 
 ---
 
-## 4. Detalhes técnicos úteis
+## 3. O passo que falta (Vercel)
 
-**Contrato do endpoint** (o que o StudioPro envia):
-- Método: `POST`
-- Corpo (JSON): `mode: "between_songs"`, `currentTrack {title, artist?}`,
-  `nextTracks [{title, artist?}]`, `language`, `tone`, `maxDurationSeconds`,
-  `customInstruction?`, `factMode?`, `verifiedFact?`.
-- Auth: `Bearer <access_token>` do dispositivo pareado.
-- Resposta esperada: `{ draft: {...} }`.
+- [ ] Vercel → projeto do aurapress → **Settings → Environment Variables → Production**
+- [ ] `UNMETERED_GENERATION_EMAILS` = e-mail da conta AURA do operador
+      (separar por vírgula se houver mais de um)
+- [ ] **Redeploy** da produção
+- [ ] Validar: gerar uma locução pelo StudioPro e confirmar que não aparece mais
+      `quota_exceeded` no painel "Problemas e saúde"
 
-**Lado StudioPro (NÃO precisa mudar):**
-- Chamada: `studiopro-ai-lab/src-tauri/src/aura.rs` (~linha 1501,
-  `/api/v1/stations/{}/voice-links/draft`).
-- Detecção do erro: `aura.rs` `api_error_message` (~linha 905) — "HTML + 404" vira
-  a mensagem `endpoint_not_available`. Ou seja, assim que produção responder JSON,
-  o app para de acusar o erro sozinho.
-
-**Repositórios:**
-- Backend AURA: `aurapress-ai-voice-link` (este repo) — remote `handoff`.
-- App StudioPro: `studiopro-ai-lab` (Tauri). Já está em alpha.14, correto.
+**Alternativas** (não recomendadas para operação contínua): esperar o reset
+diário (esgota de novo) ou subir de plano (Pro ainda é só 20/dia).
 
 ---
 
-## 5. Como confirmar que funcionou (teste de ponta a ponta)
+## 4. Correção já aplicada no app (não precisa refazer)
 
-No **StudioPro AI Lab** (com o AURA conectado):
-1. Deixar a programação tocando com a automação de locução ativa.
-2. Ao atingir a cadência (a cada N músicas / minutos), o app deve **gerar** a
-   locução e **inserir** na fila uma entrada **"Locução IA entre músicas"**.
-3. Não deve mais aparecer o aviso `endpoint_not_available` no painel
-   "Problemas e saúde".
+O StudioPro tratava `quota_exceeded` como **falha definitiva** e suspendia o
+locutor automático até o app ser reiniciado — mesmo depois de a cota voltar.
+Corrigido em `src/lib/auraRequestPolicy.ts`:
+
+- cota agora é **condição temporária** (`quota: true`, nunca `blocked`);
+- nova tentativa automática a cada **30 min** (`AURA_QUOTA_RETRY_DELAY_MS`), então
+  o locutor **se recupera sozinho** quando a cota volta;
+- enquanto esgotada, não martela a API (bloqueio vale para a conta toda);
+- mensagem clara no painel: *"a cota diária de geração do AURA foi esgotada"*.
+
+Testes: `src/lib/auraRequestPolicy.test.ts` — *"cota esgotada nunca bloqueia em
+definitivo e volta a tentar depois"*.
 
 ---
 
-_Preparado como handoff. O trabalho de código está concluído neste repo; resta
-apenas o deploy/produção, que exige acesso ao painel Vercel e decisões de branch._
+_Resumo: código pronto, deploy pronto, app pronto. Falta só liberar a cota._
