@@ -22,12 +22,56 @@ import { fetchWeatherCities } from '@/lib/news/weather';
 import { generateScript } from '@/lib/llm/script-generator';
 import { todayForPrompt } from '@/lib/llm/today';
 import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
+import { generateBulletinMusic } from '@/lib/tts/elevenlabs-music';
+import { mixVoiceAndBackgroundServerSide } from '@/lib/audio/server-mix';
 import { audioKey, uploadAudio } from '@/lib/storage/r2';
+import type { ScriptBlock } from '@/lib/llm/types';
+import type { z } from 'zod';
 
 class ContentProcessingError extends Error {
   constructor(public readonly code: string, message = code) {
     super(message);
     this.name = 'ContentProcessingError';
+  }
+}
+
+type ContentRequestInput = z.infer<typeof ContentRequestInputSchema>;
+
+/**
+ * Mistura uma cama instrumental sob a locução, quando pedida.
+ *
+ * Falhar aqui **não** perde o boletim: a locução seca é melhor que nenhum
+ * áudio, e um boletim sem trilha ainda vai ao ar. O erro é registrado e a
+ * geração segue — o operador percebe pela ausência da trilha, não por um
+ * horário vazio na programação.
+ */
+async function applyBackgroundBed(
+  voiceBytes: Uint8Array,
+  script: ScriptBlock[],
+  input: ContentRequestInput,
+  durationSeconds: number
+): Promise<Uint8Array> {
+  if (input.backgroundMode !== 'ai') return voiceBytes;
+
+  try {
+    const music = await generateBulletinMusic({
+      durationSeconds,
+      emotions: script.map((block) => block.emotion),
+      language: input.language,
+    });
+    return await mixVoiceAndBackgroundServerSide({
+      voiceBytes,
+      bgBytes: music.bytes,
+      bgFilename: 'bed.mp3',
+      duck: input.duckBackground,
+      bgGain: input.backgroundVolume / 100,
+    });
+  } catch (error) {
+    console.warn(
+      '[studio-pro-api] background bed failed, shipping voice-only bulletin',
+      error instanceof Error ? error.message : error
+    );
+    return voiceBytes;
   }
 }
 
@@ -132,11 +176,13 @@ export async function processContentRequest(requestId: string): Promise<void> {
       .set({ originalScript: script, updatedAt: new Date() })
       .where(eq(generatedAudio.id, audio.id));
 
-    const { audio: bytes, durationEstimateSeconds } = await synthesizeBulletin(script, {
+    const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeBulletin(script, {
       elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
       speed: input.speed,
       transitionEffects: input.transitionEffects,
     });
+
+    const bytes = await applyBackgroundBed(voiceBytes, script, input, durationEstimateSeconds);
     const sha256 = createHash('sha256').update(bytes).digest('hex');
     const uploaded = await uploadAudio(audioKey(billingUserId, audio.id), bytes);
     const completedAt = new Date();

@@ -139,6 +139,12 @@ export interface ServerMixInput {
    * from content, but a correct ext never hurts). */
   bgFilename?: string;
   duck?: boolean;
+  /**
+   * Nível da trilha sob a locução, de 0 a 1. Omitido, usa o padrão da casa.
+   * O nível nos intervalos de fala sobe proporcionalmente, preservando a
+   * diferença que torna o ducking perceptível.
+   */
+  bgGain?: number;
 }
 
 const BG_GAIN_LOW = 0.18;
@@ -176,13 +182,19 @@ export async function mixVoiceAndBackgroundServerSide(
     // gain envelope for the bg. Failures here fall back to a flat
     // static gain — the bulletin still ships, just without the
     // interactive ducking.
-    let bgVolumeExpr: string = String(
-      input.duck === false ? 0.3 : BG_GAIN_LOW
-    );
+    const lowGain =
+      typeof input.bgGain === 'number' && Number.isFinite(input.bgGain)
+        ? Math.min(1, Math.max(0, input.bgGain))
+        : BG_GAIN_LOW;
+    // Sem ducking a trilha fica num nível fixo um pouco acima, já que não há
+    // nada abrindo espaço para ela nos intervalos.
+    let bgVolumeExpr: string = (
+      input.duck === false ? Math.min(1, lowGain * 1.67) : lowGain
+    ).toFixed(4);
     if (input.duck !== false) {
       try {
         const silences = await detectSilences(voicePath);
-        bgVolumeExpr = buildBgVolumeExpression(silences);
+        bgVolumeExpr = buildBgVolumeExpression(silences, lowGain);
       } catch (err) {
         console.warn(
           '[mix] silencedetect failed, falling back to static duck',
@@ -304,19 +316,27 @@ async function detectSilences(voicePath: string): Promise<SilenceSegment[]> {
  * since SILENCE_MIN_SEC >= 1.0) produce a degenerate empty window
  * and are skipped.
  */
-function buildBgVolumeExpression(silences: SilenceSegment[]): string {
+function buildBgVolumeExpression(
+  silences: SilenceSegment[],
+  lowGain: number = BG_GAIN_LOW
+): string {
+  // The gap between the under-voice level and the in-silence level is what
+  // makes the ducking audible. Scaling both keeps that relationship intact
+  // when the operator picks a different bed level.
+  const highGain = Math.min(1, lowGain * (BG_GAIN_HIGH / BG_GAIN_LOW));
+
   const windows: SilenceSegment[] = [];
   for (const s of silences) {
     const closeAt = s.end - LOOKAHEAD_SEC;
     if (closeAt > s.start) windows.push({ start: s.start, end: closeAt });
   }
-  if (windows.length === 0) return String(BG_GAIN_LOW);
+  if (windows.length === 0) return lowGain.toFixed(4);
 
   // Nest from innermost out so the final string reads
   // `if(between, HIGH, if(between, HIGH, ...LOW))`.
-  let expr = String(BG_GAIN_LOW);
+  let expr = lowGain.toFixed(4);
   for (const w of windows) {
-    expr = `if(between(t,${w.start.toFixed(3)},${w.end.toFixed(3)}),${BG_GAIN_HIGH},${expr})`;
+    expr = `if(between(t,${w.start.toFixed(3)},${w.end.toFixed(3)}),${highGain.toFixed(4)},${expr})`;
   }
   return expr;
 }

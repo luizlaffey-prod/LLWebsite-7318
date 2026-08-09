@@ -42,6 +42,15 @@ export const ContentRequestInputSchema = z.object({
   weatherFormat: z.enum(['separate', 'integrated']).default('separate'),
   weatherLocation: z.string().trim().min(1).max(500).optional(),
   transitionEffects: z.boolean().default(false),
+  // Trilha de fundo. 'ai' sintetiza uma cama instrumental e a mistura sob a
+  // locução, inteiramente no servidor. Não existe modo de envio de arquivo aqui
+  // de propósito: o corpo da requisição é limitado a 4,5 MB, o que não comporta
+  // uma trilha de qualidade — quem tem arquivo próprio mistura no estúdio.
+  backgroundMode: z.enum(['none', 'ai']).default('none'),
+  /** Volume da trilha em relação à locução, em porcento. */
+  backgroundVolume: z.number().int().min(0).max(100).default(20),
+  /** Abaixa a trilha enquanto há fala e a devolve nos intervalos. */
+  duckBackground: z.boolean().default(true),
   scheduledFor: z.string().datetime({ offset: true }).optional(),
   validForSeconds: z.number().int().min(300).max(7 * 24 * 60 * 60).default(24 * 60 * 60),
 });
