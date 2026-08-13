@@ -6,6 +6,7 @@ import { db } from '@/lib/db/client';
 import { voice as voiceTable, voicePreference } from '@/lib/db/schema';
 import { canUseVoice } from '@/lib/billing/feature-gates';
 import { getQuota } from '@/lib/billing/quota';
+import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 
 export const runtime = 'nodejs';
 
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     .from(voiceTable)
     .where(eq(voiceTable.id, parsed.data.voiceId))
     .limit(1);
-  if (!chosen) {
+  if (!chosen || !isVoiceAvailableToUser(chosen, session.user.id)) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
 

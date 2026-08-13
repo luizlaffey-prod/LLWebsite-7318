@@ -7,6 +7,7 @@ import { generatedAudio, voice as voiceTable } from '@/lib/db/schema';
 import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { EMOTIONS, type Emotion } from '@/lib/audio/emotions';
+import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     .from(voiceTable)
     .where(eq(voiceTable.id, row.voiceId))
     .limit(1);
-  if (!chosenVoice) {
+  if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, session.user.id)) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
 

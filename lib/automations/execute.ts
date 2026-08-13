@@ -12,6 +12,7 @@ import { fetchWeatherCities } from '@/lib/news/weather';
 import { generateScript } from '@/lib/llm/script-generator';
 import { todayForPrompt } from '@/lib/llm/today';
 import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
+import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { incrementUsage } from '@/lib/billing/quota';
 import { dispatchAudioToEndpoints } from '@/lib/delivery/dispatch';
@@ -202,7 +203,9 @@ export async function runAutomationSlot(input: {
       .from(voiceTable)
       .where(eq(voiceTable.id, automation.voiceId))
       .limit(1);
-    if (!chosenVoice) throw new Error('voice_not_found');
+    if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, automation.userId)) {
+      throw new Error('voice_not_found');
+    }
 
     // After potentially shuffling, headline is still null for
     // weather-only slots — that's intentional, the sourceName /

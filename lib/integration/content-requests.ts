@@ -23,6 +23,7 @@ import { generateScript } from '@/lib/llm/script-generator';
 import { todayForPrompt } from '@/lib/llm/today';
 import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
 import { generateBulletinMusic } from '@/lib/tts/elevenlabs-music';
+import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 import { mixVoiceAndBackgroundServerSide } from '@/lib/audio/server-mix';
 import { audioKey, uploadAudio } from '@/lib/storage/r2';
 import type { ScriptBlock } from '@/lib/llm/types';
@@ -137,7 +138,9 @@ export async function processContentRequest(requestId: string): Promise<void> {
       .from(voiceTable)
       .where(eq(voiceTable.id, voiceId))
       .limit(1);
-    if (!chosenVoice) throw new ContentProcessingError('voice_not_found');
+    if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, billingUserId)) {
+      throw new ContentProcessingError('voice_not_found');
+    }
     if (!canUseVoice(quota.tier, chosenVoice)) {
       throw new ContentProcessingError('voice_not_allowed');
     }

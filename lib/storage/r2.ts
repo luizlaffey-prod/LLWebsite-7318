@@ -116,6 +116,81 @@ export async function uploadAudio(
   return { key, url: publicUrl };
 }
 
+/** Download a private R2 object from the server using SigV4 auth. */
+export async function downloadObject(key: string): Promise<Uint8Array> {
+  const res = await authenticatedObjectRequest('GET', key);
+  if (!res.ok) {
+    const text = (await res.text().catch(() => '')).slice(0, 500);
+    throw new Error(`R2 download failed ${res.status}: ${text}`);
+  }
+  return new Uint8Array(await res.arrayBuffer());
+}
+
+/** Best-effort callers may ignore failures, but the helper itself stays strict. */
+export async function deleteObject(key: string): Promise<void> {
+  const res = await authenticatedObjectRequest('DELETE', key);
+  if (!res.ok && res.status !== 404) {
+    const text = (await res.text().catch(() => '')).slice(0, 500);
+    throw new Error(`R2 delete failed ${res.status}: ${text}`);
+  }
+}
+
+async function authenticatedObjectRequest(
+  method: 'GET' | 'DELETE',
+  key: string
+): Promise<Response> {
+  const cfg = getConfig();
+  const host = `${cfg.accountId}.r2.cloudflarestorage.com`;
+  const canonicalUri = `/${cfg.bucket}/${encodeURI(key).replace(/%2F/g, '/')}`;
+  const url = `https://${host}${canonicalUri}`;
+
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.slice(0, 8);
+  const payloadHash = sha256Hex('');
+  const canonicalHeaders = [
+    `host:${host}`,
+    `x-amz-content-sha256:${payloadHash}`,
+    `x-amz-date:${amzDate}`,
+  ].join('\n') + '\n';
+  const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+  const canonicalRequest = [
+    method,
+    canonicalUri,
+    '',
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n');
+
+  const region = 'auto';
+  const service = 's3';
+  const scope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    scope,
+    sha256Hex(canonicalRequest),
+  ].join('\n');
+  const kDate = hmac(`AWS4${cfg.secretAccessKey}`, dateStamp);
+  const kRegion = hmac(kDate, region);
+  const kService = hmac(kRegion, service);
+  const kSigning = hmac(kService, 'aws4_request');
+  const signature = createHmac('sha256', kSigning)
+    .update(stringToSign)
+    .digest('hex');
+  const authorization = `AWS4-HMAC-SHA256 Credential=${cfg.accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  return fetch(url, {
+    method,
+    headers: {
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': amzDate,
+      Authorization: authorization,
+    },
+  });
+}
+
 export function audioKey(userId: string, audioId: string): string {
   return `audio/${userId}/${audioId}.mp3`;
 }

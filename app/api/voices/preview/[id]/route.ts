@@ -5,6 +5,7 @@ import { db } from '@/lib/db/client';
 import { voice as voiceTable } from '@/lib/db/schema';
 import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
 import { uploadAudio } from '@/lib/storage/r2';
+import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -41,11 +42,13 @@ export async function GET(
     .select({
       elevenLabsVoiceId: voiceTable.elevenLabsVoiceId,
       previewUrl: voiceTable.previewUrl,
+      ownerUserId: voiceTable.ownerUserId,
+      enabled: voiceTable.enabled,
     })
     .from(voiceTable)
     .where(eq(voiceTable.id, id))
     .limit(1);
-  if (!v) {
+  if (!v || !isVoiceAvailableToUser(v, session.user.id)) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
 

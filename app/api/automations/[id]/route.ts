@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { automationSchedule } from '@/lib/db/schema';
+import { automationSchedule, voice as voiceTable } from '@/lib/db/schema';
 import { AutomationInput } from '@/lib/automations/schemas';
 import { z } from 'zod';
+import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 
 export const runtime = 'nodejs';
 
@@ -50,6 +51,17 @@ export async function PATCH(
   const parsed = PatchInput.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: 'invalid_input' }, { status: 400 });
+  }
+
+  if (parsed.data.voiceId) {
+    const [chosenVoice] = await db
+      .select()
+      .from(voiceTable)
+      .where(eq(voiceTable.id, parsed.data.voiceId))
+      .limit(1);
+    if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, session.user.id)) {
+      return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
+    }
   }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };

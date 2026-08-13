@@ -7,10 +7,12 @@ import {
   automationExecution,
   deliveryLog,
   user,
+  voice as voiceTable,
 } from '@/lib/db/schema';
 import { canSchedule, canUseDaysOfWeek } from '@/lib/billing/feature-gates';
 import { effectiveTier } from '@/lib/billing/quota';
 import { AutomationInput } from '@/lib/automations/schemas';
+import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 
 export const runtime = 'nodejs';
 
@@ -151,6 +153,15 @@ export async function POST(req: Request) {
       { error: 'invalid_input', details: parsed.error.issues },
       { status: 400 }
     );
+  }
+
+  const [chosenVoice] = await db
+    .select()
+    .from(voiceTable)
+    .where(eq(voiceTable.id, parsed.data.voiceId))
+    .limit(1);
+  if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, session.user.id)) {
+    return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
 
   // Strip per-slot daysOfWeek when the tier isn't entitled — Standard

@@ -12,6 +12,7 @@ import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { getQuota, incrementUsage } from '@/lib/billing/quota';
 import { canRequestDuration, canUseVoice } from '@/lib/billing/feature-gates';
 import { recordOverage } from '@/lib/billing/overage';
+import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
     .from(voiceTable)
     .where(eq(voiceTable.id, parsed.data.voiceId))
     .limit(1);
-  if (!chosenVoice) {
+  if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, session.user.id)) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
 

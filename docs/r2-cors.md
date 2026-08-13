@@ -1,10 +1,10 @@
 # R2 CORS configuration
 
-The bulletin drawer uploads user-selected background tracks directly to
-Cloudflare R2 via presigned PUT URLs (see `lib/storage/r2.ts` →
-`presignPutUrl`). That bypass exists because Vercel's serverless
-runtime caps request bodies at 4.5 MB on every paid plan — far below
-the size of a typical bed track (10–30 MB WAVs are common).
+The bulletin drawer uploads user-selected background tracks and the voice
+cloning modal uploads voice samples directly to Cloudflare R2 via presigned
+PUT URLs (see `lib/storage/r2.ts` → `presignPutUrl`). That bypass exists
+because Vercel's serverless runtime caps request bodies at 4.5 MB on every
+paid plan — below the size of many practical WAV files.
 
 For browser → R2 PUT to work, the bucket must allow CORS from the
 app's origins. The Cloudflare R2 console accepts this JSON:
@@ -43,6 +43,16 @@ background, and confirm:
 - Browser DevTools → Network tab: a `PUT` to
   `<account>.r2.cloudflarestorage.com/<bucket>/bg-tracks/...` returns
   200. If you see 403/CORS errors, the policy didn't take effect.
+- Repeat from the voice cloning modal and confirm the `PUT` under
+  `voice-clones/...` returns 200. The server downloads that private object,
+  sends it to ElevenLabs, and deletes it after the attempt completes.
+
+## Temporary voice-sample lifecycle
+
+The application deletes voice samples after every clone attempt and also
+cleans up partial browser uploads when possible. Configure an R2 lifecycle
+rule that expires objects under `voice-clones/` after one day as a final
+safety net for browser disconnects that occur before the clone request.
 
 ## Why this is safe
 

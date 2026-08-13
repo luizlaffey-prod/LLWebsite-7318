@@ -619,11 +619,16 @@
       "samples": "Audio samples",
       "samplesHint": "Drop or click to add MP3/WAV files",
       "samplesSelected": "{count} file(s) selected",
-      "samplesNote": "Max 11MB per file. ElevenLabs Instant Voice Clone API will be used.",
+      "samplesNote": "1–5 MP3/WAV files, max 11MB each. Files are uploaded temporarily and deleted after cloning.",
+      "consent": "I confirm that I own this voice or have explicit permission to clone it, and authorize temporary processing by Cloudflare R2 and ElevenLabs.",
       "clone": "Clone voice",
       "cloning": "Cloning...",
       "cancel": "Cancel",
       "errorNoFiles": "Please select at least one audio sample.",
+      "errorTooManyFiles": "Select no more than 5 audio samples.",
+      "errorFileTooLarge": "Each audio sample must be 11MB or smaller.",
+      "errorConsent": "Confirm that you have permission to clone this voice.",
+      "errorUpload": "The audio sample could not be uploaded. Check the file and try again.",
       "errorGeneric": "Voice cloning failed. Try again."
     }
   },

@@ -619,11 +619,16 @@
       "samples": "Amostras de áudio",
       "samplesHint": "Solte ou clique para adicionar arquivos MP3/WAV",
       "samplesSelected": "{count} arquivo(s) selecionado(s)",
-      "samplesNote": "Máx 11MB por arquivo. Usa a API Instant Voice Clone do ElevenLabs.",
+      "samplesNote": "1–5 arquivos MP3/WAV, máx. 11MB cada. Os arquivos são temporários e apagados após a clonagem.",
+      "consent": "Confirmo que sou titular desta voz ou tenho autorização expressa para cloná-la e autorizo o processamento temporário pelo Cloudflare R2 e ElevenLabs.",
       "clone": "Clonar voz",
       "cloning": "Clonando...",
       "cancel": "Cancelar",
       "errorNoFiles": "Selecione pelo menos uma amostra.",
+      "errorTooManyFiles": "Selecione no máximo 5 amostras de áudio.",
+      "errorFileTooLarge": "Cada amostra deve ter no máximo 11MB.",
+      "errorConsent": "Confirme que você tem autorização para clonar esta voz.",
+      "errorUpload": "Não foi possível enviar a amostra. Verifique o arquivo e tente novamente.",
       "errorGeneric": "Falha na clonagem. Tente novamente."
     }
   },

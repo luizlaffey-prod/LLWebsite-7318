@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -38,6 +39,7 @@ export function VoiceCloneModal({
   const [gender, setGender] = useState<'male' | 'female' | 'neutral'>('neutral');
   const [accent, setAccent] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [consent, setConsent] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,25 +49,94 @@ export function VoiceCloneModal({
       setError(t('errorNoFiles'));
       return;
     }
+    if (files.length > 5) {
+      setError(t('errorTooManyFiles'));
+      return;
+    }
+    if (files.some((file) => file.size > 11 * 1024 * 1024)) {
+      setError(t('errorFileTooLarge'));
+      return;
+    }
+    if (!consent) {
+      setError(t('errorConsent'));
+      return;
+    }
     setPending(true);
     setError(null);
-    const form = new FormData();
-    form.set('name', name);
-    if (description) form.set('description', description);
-    form.set('language', language);
-    form.set('gender', gender);
-    if (accent) form.set('accent', accent);
-    for (const f of files) form.append('samples', f);
+    let uploadedKeys: string[] = [];
 
     try {
-      const res = await fetch('/api/voices/clone', { method: 'POST', body: form });
+      const presignRes = await fetch('/api/voices/clone/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          samples: files.map((file) => ({
+            filename: file.name,
+            contentType: file.type || contentTypeFromName(file.name),
+            sizeBytes: file.size,
+          })),
+        }),
+      });
+      if (!presignRes.ok) {
+        const data = await readApiError(presignRes);
+        setError(data.message || t('errorUpload'));
+        return;
+      }
+
+      const { uploads } = (await presignRes.json()) as {
+        uploads: Array<{
+          uploadUrl: string;
+          key: string;
+          filename: string;
+          contentType: string;
+          sizeBytes: number;
+        }>;
+      };
+      uploadedKeys = uploads.map((upload) => upload.key);
+
+      try {
+        await Promise.all(
+          uploads.map(async (upload, index) => {
+            const putRes = await fetch(upload.uploadUrl, {
+              method: 'PUT',
+              body: files[index],
+            });
+            if (!putRes.ok) throw new Error(`upload_${putRes.status}`);
+          })
+        );
+      } catch {
+        await cleanupUploads(uploads.map((upload) => upload.key));
+        setError(t('errorUpload'));
+        return;
+      }
+
+      const res = await fetch('/api/voices/clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description: description || undefined,
+          language,
+          gender,
+          accent: accent || undefined,
+          consent,
+          samples: uploads.map(({ key, filename, contentType, sizeBytes }) => ({
+            key,
+            filename,
+            contentType,
+            sizeBytes,
+          })),
+        }),
+      });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await readApiError(res);
+        await cleanupUploads(uploadedKeys);
         setError(data.message || t('errorGeneric'));
         return;
       }
       onCloned();
     } catch {
+      if (uploadedKeys.length > 0) await cleanupUploads(uploadedKeys);
       setError(t('errorGeneric'));
     } finally {
       setPending(false);
@@ -174,11 +245,23 @@ export function VoiceCloneModal({
             <p className="mt-1 text-xs text-text-muted">{t('samplesNote')}</p>
           </div>
 
+          <div className="flex items-start gap-3 rounded-md border border-border bg-elevated/40 p-3">
+            <Checkbox
+              id="voice-clone-consent"
+              checked={consent}
+              onCheckedChange={(checked) => setConsent(checked === true)}
+              disabled={pending}
+            />
+            <Label htmlFor="voice-clone-consent" className="text-sm leading-5 text-text-secondary">
+              {t('consent')}
+            </Label>
+          </div>
+
           <DialogFooter className="gap-2">
             <Button type="button" variant="secondary" onClick={onClose} disabled={pending}>
               {t('cancel')}
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || !consent}>
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" /> {t('cloning')}
@@ -194,4 +277,27 @@ export function VoiceCloneModal({
       </DialogContent>
     </Dialog>
   );
+}
+
+function contentTypeFromName(filename: string): string {
+  return filename.toLowerCase().endsWith('.wav') ? 'audio/wav' : 'audio/mpeg';
+}
+
+async function readApiError(res: Response): Promise<{ message?: string }> {
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) {
+    return res.json().catch(() => ({}));
+  }
+  if (res.status === 413) {
+    return { message: 'The selected audio is too large for this upload.' };
+  }
+  return {};
+}
+
+async function cleanupUploads(keys: string[]): Promise<void> {
+  await fetch('/api/voices/clone/presign', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keys }),
+  }).catch(() => undefined);
 }
