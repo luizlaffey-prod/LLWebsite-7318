@@ -11,11 +11,11 @@ export function canRequestDuration(tier: PlanTier, durationSeconds: number): boo
 }
 
 /** Whether a tier may use the given voice. */
-export function canUseVoice(tier: PlanTier, voice: Pick<Voice, 'tierRequired'>): boolean {
+export function canUseVoice(tier: PlanTier | 'trial', voice: Pick<Voice, 'tierRequired'>): boolean {
   const order: PlanTier[] = ['starter', 'standard', 'pro'];
-  // Voices should never require the trial tier; if they do, treat as Starter.
+  const userTier: PlanTier = tier === 'trial' ? 'pro' : tier;
   const required = (voice.tierRequired === 'trial' ? 'starter' : voice.tierRequired) as PlanTier;
-  return order.indexOf(tier) >= order.indexOf(required);
+  return order.indexOf(userTier) >= order.indexOf(required);
 }
 
 /** Whether a tier may export to the given audio format. */

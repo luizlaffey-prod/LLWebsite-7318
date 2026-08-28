@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { voice as voiceTable, voicePreference } from '@/lib/db/schema';
@@ -11,7 +11,7 @@ import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 export const runtime = 'nodejs';
 
 const Input = z.object({
-  voiceId: z.string().uuid(),
+  voiceId: z.string().min(1),
   speed: z.number().min(0.8).max(1.5).default(1.0),
   isDefault: z.boolean().default(true),
 });
@@ -25,13 +25,20 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const parsed = Input.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'invalid_input' }, { status: 400 });
+    return NextResponse.json({ error: 'invalid_input', details: parsed.error.format() }, { status: 400 });
   }
 
+  const targetId = parsed.data.voiceId;
   const [chosen] = await db
     .select()
     .from(voiceTable)
-    .where(eq(voiceTable.id, parsed.data.voiceId))
+    .where(
+      or(
+        eq(voiceTable.id, targetId),
+        eq(voiceTable.slug, targetId),
+        eq(voiceTable.elevenLabsVoiceId, targetId)
+      )
+    )
     .limit(1);
   if (!chosen || !isVoiceAvailableToUser(chosen, session.user.id)) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
@@ -60,7 +67,7 @@ export async function POST(req: Request) {
       .where(
         and(
           eq(voicePreference.userId, session.user.id),
-          eq(voicePreference.voiceId, parsed.data.voiceId)
+          eq(voicePreference.voiceId, chosen.id)
         )
       )
       .limit(1)
@@ -74,7 +81,7 @@ export async function POST(req: Request) {
   } else {
     await db.insert(voicePreference).values({
       userId: session.user.id,
-      voiceId: parsed.data.voiceId,
+      voiceId: chosen.id,
       speed: parsed.data.speed,
       isDefault: parsed.data.isDefault,
     });
