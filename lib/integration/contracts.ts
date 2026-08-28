@@ -60,7 +60,7 @@ const VoiceLinkBaseSchema = z.object({
   nextTracks: z.array(TrackMetadataSchema).min(1).max(4),
   language: z.enum(['en', 'pt', 'es']),
   tone: z.enum(['natural', 'energetic', 'warm', 'institutional']).default('natural'),
-  maxDurationSeconds: z.number().int().min(4).max(120).default(10),
+  maxDurationSeconds: z.coerce.number().int().min(1).default(10).transform((v) => Math.min(v, 60)),
   customInstruction: z.string().trim().max(500).optional(),
   factMode: z.enum(['off', 'verified']).default('off'),
   verifiedFact: VerifiedFactSchema.optional(),
@@ -103,7 +103,7 @@ export const VoiceLinkContentInputSchema = VoiceLinkBaseSchema.innerType().omit(
 }).extend({
   kind: z.literal('voice_link'),
   scriptText: z.string().trim().min(1).max(1_000),
-  durationSeconds: z.number().int().min(4).max(120),
+  durationSeconds: z.coerce.number().int().min(1).default(10).transform((v) => Math.min(v, 60)),
   voiceId: z.string().min(1).max(200).optional(),
   speed: z.number().min(0.8).max(1.3).default(1),
   scheduledFor: z.string().datetime({ offset: true }).optional(),
