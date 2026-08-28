@@ -1,7 +1,7 @@
 import { and, eq, isNull, like, not, or } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { voice as voiceTable } from '@/lib/db/schema';
+import { station, voice as voiceTable, voicePreference } from '@/lib/db/schema';
 import {
   authenticateDevice,
   integrationErrorResponse,
@@ -38,7 +38,7 @@ export async function GET(
         )
       : and(eq(voiceTable.enabled, true), not(like(voiceTable.slug, 'el-%')));
 
-    const voices = await db
+    const allVoices = await db
       .select({
         id: voiceTable.id,
         slug: voiceTable.slug,
@@ -57,7 +57,69 @@ export async function GET(
       .from(voiceTable)
       .where(baseWhere);
 
-    return Response.json({ voices });
+    // Dedupe by elevenLabsVoiceId
+    const byElevenId = new Map<string, (typeof allVoices)[number]>();
+    for (const v of allVoices) {
+      const existing = byElevenId.get(v.elevenLabsVoiceId);
+      if (!existing) {
+        byElevenId.set(v.elevenLabsVoiceId, v);
+        continue;
+      }
+      const vOwned = userId ? v.ownerUserId === userId : false;
+      const existingOwned = userId ? existing.ownerUserId === userId : false;
+      if (vOwned && !existingOwned) {
+        byElevenId.set(v.elevenLabsVoiceId, v);
+        continue;
+      }
+      if (!vOwned && existingOwned) continue;
+      if (!existing.previewUrl && v.previewUrl) {
+        byElevenId.set(v.elevenLabsVoiceId, v);
+      }
+    }
+    const deduped = Array.from(byElevenId.values());
+
+    let defaultVoiceId: string | null = null;
+    let defaultSpeed = 1.0;
+
+    if (userId) {
+      const prefs = await db
+        .select({
+          voiceId: voicePreference.voiceId,
+          isDefault: voicePreference.isDefault,
+          speed: voicePreference.speed,
+        })
+        .from(voicePreference)
+        .where(eq(voicePreference.userId, userId));
+
+      const defaultPref = prefs.find((p) => p.isDefault);
+      if (defaultPref) {
+        defaultVoiceId = defaultPref.voiceId;
+        defaultSpeed = defaultPref.speed ?? 1.0;
+      }
+    }
+
+    const voices = deduped
+      .map((v) => ({
+        id: v.id,
+        name: v.name,
+        description: v.description ?? null,
+        languages: v.languages,
+        gender: v.gender,
+        accent: v.accent ?? null,
+        style: v.style ?? null,
+        isDefault: defaultVoiceId === v.id,
+        isMine: userId ? v.ownerUserId === userId : v.isCloned,
+      }))
+      .sort((a, b) => {
+        if (a.isMine !== b.isMine) return a.isMine ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+
+    return Response.json({
+      voices,
+      defaultVoiceId,
+      defaultSpeed,
+    });
   } catch (error) {
     return integrationErrorResponse(error);
   }
