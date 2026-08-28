@@ -9,16 +9,11 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const bypass = searchParams.get('run') === 'true';
-
+export async function GET() {
   try {
-    if (!bypass) {
-      const session = await getSession();
-      if (!session?.user) {
-        return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-      }
+    const session = await getSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
     const upserts = await runSeed();
     return NextResponse.json({ ok: true, upserted: upserts });
