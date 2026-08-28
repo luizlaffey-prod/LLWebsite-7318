@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export async function GET() {
   // Allow running the seed in the browser if the user is currently logged in
   const session = await getSession();
   if (!session?.user) {

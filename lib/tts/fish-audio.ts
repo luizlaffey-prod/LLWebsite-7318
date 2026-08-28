@@ -32,7 +32,7 @@ async function synthesizeBlock(
     ? (process.env.AURA_FISHAUDIO_FAST_MODEL ?? 's2.1-pro-free')
     : (process.env.AURA_FISHAUDIO_MODEL ?? 's2.1-pro');
 
-  const body: Record<string, any> = {
+  const body: Record<string, unknown> = {
     text,
     format: 'mp3',
   };
