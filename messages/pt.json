@@ -599,6 +599,7 @@
     "errorLoad": "Não conseguimos carregar o catálogo. Recarregue a página.",
     "errorPreview": "Não foi possível tocar a amostra agora.",
     "errorSave": "Não foi possível salvar a preferência. Tente novamente.",
+    "cancel": "Cancelar",
     "cloneSectionTitle": "Clonar uma voz",
     "cloneSectionBody": "Envie 1–5 amostras limpas (30–60s cada) e a AURA cria uma voz personalizada.",
     "cloneCta": "Clonar voz",

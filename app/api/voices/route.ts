@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { eq, and, or, isNull, not, like, notInArray } from 'drizzle-orm';
+import { eq, and, or, isNull, not, like, notInArray, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import { voice as voiceTable, voicePreference } from '@/lib/db/schema';
@@ -43,14 +43,14 @@ async function reconcileCatalog(): Promise<void> {
         target: voiceTable.slug,
         set: {
           elevenLabsVoiceId: seed.elevenLabsVoiceId,
-          name: seed.name,
-          description: seed.description,
           languages: seed.languages,
           gender: seed.gender,
-          style: seed.style,
-          accent: seed.accent,
           tierRequired: seed.tierRequired,
           enabled: true,
+          name: sql`COALESCE(${voiceTable.name}, ${seed.name})`,
+          description: sql`COALESCE(${voiceTable.description}, ${seed.description})`,
+          style: sql`COALESCE(${voiceTable.style}, ${seed.style})`,
+          accent: sql`COALESCE(${voiceTable.accent}, ${seed.accent})`,
         },
       });
   }
