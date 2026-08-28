@@ -25,11 +25,13 @@ interface VoiceItem {
   isDefault: boolean;
   isCloned: boolean;
   isMine: boolean;
+  elevenLabsVoiceId?: string;
 }
 
 interface ApiResponse {
   voices: VoiceItem[];
   tier: 'starter' | 'standard' | 'pro';
+  activeProvider?: string;
   defaultVoiceId: string | null;
   defaultSpeed: number;
 }
@@ -40,6 +42,7 @@ export function VoicesClient() {
   const [loading, setLoading] = useState(true);
   const [voices, setVoices] = useState<VoiceItem[]>([]);
   const [tier, setTier] = useState<'starter' | 'standard' | 'pro'>('starter');
+  const [activeProvider, setActiveProvider] = useState<string>('elevenlabs');
   const [defaultVoiceId, setDefaultVoiceId] = useState<string | null>(null);
   const [speed, setSpeed] = useState(1.0);
   const [pendingVoiceId, setPendingVoiceId] = useState<string | null>(null);
@@ -62,6 +65,7 @@ export function VoicesClient() {
       const data = (await res.json()) as ApiResponse;
       setVoices(data.voices);
       setTier(data.tier);
+      if (data.activeProvider) setActiveProvider(data.activeProvider);
       setDefaultVoiceId(data.defaultVoiceId);
       setSpeed(data.defaultSpeed);
     } catch {
@@ -283,6 +287,15 @@ export function VoicesClient() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
+                    {v.elevenLabsVoiceId?.startsWith('fish:') || v.slug.startsWith('fish') ? (
+                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-teal/40 text-teal bg-teal/10 font-mono uppercase">
+                        Fish Audio
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-zinc-700 text-zinc-400 bg-zinc-900/50 font-mono uppercase">
+                        ElevenLabs
+                      </Badge>
+                    )}
                     {isDefault && <Badge>{t('defaultBadge')}</Badge>}
                     {v.isCloned && v.isMine && (
                       <Badge variant="success">
@@ -372,6 +385,7 @@ export function VoicesClient() {
 
       <VoiceCloneModal
         open={cloneOpen}
+        activeProvider={activeProvider}
         onClose={() => setCloneOpen(false)}
         onCloned={() => {
           setCloneOpen(false);

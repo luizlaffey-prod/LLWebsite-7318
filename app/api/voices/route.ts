@@ -172,9 +172,13 @@ export async function GET(req: Request) {
       return a.name.localeCompare(b.name);
     });
 
+  const fishKey = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
+  const activeProvider = process.env.AURA_ACTIVE_TTS_PROVIDER ?? (fishKey ? 'fishaudio' : 'elevenlabs');
+
   return NextResponse.json({
     voices: enriched,
     tier: quota.tier,
+    activeProvider,
     defaultVoiceId: defaultPref?.voiceId ?? null,
     defaultSpeed: defaultPref?.speed ?? 1.0,
   });

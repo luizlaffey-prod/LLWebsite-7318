@@ -620,7 +620,7 @@
       "samplesHint": "Solte ou clique para adicionar arquivos MP3/WAV",
       "samplesSelected": "{count} arquivo(s) selecionado(s)",
       "samplesNote": "1–5 arquivos MP3/WAV, máx. 11MB cada. Os arquivos são temporários e apagados após a clonagem.",
-      "consent": "Confirmo que sou titular desta voz ou tenho autorização expressa para cloná-la e autorizo o processamento temporário pelo Cloudflare R2 e ElevenLabs.",
+      "consent": "Confirmo que sou titular desta voz ou tenho autorização expressa para cloná-la e autorizo o processamento temporário pelo Cloudflare R2 e {provider}.",
       "clone": "Clonar voz",
       "cloning": "Clonando...",
       "cancel": "Cancelar",

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, Upload, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -27,10 +28,12 @@ export function VoiceCloneModal({
   open,
   onClose,
   onCloned,
+  activeProvider = 'fishaudio',
 }: {
   open: boolean;
   onClose: () => void;
   onCloned: () => void;
+  activeProvider?: string;
 }) {
   const t = useTranslations('voicesPage.clone');
   const [name, setName] = useState('');
@@ -147,11 +150,16 @@ export function VoiceCloneModal({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-teal" />
-            {t('title')}
+          <DialogTitle className="flex items-center justify-between gap-2 text-white">
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-teal" />
+              {t('title')}
+            </span>
+            <Badge variant="outline" className="border-teal/40 text-teal bg-teal/10 font-mono text-[11px] uppercase tracking-wide">
+              Engine: {activeProvider === 'fishaudio' ? 'Fish Audio' : 'ElevenLabs'}
+            </Badge>
           </DialogTitle>
-          <DialogDescription>{t('modalHelp')}</DialogDescription>
+          <DialogDescription className="text-zinc-300">{t('modalHelp')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           {error && (
@@ -161,9 +169,9 @@ export function VoiceCloneModal({
           )}
 
           <div>
-            <Label>{t('name')}</Label>
+            <Label className="text-zinc-200 font-medium">{t('name')}</Label>
             <Input
-              className="mt-2"
+              className="mt-2 text-white bg-elevated/80 border-border placeholder:text-zinc-400 focus:border-teal font-normal"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -174,9 +182,9 @@ export function VoiceCloneModal({
           </div>
 
           <div>
-            <Label>{t('description')}</Label>
+            <Label className="text-zinc-200 font-medium">{t('description')}</Label>
             <Input
-              className="mt-2"
+              className="mt-2 text-white bg-elevated/80 border-border placeholder:text-zinc-400 focus:border-teal font-normal"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={200}
@@ -186,9 +194,9 @@ export function VoiceCloneModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>{t('language')}</Label>
+              <Label className="text-zinc-200 font-medium">{t('language')}</Label>
               <Select value={language} onValueChange={(v) => setLanguage(v as 'en' | 'pt' | 'es')}>
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2 text-white bg-elevated/80 border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -199,9 +207,9 @@ export function VoiceCloneModal({
               </Select>
             </div>
             <div>
-              <Label>{t('gender')}</Label>
+              <Label className="text-zinc-200 font-medium">{t('gender')}</Label>
               <Select value={gender} onValueChange={(v) => setGender(v as 'male' | 'female' | 'neutral')}>
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2 text-white bg-elevated/80 border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -214,9 +222,9 @@ export function VoiceCloneModal({
           </div>
 
           <div>
-            <Label>{t('accent')}</Label>
+            <Label className="text-zinc-200 font-medium">{t('accent')}</Label>
             <Input
-              className="mt-2"
+              className="mt-2 text-white bg-elevated/80 border-border placeholder:text-zinc-400 focus:border-teal font-normal"
               value={accent}
               onChange={(e) => setAccent(e.target.value)}
               placeholder={t('accentPlaceholder')}
@@ -224,10 +232,10 @@ export function VoiceCloneModal({
           </div>
 
           <div>
-            <Label>{t('samples')}</Label>
+            <Label className="text-zinc-200 font-medium">{t('samples')}</Label>
             <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-border bg-elevated/40 px-4 py-6 text-center hover:border-teal/50">
-              <Upload className="mb-2 h-5 w-5 text-text-muted" />
-              <span className="text-sm text-text-secondary">
+              <Upload className="mb-2 h-5 w-5 text-teal" />
+              <span className="text-sm text-zinc-200 font-medium">
                 {files.length > 0
                   ? t('samplesSelected', { count: files.length })
                   : t('samplesHint')}
@@ -242,7 +250,7 @@ export function VoiceCloneModal({
                 }
               />
             </label>
-            <p className="mt-1 text-xs text-text-muted">{t('samplesNote')}</p>
+            <p className="mt-1 text-xs text-zinc-300 font-medium">{t('samplesNote')}</p>
           </div>
 
           <div className="flex items-start gap-3 rounded-md border border-border bg-elevated/40 p-3">
@@ -252,8 +260,8 @@ export function VoiceCloneModal({
               onCheckedChange={(checked) => setConsent(checked === true)}
               disabled={pending}
             />
-            <Label htmlFor="voice-clone-consent" className="text-sm leading-5 text-text-secondary">
-              {t('consent')}
+            <Label htmlFor="voice-clone-consent" className="text-sm leading-5 text-zinc-200 font-medium cursor-pointer">
+              {t('consent', { provider: activeProvider === 'fishaudio' ? 'Fish Audio' : 'ElevenLabs' })}
             </Label>
           </div>
 
