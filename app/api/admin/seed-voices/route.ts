@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sql } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { voice } from '@/lib/db/schema';
 import { VOICE_CATALOG } from '@/lib/tts/voice-catalog';
@@ -65,14 +66,14 @@ async function runSeed() {
       .onConflictDoUpdate({
         target: voice.slug,
         set: {
-          elevenLabsVoiceId: seed.elevenLabsVoiceId,
-          name: seed.name,
-          description: seed.description ?? null,
-          languages: seed.languages,
-          gender: seed.gender,
-          style: seed.style ?? null,
-          accent: seed.accent ?? null,
-          tierRequired: seed.tierRequired,
+          elevenLabsVoiceId: sql`excluded.eleven_labs_voice_id`,
+          name: sql`excluded.name`,
+          description: sql`excluded.description`,
+          languages: sql`excluded.languages`,
+          gender: sql`excluded.gender`,
+          style: sql`excluded.style`,
+          accent: sql`excluded.accent`,
+          tierRequired: sql`excluded.tier_required`,
         },
       });
     upserts++;
