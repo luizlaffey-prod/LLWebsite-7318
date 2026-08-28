@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const fishKey = process.env.FISHAUDIO_API_KEY;
+  const fishKey = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
   const elevenKey = process.env.ELEVENLABS_API_KEY;
   const activeProvider = process.env.AURA_ACTIVE_TTS_PROVIDER ?? (fishKey ? 'fishaudio' : 'elevenlabs');
 

@@ -24,8 +24,8 @@ async function synthesizeBlock(
   text: string,
   opts: FishSynthesizeOptions
 ): Promise<Uint8Array> {
-  const key = process.env.FISHAUDIO_API_KEY;
-  if (!key) throw new FishAudioError('FISHAUDIO_API_KEY is not set', 0);
+  const key = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
+  if (!key) throw new FishAudioError('FISHAUDIO_API_KEY or FISH_API_KEY is not set', 0);
 
   const url = `${FISH_BASE}/tts`;
   const model = opts.fast
