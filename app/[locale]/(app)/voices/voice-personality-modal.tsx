@@ -113,7 +113,8 @@ export function VoicePersonalityModal({
       });
 
       if (!res.ok) {
-        setError(t('errorSave'));
+        const errJson = (await res.json().catch(() => ({}))) as { message?: string };
+        setError(errJson.message || t('errorSave'));
         return;
       }
 

@@ -9,10 +9,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const PatchSchema = z.object({
-  name: z.string().trim().min(2).max(60).optional(),
-  description: z.string().trim().max(500).optional(),
-  style: z.string().trim().max(100).optional(),
-  accent: z.string().trim().max(100).optional(),
+  name: z.string().trim().min(2).max(100).optional(),
+  description: z.string().trim().max(10000).optional(),
+  style: z.string().trim().max(1000).optional(),
+  accent: z.string().trim().max(1000).optional(),
 });
 
 /**
