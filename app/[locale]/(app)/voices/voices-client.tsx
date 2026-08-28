@@ -261,7 +261,7 @@ export function VoicesClient() {
                         </form>
                       ) : (
                         <div className="flex items-center gap-1.5">
-                          <h3 className="truncate text-base font-semibold">{v.name}</h3>
+                          <h3 className="truncate text-base font-semibold text-white">{v.name}</h3>
                           {v.isMine && (
                             <button
                               type="button"
