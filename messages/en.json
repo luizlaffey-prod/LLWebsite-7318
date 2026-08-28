@@ -620,7 +620,7 @@
       "samplesHint": "Drop or click to add MP3/WAV files",
       "samplesSelected": "{count} file(s) selected",
       "samplesNote": "1–5 MP3/WAV files, max 11MB each. Files are uploaded temporarily and deleted after cloning.",
-      "consent": "I confirm that I own this voice or have explicit permission to clone it, and authorize temporary processing by Cloudflare R2 and {provider}.",
+      "consent": "I confirm that I own this voice or have explicit permission to clone it, and authorize temporary processing by AURA AI.",
       "clone": "Clone voice",
       "cloning": "Cloning...",
       "cancel": "Cancel",

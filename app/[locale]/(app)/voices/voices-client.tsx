@@ -287,15 +287,6 @@ export function VoicesClient() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    {v.elevenLabsVoiceId?.startsWith('fish:') || v.slug.startsWith('fish') ? (
-                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-teal/40 text-teal bg-teal/10 font-mono uppercase">
-                        Fish Audio
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-zinc-700 text-zinc-400 bg-zinc-900/50 font-mono uppercase">
-                        ElevenLabs
-                      </Badge>
-                    )}
                     {isDefault && <Badge>{t('defaultBadge')}</Badge>}
                     {v.isCloned && v.isMine && (
                       <Badge variant="success">

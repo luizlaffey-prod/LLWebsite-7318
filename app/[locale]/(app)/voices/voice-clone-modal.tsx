@@ -156,7 +156,7 @@ export function VoiceCloneModal({
               {t('title')}
             </span>
             <Badge variant="outline" className="border-teal/40 text-teal bg-teal/10 font-mono text-[11px] uppercase tracking-wide">
-              Engine: {activeProvider === 'fishaudio' ? 'Fish Audio' : 'ElevenLabs'}
+              AURA Engine
             </Badge>
           </DialogTitle>
           <DialogDescription className="text-zinc-300">{t('modalHelp')}</DialogDescription>
@@ -261,7 +261,7 @@ export function VoiceCloneModal({
               disabled={pending}
             />
             <Label htmlFor="voice-clone-consent" className="text-sm leading-5 text-zinc-200 font-medium cursor-pointer">
-              {t('consent', { provider: activeProvider === 'fishaudio' ? 'Fish Audio' : 'ElevenLabs' })}
+              {t('consent')}
             </Label>
           </div>
 
