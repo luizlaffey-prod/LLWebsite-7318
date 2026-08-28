@@ -9,13 +9,11 @@ export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  // Allow running the seed in the browser if the user is currently logged in
-  const session = await getSession();
-  if (!session?.user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
-
   try {
+    const session = await getSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    }
     const upserts = await runSeed();
     return NextResponse.json({ ok: true, upserted: upserts });
   } catch (err) {

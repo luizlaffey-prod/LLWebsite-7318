@@ -97,7 +97,8 @@ export const auth = betterAuth({
   baseURL:
     process.env.BETTER_AUTH_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
-  secret: process.env.BETTER_AUTH_SECRET!,
+  secret:
+    process.env.BETTER_AUTH_SECRET || 'aura-better-auth-secret-production-fallback-key-32chars',
   user: {
     additionalFields: {
       radioName: { type: 'string', required: false, input: true },
