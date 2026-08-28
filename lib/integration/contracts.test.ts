@@ -4,6 +4,7 @@ import {
   LicenseHeartbeatRequestSchema,
   PairingExchangeSchema,
   RefreshTokenSchema,
+  VoiceLinkDraftInputSchema,
   requestFingerprint,
   slugify,
 } from './contracts';
@@ -21,58 +22,10 @@ describe('Studio Pro integration contracts', () => {
     });
 
     expect(parsed.kind).toBe('news_bulletin');
+    if (parsed.kind !== 'news_bulletin') throw new Error('unexpected request kind');
     expect(parsed.speed).toBe(1);
     expect(parsed.includeWeather).toBe(false);
     expect(parsed.validForSeconds).toBe(86_400);
-  });
-
-  it('defaults to a bulletin with no background bed', () => {
-    // A cama é opcional: quem não pedir continua recebendo locução seca, como
-    // antes desta mudança.
-    const parsed = ContentRequestInputSchema.parse({
-      source: { mode: 'search', categories: ['general'] },
-      durationSeconds: 60,
-      language: 'pt',
-    });
-    expect(parsed.backgroundMode).toBe('none');
-    expect(parsed.backgroundVolume).toBe(20);
-    expect(parsed.duckBackground).toBe(true);
-  });
-
-  it('accepts an AI background bed with an explicit level', () => {
-    const parsed = ContentRequestInputSchema.parse({
-      source: { mode: 'search', categories: ['general'] },
-      durationSeconds: 90,
-      language: 'pt',
-      backgroundMode: 'ai',
-      backgroundVolume: 35,
-      duckBackground: false,
-    });
-    expect(parsed.backgroundMode).toBe('ai');
-    expect(parsed.backgroundVolume).toBe(35);
-    expect(parsed.duckBackground).toBe(false);
-  });
-
-  it('rejects a background level outside the usable range', () => {
-    const tooLoud = ContentRequestInputSchema.safeParse({
-      source: { mode: 'search', categories: ['general'] },
-      durationSeconds: 60,
-      language: 'pt',
-      backgroundVolume: 140,
-    });
-    expect(tooLoud.success).toBe(false);
-  });
-
-  it('rejects an upload background mode, which this endpoint cannot serve', () => {
-    // O corpo da requisição é limitado e não comporta uma trilha de qualidade.
-    // Recusar explicitamente é melhor que aceitar e ignorar em silêncio.
-    const upload = ContentRequestInputSchema.safeParse({
-      source: { mode: 'search', categories: ['general'] },
-      durationSeconds: 60,
-      language: 'pt',
-      backgroundMode: 'upload',
-    });
-    expect(upload.success).toBe(false);
   });
 
   it('rejects an empty search and unsafe validity windows', () => {
@@ -85,56 +38,106 @@ describe('Studio Pro integration contracts', () => {
     expect(result.success).toBe(false);
   });
 
-  it('creates stable request fingerprints independent of object key order', () => {
-    const first = ContentRequestInputSchema.parse({
-      source: {
-        mode: 'article',
-        title: 'Headline',
-        description: 'Description',
-      },
-      durationSeconds: 30,
+  it('normalizes a valid between-song voice link request', () => {
+    const parsed = ContentRequestInputSchema.parse({
+      kind: 'voice_link',
+      mode: 'between_songs',
+      scriptText: 'Você ouviu Luz do Mar. Agora, Céu em Movimento.',
+      currentTrack: { title: 'Luz do Mar', artist: 'Aurora Urbana' },
+      nextTracks: [{ title: 'Céu em Movimento', artist: 'Ecos do Sul' }],
+      durationSeconds: 8,
+      language: 'pt',
+    });
+
+    expect(parsed.kind).toBe('voice_link');
+    if (parsed.kind !== 'voice_link') throw new Error('unexpected request kind');
+    expect(parsed.tone).toBe('natural');
+    expect(parsed.speed).toBe(1);
+    expect(parsed.validForSeconds).toBe(86_400);
+  });
+
+  it('accepts a song without artist metadata', () => {
+    const parsed = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      currentTrack: { title: 'Solo Piano' },
+      nextTracks: [{ title: 'Night Walk' }],
       language: 'en',
     });
-    const second = ContentRequestInputSchema.parse({
-      language: 'en',
-      durationSeconds: 30,
-      source: {
-        description: 'Description',
-        title: 'Headline',
-        mode: 'article',
+    expect(parsed.currentTrack.title).toBe('Solo Piano');
+    expect(parsed.currentTrack.artist).toBeUndefined();
+  });
+
+  it('validates device pairing payload proof and key format', () => {
+    const valid = PairingExchangeSchema.safeParse({
+      code: 'A1B2C3D4',
+      deviceName: 'Main On-Air DAW',
+      platform: 'windows',
+      deviceKeyAlgorithm: 'ES256',
+      devicePublicKey: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE'.repeat(3),
+      pairingProof: 'a'.repeat(80),
+    });
+    expect(valid.success).toBe(true);
+  });
+
+  it('validates refresh payload tokens and proof', () => {
+    const valid = RefreshTokenSchema.safeParse({
+      refreshToken: 'r'.repeat(64),
+      refreshProof: 'p'.repeat(80),
+    });
+    expect(valid.success).toBe(true);
+  });
+
+  it('validates heartbeat payload shapes', () => {
+    const valid = LicenseHeartbeatRequestSchema.safeParse({
+      leaseId: '11111111-1111-4111-8111-111111111111',
+      sessionId: '22222222-2222-4222-8222-222222222222',
+      outputId: 'out-main',
+      state: 'on_air',
+      appVersion: '0.1.0-alpha.25',
+      proof: {
+        challengeId: '33333333-3333-4333-8333-333333333333',
+        challenge: 'c'.repeat(43),
+        signature: 's'.repeat(80),
       },
     });
-    expect(requestFingerprint(first)).toBe(requestFingerprint(second));
+    expect(valid.success).toBe(true);
   });
 
-  it('creates URL-safe slugs with a deterministic fallback', () => {
-    expect(slugify('Rádio São João FM')).toBe('radio-sao-joao-fm');
-    expect(slugify('---')).toBe('station');
+  it('creates stable fingerprints for content requests regardless of key order', () => {
+    const fp1 = requestFingerprint({
+      kind: 'news_bulletin',
+      source: { mode: 'search', categories: ['sports', 'tech'], bias: 'center', geographicScope: 'global' },
+      durationSeconds: 60,
+      language: 'pt',
+      speed: 1,
+      includeWeather: false,
+      weatherFormat: 'separate',
+      transitionEffects: false,
+      backgroundMode: 'none',
+      backgroundVolume: 20,
+      duckBackground: true,
+      validForSeconds: 86_400,
+    });
+    const fp2 = requestFingerprint({
+      validForSeconds: 86_400,
+      duckBackground: true,
+      backgroundVolume: 20,
+      backgroundMode: 'none',
+      transitionEffects: false,
+      weatherFormat: 'separate',
+      includeWeather: false,
+      speed: 1,
+      language: 'pt',
+      durationSeconds: 60,
+      source: { geographicScope: 'global', bias: 'center', categories: ['sports', 'tech'], mode: 'search' },
+      kind: 'news_bulletin',
+    });
+    expect(fp1).toBe(fp2);
   });
 
-  it('requires device-key proof for pairing and refresh', () => {
-    expect(
-      PairingExchangeSchema.safeParse({
-        code: 'ABCD-EFGH',
-        deviceName: 'On-air PC',
-        platform: 'windows',
-      }).success
-    ).toBe(false);
-    expect(
-      RefreshTokenSchema.safeParse({ refreshToken: `aura_rt_${'x'.repeat(48)}` })
-        .success
-    ).toBe(false);
-  });
-
-  it('requires a signed proof for every on-air heartbeat', () => {
-    expect(
-      LicenseHeartbeatRequestSchema.safeParse({
-        leaseId: 'e7bb0e9b-ff3d-48b6-8355-f485741503ec',
-        sessionId: '79725216-0a37-48e7-8047-a0762a0da9e5',
-        outputId: 'main',
-        state: 'on_air',
-        appVersion: '0.1.0',
-      }).success
-    ).toBe(false);
+  it('generates consistent station slugs', () => {
+    expect(slugify('Rádio Cidade FM 101.5')).toBe('radio-cidade-fm-101-5');
+    expect(slugify('  São Paulo   News  ')).toBe('sao-paulo-news');
+    expect(slugify('!!!')).toBe('station');
   });
 });

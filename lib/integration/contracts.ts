@@ -14,6 +14,17 @@ export const DEFAULT_DEVICE_SCOPES = [
 
 export const DeviceScopeSchema = z.enum(DEFAULT_DEVICE_SCOPES);
 
+export function normalizeRequestedScopes(
+  raw: string | null | undefined
+): string[] | null {
+  if (!raw || !raw.trim()) return [...DEFAULT_DEVICE_SCOPES];
+  const requested = raw.trim().split(/\s+/);
+  const allowed = new Set<string>(DEFAULT_DEVICE_SCOPES);
+  for (const s of requested) if (!allowed.has(s)) return null;
+  const wanted = new Set(requested);
+  return DEFAULT_DEVICE_SCOPES.filter((s) => wanted.has(s));
+}
+
 const ArticleSourceSchema = z.object({
   mode: z.literal('article'),
   title: z.string().trim().min(1).max(300),
@@ -30,30 +41,79 @@ const SearchSourceSchema = z.object({
   location: z.string().trim().min(1).max(160).optional(),
 });
 
-export const ContentRequestInputSchema = z.object({
+const TrackMetadataSchema = z.object({
+  title: z.string().trim().min(1).max(300),
+  artist: z.string().trim().min(1).max(200).optional(),
+});
+
+const VerifiedFactSchema = z.object({
+  text: z.string().trim().min(1).max(500),
+  sources: z.array(z.object({
+    title: z.string().trim().min(1).max(300),
+    url: z.string().url().max(2_000),
+  })).min(1).max(3),
+});
+
+const VoiceLinkBaseSchema = z.object({
+  mode: z.literal('between_songs'),
+  currentTrack: TrackMetadataSchema,
+  nextTracks: z.array(TrackMetadataSchema).min(1).max(4),
+  language: z.enum(['en', 'pt', 'es']),
+  tone: z.enum(['natural', 'energetic', 'warm', 'institutional']).default('natural'),
+  maxDurationSeconds: z.number().int().min(4).max(20).default(10),
+  customInstruction: z.string().trim().max(500).optional(),
+  factMode: z.enum(['off', 'verified']).default('off'),
+  verifiedFact: VerifiedFactSchema.optional(),
+}).superRefine((value, ctx) => {
+  if (value.factMode === 'off' && value.verifiedFact) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'verifiedFact requires factMode=verified',
+      path: ['verifiedFact'],
+    });
+  }
+});
+
+export const VoiceLinkDraftInputSchema = VoiceLinkBaseSchema;
+
+export const NewsBulletinInputSchema = z.object({
   kind: z.literal('news_bulletin').default('news_bulletin'),
   source: z.discriminatedUnion('mode', [ArticleSourceSchema, SearchSourceSchema]),
   title: z.string().trim().min(1).max(300).optional(),
   durationSeconds: z.number().int().min(15).max(600),
   language: z.enum(['en', 'pt', 'es']),
-  voiceId: z.string().uuid().optional(),
+  voiceId: z.string().min(1).max(200).optional(),
   speed: z.number().min(0.8).max(1.5).default(1),
   includeWeather: z.boolean().default(false),
   weatherFormat: z.enum(['separate', 'integrated']).default('separate'),
   weatherLocation: z.string().trim().min(1).max(500).optional(),
   transitionEffects: z.boolean().default(false),
-  // Trilha de fundo. 'ai' sintetiza uma cama instrumental e a mistura sob a
-  // locução, inteiramente no servidor. Não existe modo de envio de arquivo aqui
-  // de propósito: o corpo da requisição é limitado a 4,5 MB, o que não comporta
-  // uma trilha de qualidade — quem tem arquivo próprio mistura no estúdio.
   backgroundMode: z.enum(['none', 'ai']).default('none'),
-  /** Volume da trilha em relação à locução, em porcento. */
   backgroundVolume: z.number().int().min(0).max(100).default(20),
-  /** Abaixa a trilha enquanto há fala e a devolve nos intervalos. */
   duckBackground: z.boolean().default(true),
   scheduledFor: z.string().datetime({ offset: true }).optional(),
   validForSeconds: z.number().int().min(300).max(7 * 24 * 60 * 60).default(24 * 60 * 60),
 });
+
+export const VoiceLinkContentInputSchema = VoiceLinkBaseSchema.innerType().omit({
+  maxDurationSeconds: true,
+  customInstruction: true,
+  factMode: true,
+  verifiedFact: true,
+}).extend({
+  kind: z.literal('voice_link'),
+  scriptText: z.string().trim().min(1).max(1_000),
+  durationSeconds: z.number().int().min(4).max(20),
+  voiceId: z.string().min(1).max(200).optional(),
+  speed: z.number().min(0.8).max(1.3).default(1),
+  scheduledFor: z.string().datetime({ offset: true }).optional(),
+  validForSeconds: z.number().int().min(300).max(24 * 60 * 60).default(24 * 60 * 60),
+});
+
+export const ContentRequestInputSchema = z.union([
+  VoiceLinkContentInputSchema,
+  NewsBulletinInputSchema,
+]);
 
 export const PairingCodeCreateSchema = z.object({
   scopes: z.array(DeviceScopeSchema).min(1).optional(),
@@ -73,12 +133,39 @@ export const RefreshTokenSchema = z.object({
   refreshProof: z.string().trim().regex(/^[A-Za-z0-9_-]+$/).min(64).max(256),
 });
 
+export const StudioAuthorizeParamsSchema = z.object({
+  client_id: z.string().trim().min(1).max(64),
+  redirect_uri: z.string().trim().min(1).max(2048),
+  state: z.string().trim().min(8).max(512),
+  code_challenge: z.string().trim().min(43).max(128),
+  code_challenge_method: z.literal('S256'),
+  device_name: z.string().trim().min(1).max(120),
+  device_platform: z.enum(['windows', 'macos']),
+  device_public_key: z.string().trim().min(80).max(1024),
+  device_key_algorithm: z.literal('ES256'),
+  scope: z.string().trim().max(256).optional(),
+});
+
+export const StudioTokenExchangeSchema = z.object({
+  grant_type: z.literal('authorization_code'),
+  client_id: z.string().trim().min(1).max(64),
+  code: z.string().trim().min(20).max(200),
+  redirect_uri: z.string().trim().min(1).max(2048),
+  code_verifier: z.string().trim().min(43).max(128),
+  device_proof: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .min(64)
+    .max(256),
+});
+
 export const StationBootstrapSchema = z.object({
   organizationName: z.string().trim().min(1).max(160).optional(),
   stationName: z.string().trim().min(1).max(160).optional(),
   timezone: z.string().trim().min(1).max(100).optional(),
   defaultLanguage: z.enum(['en', 'pt', 'es']).optional(),
-  defaultVoiceId: z.string().uuid().optional(),
+  defaultVoiceId: z.string().min(1).max(200).optional(),
 });
 
 const DeviceProofSchema = z.object({
@@ -140,6 +227,9 @@ export const StationEventCreateSchema = z
   });
 
 export type ContentRequestInput = z.infer<typeof ContentRequestInputSchema>;
+export type NewsBulletinInput = z.infer<typeof NewsBulletinInputSchema>;
+export type VoiceLinkContentInput = z.infer<typeof VoiceLinkContentInputSchema>;
+export type VoiceLinkDraftInput = z.infer<typeof VoiceLinkDraftInputSchema>;
 
 export function requestFingerprint(input: ContentRequestInput): string {
   return payloadFingerprint(input);

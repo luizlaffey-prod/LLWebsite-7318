@@ -7,27 +7,30 @@ import {
   integrationContentRequest,
   organization,
   station,
-  voice as voiceTable,
   type IntegrationSourceReference,
 } from '@/lib/db/schema';
+import { resolveAuthorizedVoice } from '@/lib/integration/voice-authorization';
 import { getQuota, incrementUsage } from '@/lib/billing/quota';
 import {
   canRequestDuration,
   canUseVoice,
   maxCategoriesPerBulletin,
 } from '@/lib/billing/feature-gates';
-import { ContentRequestInputSchema } from '@/lib/integration/contracts';
+import {
+  ContentRequestInputSchema,
+  type NewsBulletinInput,
+  type VoiceLinkContentInput,
+} from '@/lib/integration/contracts';
 import { searchNews } from '@/lib/news/aggregator';
 import { fetchWeatherCities } from '@/lib/news/weather';
 import { generateScript } from '@/lib/llm/script-generator';
+import type { ScriptBlock } from '@/lib/llm/types';
+import type { Emotion } from '@/lib/audio/emotions';
 import { todayForPrompt } from '@/lib/llm/today';
 import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
 import { generateBulletinMusic } from '@/lib/tts/elevenlabs-music';
-import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
 import { mixVoiceAndBackgroundServerSide } from '@/lib/audio/server-mix';
 import { audioKey, uploadAudio } from '@/lib/storage/r2';
-import type { ScriptBlock } from '@/lib/llm/types';
-import type { z } from 'zod';
 
 class ContentProcessingError extends Error {
   constructor(public readonly code: string, message = code) {
@@ -36,20 +39,10 @@ class ContentProcessingError extends Error {
   }
 }
 
-type ContentRequestInput = z.infer<typeof ContentRequestInputSchema>;
-
-/**
- * Mistura uma cama instrumental sob a locução, quando pedida.
- *
- * Falhar aqui **não** perde o boletim: a locução seca é melhor que nenhum
- * áudio, e um boletim sem trilha ainda vai ao ar. O erro é registrado e a
- * geração segue — o operador percebe pela ausência da trilha, não por um
- * horário vazio na programação.
- */
 async function applyBackgroundBed(
   voiceBytes: Uint8Array,
   script: ScriptBlock[],
-  input: ContentRequestInput,
+  input: NewsBulletinInput,
   durationSeconds: number
 ): Promise<Uint8Array> {
   if (input.backgroundMode !== 'ai') return voiceBytes;
@@ -125,6 +118,7 @@ export async function processContentRequest(requestId: string): Promise<void> {
       throw new ContentProcessingError('duration_not_allowed');
     }
     if (
+      input.kind === 'news_bulletin' &&
       input.source.mode === 'search' &&
       input.source.categories.length > maxCategoriesPerBulletin(quota.tier)
     ) {
@@ -133,29 +127,30 @@ export async function processContentRequest(requestId: string): Promise<void> {
 
     const voiceId = input.voiceId ?? context.station.defaultVoiceId;
     if (!voiceId) throw new ContentProcessingError('no_voice_configured');
-    const [chosenVoice] = await db
-      .select()
-      .from(voiceTable)
-      .where(eq(voiceTable.id, voiceId))
-      .limit(1);
-    if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, billingUserId)) {
-      throw new ContentProcessingError('voice_not_found');
+
+    let chosenVoice;
+    try {
+      chosenVoice = await resolveAuthorizedVoice(voiceId, context.organization.id);
+    } catch {
+      throw new ContentProcessingError('voice_not_authorized');
     }
     if (!canUseVoice(quota.tier, chosenVoice)) {
       throw new ContentProcessingError('voice_not_allowed');
     }
 
-    const source = await resolveSource(input);
-    const weather = await resolveWeather(input);
+    const content =
+      input.kind === 'voice_link'
+        ? resolveVoiceLinkContent(input)
+        : await resolveNewsBulletinContent(input, context.station.timezone);
     const validFrom = input.scheduledFor ? new Date(input.scheduledFor) : now;
 
     const [audio] = await db
       .insert(generatedAudio)
       .values({
         userId: billingUserId,
-        title: input.title || source.title,
-        sourceArticleUrl: source.references[0]?.url,
-        sourceName: source.references[0]?.source,
+        title: content.title,
+        sourceArticleUrl: content.references[0]?.url,
+        sourceName: content.references[0]?.source,
         originalScript: [],
         voiceId,
         speed: input.speed,
@@ -166,26 +161,31 @@ export async function processContentRequest(requestId: string): Promise<void> {
       .returning({ id: generatedAudio.id });
     audioId = audio.id;
 
-    const script = await generateScript({
-      newsContent: source.newsContent,
-      targetDurationSeconds: input.durationSeconds,
-      language: input.language,
-      today: todayForPrompt(context.station.timezone, input.language),
-      weather,
-    });
-
     await db
       .update(generatedAudio)
-      .set({ originalScript: script, updatedAt: new Date() })
+      .set({ originalScript: content.script, updatedAt: new Date() })
       .where(eq(generatedAudio.id, audio.id));
 
-    const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeBulletin(script, {
-      elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
-      speed: input.speed,
-      transitionEffects: input.transitionEffects,
-    });
+    const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeBulletin(
+      content.script,
+      {
+        elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
+        speed: input.speed,
+        transitionEffects:
+          input.kind === 'news_bulletin' && input.transitionEffects,
+      }
+    );
 
-    const bytes = await applyBackgroundBed(voiceBytes, script, input, durationEstimateSeconds);
+    const bytes =
+      input.kind === 'news_bulletin'
+        ? await applyBackgroundBed(
+            voiceBytes,
+            content.script,
+            input,
+            durationEstimateSeconds
+          )
+        : voiceBytes;
+
     const sha256 = createHash('sha256').update(bytes).digest('hex');
     const uploaded = await uploadAudio(audioKey(billingUserId, audio.id), bytes);
     const completedAt = new Date();
@@ -204,7 +204,7 @@ export async function processContentRequest(requestId: string): Promise<void> {
       .update(integrationContentRequest)
       .set({
         status: 'ready',
-        sourceReferences: source.references,
+        sourceReferences: content.references,
         audioId: audio.id,
         validFrom,
         assetSha256: sha256,
@@ -279,54 +279,96 @@ export async function processPendingContentRequests(limit = 5) {
   return results;
 }
 
-async function resolveSource(input: ReturnType<typeof ContentRequestInputSchema.parse>) {
+interface ResolvedContent {
+  title: string;
+  references: IntegrationSourceReference[];
+  script: ScriptBlock[];
+}
+
+async function resolveNewsBulletinContent(
+  input: NewsBulletinInput,
+  timezone: string
+): Promise<ResolvedContent> {
+  const source = await resolveNewsSource(input);
+  const weather = await resolveNewsWeather(input);
+  const script = await generateScript({
+    newsContent: source.newsContent,
+    targetDurationSeconds: input.durationSeconds,
+    language: input.language,
+    today: todayForPrompt(timezone, input.language),
+    weather,
+  });
+  return {
+    title: input.title || source.title,
+    references: source.references,
+    script,
+  };
+}
+
+function resolveVoiceLinkContent(input: VoiceLinkContentInput): ResolvedContent {
+  const title = `${input.currentTrack.title} / ${input.nextTracks[0].title}`;
+  const script: ScriptBlock[] = [
+    { text: input.scriptText, emotion: 'NEUTRAL' as Emotion, duracaoSegundos: input.durationSeconds },
+  ];
+  return {
+    title,
+    references: [],
+    script,
+  };
+}
+
+async function resolveNewsSource(input: NewsBulletinInput): Promise<{
+  title: string;
+  newsContent: string;
+  references: IntegrationSourceReference[];
+}> {
   if (input.source.mode === 'article') {
-    const reference: IntegrationSourceReference = {
-      title: input.source.title,
-      source: input.source.source,
-      url: input.source.url,
-    };
     return {
       title: input.source.title,
       newsContent: `${input.source.title}\n\n${input.source.description}`,
-      references: [reference],
+      references: [
+        {
+          title: input.source.title,
+          source: input.source.source ?? 'custom',
+          url: input.source.url,
+        },
+      ],
     };
   }
 
-  const result = await searchNews({
+  const bias = input.source.bias === 'mixed' ? 'center' : input.source.bias;
+  const { articles } = await searchNews({
     categories: input.source.categories,
-    bias: input.source.bias === 'mixed' ? 'center' : input.source.bias,
+    bias,
     language: input.language,
     geographicScope: input.source.geographicScope,
     location: input.source.location,
-    limit: 20,
+    limit: 5,
   });
-  const articles = result.articles.slice(0, 4);
   if (articles.length === 0) {
-    throw new ContentProcessingError('no_articles_found');
+    throw new ContentProcessingError('news_search_empty');
   }
-  const references: IntegrationSourceReference[] = articles.map((article) => ({
-    title: article.title,
-    source: article.source,
-    url: article.url,
-    publishedAt: article.publishedAt,
+
+  const references: IntegrationSourceReference[] = articles.map((item) => ({
+    title: item.title,
+    source: item.source,
+    url: item.url,
   }));
   const newsContent = articles
-    .map((article, index) => {
-      const published = article.publishedAt
-        ? ` [published ${article.publishedAt.slice(0, 10)}]`
-        : '';
-      return `${index + 1}. ${article.title}${published} — ${article.description}`;
-    })
-    .join('\n');
+    .map(
+      (item, index) =>
+        `# Materia ${index + 1}: ${item.title}\nFonte: ${item.source}\n${item.description}`
+    )
+    .join('\n\n');
+
   return {
-    title: input.title || articles[0].title,
+    title: articles[0].title,
     newsContent,
     references,
   };
 }
 
-async function resolveWeather(input: ReturnType<typeof ContentRequestInputSchema.parse>) {
+async function resolveNewsWeather(input: NewsBulletinInput) {
   if (!input.includeWeather || !input.weatherLocation) return undefined;
   const { snapshots, failed } = await fetchWeatherCities(
     input.weatherLocation,
