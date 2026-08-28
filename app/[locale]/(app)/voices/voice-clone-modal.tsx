@@ -171,7 +171,7 @@ export function VoiceCloneModal({
           <div>
             <Label className="text-zinc-200 font-medium">{t('name')}</Label>
             <Input
-              className="mt-2 text-white bg-elevated/80 border-border placeholder:text-zinc-400 focus:border-teal font-normal"
+              className="mt-2 text-white bg-[#06080F] border-zinc-700/80 placeholder:text-zinc-400 focus:border-teal font-normal"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -184,7 +184,7 @@ export function VoiceCloneModal({
           <div>
             <Label className="text-zinc-200 font-medium">{t('description')}</Label>
             <Input
-              className="mt-2 text-white bg-elevated/80 border-border placeholder:text-zinc-400 focus:border-teal font-normal"
+              className="mt-2 text-white bg-[#06080F] border-zinc-700/80 placeholder:text-zinc-400 focus:border-teal font-normal"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={200}
@@ -196,10 +196,10 @@ export function VoiceCloneModal({
             <div>
               <Label className="text-zinc-200 font-medium">{t('language')}</Label>
               <Select value={language} onValueChange={(v) => setLanguage(v as 'en' | 'pt' | 'es')}>
-                <SelectTrigger className="mt-2 text-white bg-elevated/80 border-border">
+                <SelectTrigger className="mt-2 text-white bg-[#06080F] border-zinc-700/80">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#0D1017] border-zinc-700 text-white">
                   <SelectItem value="en">English</SelectItem>
                   <SelectItem value="pt">Português</SelectItem>
                   <SelectItem value="es">Español</SelectItem>
@@ -209,10 +209,10 @@ export function VoiceCloneModal({
             <div>
               <Label className="text-zinc-200 font-medium">{t('gender')}</Label>
               <Select value={gender} onValueChange={(v) => setGender(v as 'male' | 'female' | 'neutral')}>
-                <SelectTrigger className="mt-2 text-white bg-elevated/80 border-border">
+                <SelectTrigger className="mt-2 text-white bg-[#06080F] border-zinc-700/80">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#0D1017] border-zinc-700 text-white">
                   <SelectItem value="male">{t('genderMale')}</SelectItem>
                   <SelectItem value="female">{t('genderFemale')}</SelectItem>
                   <SelectItem value="neutral">{t('genderNeutral')}</SelectItem>
@@ -224,7 +224,7 @@ export function VoiceCloneModal({
           <div>
             <Label className="text-zinc-200 font-medium">{t('accent')}</Label>
             <Input
-              className="mt-2 text-white bg-elevated/80 border-border placeholder:text-zinc-400 focus:border-teal font-normal"
+              className="mt-2 text-white bg-[#06080F] border-zinc-700/80 placeholder:text-zinc-400 focus:border-teal font-normal"
               value={accent}
               onChange={(e) => setAccent(e.target.value)}
               placeholder={t('accentPlaceholder')}

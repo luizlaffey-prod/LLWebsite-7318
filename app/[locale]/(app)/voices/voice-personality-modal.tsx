@@ -110,7 +110,7 @@ export function VoicePersonalityModal({
           <div>
             <Label className="text-zinc-200 font-medium">Tom & Personalidade do Locutor (Prompt)</Label>
             <textarea
-              className="mt-2 w-full rounded-md border border-border bg-elevated/80 p-3 text-sm text-white placeholder:text-zinc-400 focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
+              className="mt-2 w-full rounded-md border border-zinc-700/80 bg-[#06080F] p-3 text-sm text-white placeholder:text-zinc-400 focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -124,7 +124,7 @@ export function VoicePersonalityModal({
           <div>
             <Label className="text-zinc-200 font-medium">Estilo de Apresentação</Label>
             <Input
-              className="mt-2 text-white bg-elevated/80 border-border placeholder:text-zinc-400 focus:border-teal font-normal"
+              className="mt-2 text-white bg-[#06080F] border-zinc-700/80 placeholder:text-zinc-400 focus:border-teal font-normal"
               value={style}
               onChange={(e) => setStyle(e.target.value)}
               placeholder="Ex: Jornalístico Dinâmico, Suave, Pop & Entretenimento"
@@ -134,7 +134,7 @@ export function VoicePersonalityModal({
           <div>
             <Label className="text-zinc-200 font-medium">Instruções de Pronúncia / Observações</Label>
             <Input
-              className="mt-2 text-white bg-elevated/80 border-border placeholder:text-zinc-400 focus:border-teal font-normal"
+              className="mt-2 text-white bg-[#06080F] border-zinc-700/80 placeholder:text-zinc-400 focus:border-teal font-normal"
               value={accent}
               onChange={(e) => setAccent(e.target.value)}
               placeholder="Ex: Paulista neutro, articular nomes próprios com clareza"
