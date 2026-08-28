@@ -148,13 +148,18 @@ export async function POST(req: Request) {
           },
           { timeoutMs: 90_000 }
         );
-        const data = (await res.json()) as { id?: string };
-        if (!data.id) throw new Error('fishaudio_missing_voice_id');
-        voiceId = `fish:${data.id}`;
+        const data = (await res.json()) as { id?: string; _id?: string };
+        const fishModelId = data._id || data.id;
+        if (!fishModelId) {
+          console.error('[voice-clone] Fish Audio missing model ID in payload:', data);
+          throw new Error('fishaudio_missing_voice_id');
+        }
+        voiceId = `fish:${fishModelId}`;
       } catch (err) {
         console.error('[voice-clone] Fish Audio response failed', err);
+        const errMsg = err instanceof FetchError ? err.responseText || err.message : (err instanceof Error ? err.message : 'Fish Audio returned an invalid response.');
         return NextResponse.json(
-          { error: 'clone_failed', message: 'Fish Audio returned an invalid response.' },
+          { error: 'clone_failed', message: `Fish Audio error: ${errMsg}` },
           { status: 502 }
         );
       }

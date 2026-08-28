@@ -52,18 +52,6 @@ export async function GET(
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
 
-  const key = process.env.ELEVENLABS_API_KEY;
-  if (!key) {
-    return NextResponse.json({ error: 'tts_not_configured' }, { status: 503 });
-  }
-
-  // Layer 0: if the synced library row has an ElevenLabs CDN preview URL,
-  // redirect straight to it. These URLs are public, served from
-  // ElevenLabs' CDN, and don't burn any quota — best possible path.
-  if (v.previewUrl && /^https?:\/\//.test(v.previewUrl)) {
-    return NextResponse.redirect(v.previewUrl, 302);
-  }
-
   // Layer 1: redirect to cached R2 preview if it exists.
   const cacheKey = `voice-previews/${v.elevenLabsVoiceId}.mp3`;
   const cachedUrl = guessR2PublicUrl(cacheKey);
@@ -76,6 +64,46 @@ export async function GET(
     } catch {
       /* fall through */
     }
+  }
+
+  // Handle Fish Audio voices (IDs starting with fish:)
+  if (v.elevenLabsVoiceId?.startsWith('fish:')) {
+    const fishKey = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
+    if (!fishKey) {
+      return NextResponse.json({ error: 'tts_not_configured' }, { status: 503 });
+    }
+    const referenceId = v.elevenLabsVoiceId.replace(/^fish:/, '');
+    try {
+      const { synthesizeBulletin } = await import('@/lib/tts/fish-audio');
+      const { audio } = await synthesizeBulletin(
+        [{ text: PREVIEW_SAMPLE_TEXT, duracaoSegundos: 4, category: 'preview', emotion: 'NEUTRAL' }],
+        { referenceId, fast: true }
+      );
+
+      try {
+        await uploadAudio(cacheKey, audio, 'audio/mpeg');
+      } catch (err) {
+        console.warn('[voice-preview] R2 upload (cache) failed', err);
+      }
+
+      return new NextResponse(audio as unknown as BodyInit, {
+        headers: {
+          'Content-Type': 'audio/mpeg',
+          'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+        },
+      });
+    } catch (err) {
+      console.error('[voice-preview] Fish Audio preview failed', v.elevenLabsVoiceId, err);
+      return NextResponse.json(
+        { error: 'preview_failed', voiceId: v.elevenLabsVoiceId },
+        { status: 502 }
+      );
+    }
+  }
+
+  const key = process.env.ELEVENLABS_API_KEY;
+  if (!key) {
+    return NextResponse.json({ error: 'tts_not_configured' }, { status: 503 });
   }
 
   // Layer 2: ElevenLabs preview_url via metadata endpoint (covers voices
