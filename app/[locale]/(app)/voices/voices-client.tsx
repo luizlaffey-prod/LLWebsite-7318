@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Play, Pause, Check, Lock, Loader2, Mic, Sparkles, Pencil, X } from 'lucide-react';
+import { Play, Pause, Check, Lock, Loader2, Mic, Sparkles, Pencil, X, Sliders } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { VoiceCloneModal } from './voice-clone-modal';
+import { VoicePersonalityModal } from './voice-personality-modal';
 
 interface VoiceItem {
   id: string;
@@ -51,6 +52,7 @@ export function VoicesClient() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [personalityVoice, setPersonalityVoice] = useState<VoiceItem | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
   const [renameSaving, setRenameSaving] = useState(false);
 
@@ -315,22 +317,34 @@ export function VoicesClient() {
                 </div>
 
                 <div className="mt-5 flex items-center justify-between gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => togglePreview(v.id)}
-                    disabled={v.locked}
-                  >
-                    {playingId === v.id ? (
-                      <>
-                        <Pause className="h-3.5 w-3.5" /> {t('stop')}
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-3.5 w-3.5" /> {t('preview')}
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => togglePreview(v.id)}
+                      disabled={v.locked}
+                    >
+                      {playingId === v.id ? (
+                        <>
+                          <Pause className="h-3.5 w-3.5" /> {t('stop')}
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-3.5 w-3.5" /> {t('preview')}
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPersonalityVoice(v)}
+                      disabled={v.locked}
+                      title="Configurar Personalidade do Locutor"
+                      className="border-border/80 text-zinc-200 hover:border-teal/50 hover:text-white"
+                    >
+                      <Sliders className="h-3.5 w-3.5 text-teal" /> Personalidade
+                    </Button>
+                  </div>
                   <Button
                     size="sm"
                     variant={isDefault ? 'outline' : 'default'}
@@ -380,6 +394,16 @@ export function VoicesClient() {
         onClose={() => setCloneOpen(false)}
         onCloned={() => {
           setCloneOpen(false);
+          load();
+        }}
+      />
+
+      <VoicePersonalityModal
+        open={!!personalityVoice}
+        voice={personalityVoice}
+        onClose={() => setPersonalityVoice(null)}
+        onSaved={() => {
+          setPersonalityVoice(null);
           load();
         }}
       />

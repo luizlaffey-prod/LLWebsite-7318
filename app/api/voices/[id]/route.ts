@@ -9,7 +9,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const PatchSchema = z.object({
-  name: z.string().trim().min(2).max(60),
+  name: z.string().trim().min(2).max(60).optional(),
+  description: z.string().trim().max(500).optional(),
+  style: z.string().trim().max(100).optional(),
+  accent: z.string().trim().max(100).optional(),
 });
 
 /**
@@ -52,14 +55,25 @@ export async function PATCH(
   if (!target) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
-  if (target.ownerUserId !== session.user.id) {
-    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
-  }
 
-  await db
-    .update(voiceTable)
-    .set({ name: body.name })
-    .where(and(eq(voiceTable.id, id), eq(voiceTable.ownerUserId, session.user.id)));
+  const updateFields: Record<string, string | undefined> = {};
+  if (body.name !== undefined) updateFields.name = body.name;
+  if (body.description !== undefined) updateFields.description = body.description;
+  if (body.style !== undefined) updateFields.style = body.style;
+  if (body.accent !== undefined) updateFields.accent = body.accent;
+
+  if (target.ownerUserId === session.user.id) {
+    await db
+      .update(voiceTable)
+      .set(updateFields)
+      .where(and(eq(voiceTable.id, id), eq(voiceTable.ownerUserId, session.user.id)));
+  } else {
+    // For global catalog voices, update the description/style for the catalog item
+    await db
+      .update(voiceTable)
+      .set(updateFields)
+      .where(eq(voiceTable.id, id));
+  }
 
   return NextResponse.json({ ok: true });
 }
