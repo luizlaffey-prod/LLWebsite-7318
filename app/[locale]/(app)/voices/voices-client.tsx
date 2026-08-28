@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Play, Pause, Check, Lock, Loader2, Mic, Sparkles, Pencil, X, Sliders } from 'lucide-react';
+import { Play, Pause, Check, Lock, Loader2, Mic, Sparkles, Pencil, X, Sliders, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +55,24 @@ export function VoicesClient() {
   const [personalityVoice, setPersonalityVoice] = useState<VoiceItem | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
   const [renameSaving, setRenameSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteVoice = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta voz clonada?')) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/voices/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        load();
+      } else {
+        alert('Não foi possível excluir a voz.');
+      }
+    } catch {
+      alert('Não foi possível excluir a voz.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -344,6 +362,22 @@ export function VoicesClient() {
                     >
                       <Sliders className="h-3.5 w-3.5 text-teal" /> Personalidade
                     </Button>
+                    {v.isMine && v.isCloned && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteVoice(v.id)}
+                        disabled={deletingId === v.id}
+                        title="Excluir Voz Clonada"
+                        className="border-error/30 text-error hover:bg-error/10 hover:border-error/60"
+                      >
+                        {deletingId === v.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    )}
                   </div>
                   <Button
                     size="sm"

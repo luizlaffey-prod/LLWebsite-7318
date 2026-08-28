@@ -77,3 +77,67 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const [target] = await db
+    .select({
+      id: voiceTable.id,
+      ownerUserId: voiceTable.ownerUserId,
+      isCloned: voiceTable.isCloned,
+      elevenLabsVoiceId: voiceTable.elevenLabsVoiceId,
+    })
+    .from(voiceTable)
+    .where(eq(voiceTable.id, id))
+    .limit(1);
+
+  if (!target) {
+    return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
+  }
+  if (target.ownerUserId !== session.user.id || !target.isCloned) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+
+  // Attempt upstream model cleanup if applicable (best effort)
+  if (target.elevenLabsVoiceId?.startsWith('fish:')) {
+    const fishKey = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
+    const modelId = target.elevenLabsVoiceId.replace(/^fish:/, '');
+    if (fishKey && modelId && modelId !== 'default') {
+      try {
+        await fetch(`https://api.fish.audio/model/${modelId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${fishKey}` },
+        });
+      } catch (err) {
+        console.warn('[voice-delete] Fish Audio upstream model delete warning:', err);
+      }
+    }
+  } else if (target.elevenLabsVoiceId) {
+    const elevenKey = process.env.ELEVENLABS_API_KEY;
+    if (elevenKey) {
+      try {
+        await fetch(`https://api.elevenlabs.io/v1/voices/${target.elevenLabsVoiceId}`, {
+          method: 'DELETE',
+          headers: { 'xi-api-key': elevenKey },
+        });
+      } catch (err) {
+        console.warn('[voice-delete] ElevenLabs upstream model delete warning:', err);
+      }
+    }
+  }
+
+  await db
+    .delete(voiceTable)
+    .where(and(eq(voiceTable.id, id), eq(voiceTable.ownerUserId, session.user.id)));
+
+  return NextResponse.json({ ok: true });
+}
