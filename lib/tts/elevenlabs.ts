@@ -7,6 +7,7 @@ import {
 import { concatMp3Bytes } from '@/lib/audio/server-mix';
 import type { Emotion } from '@/lib/audio/emotions';
 import type { ScriptBlock } from '@/lib/llm/script-generator';
+import { synthesizeBulletin as synthesizeFish } from './fish-audio';
 
 const ELEVEN_BASE = 'https://api.elevenlabs.io/v1';
 
@@ -142,6 +143,14 @@ export async function synthesizeBulletin(
   blocks: ScriptBlock[],
   opts: SynthesizeOptions
 ): Promise<{ audio: Uint8Array; durationEstimateSeconds: number }> {
+  if (opts.elevenLabsVoiceId.startsWith('fish:')) {
+    const fishVoiceId = opts.elevenLabsVoiceId.replace(/^fish:/, '');
+    return synthesizeFish(blocks, {
+      ...opts,
+      referenceId: fishVoiceId,
+    });
+  }
+
   const chunks: Uint8Array[] = [];
   let durationEstimate = 0;
 

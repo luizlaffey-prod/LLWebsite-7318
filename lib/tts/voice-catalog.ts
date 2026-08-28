@@ -131,6 +131,16 @@ export const VOICE_CATALOG: VoiceSeed[] = [
     accent: 'british',
     tierRequired: 'pro',
   },
+  {
+    slug: 'fish-default',
+    elevenLabsVoiceId: 'fish:default',
+    name: 'Fish Default',
+    description: 'Default neural system voice from Fish Audio.',
+    languages: ['en', 'pt', 'es'],
+    gender: 'neutral',
+    style: 'conversational',
+    tierRequired: 'starter',
+  },
 ];
 
 // We default to multilingual_v2 because it preserves the distinct timbre of

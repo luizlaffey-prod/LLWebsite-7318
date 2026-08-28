@@ -27,6 +27,7 @@ const VARS: VarSpec[] = [
     note: 'optional override: "claude" or "gemini"',
   },
   { name: 'ELEVENLABS_API_KEY', required: false, group: 'TTS' },
+  { name: 'FISHAUDIO_API_KEY', required: false, group: 'TTS' },
 
   { name: 'NEWSAPI_KEY', required: false, group: 'News (at least one)' },
   { name: 'GNEWS_KEY', required: false, group: 'News (at least one)' },

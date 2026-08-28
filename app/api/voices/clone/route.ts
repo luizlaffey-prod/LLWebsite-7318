@@ -55,8 +55,17 @@ export async function POST(req: Request) {
     );
   }
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) {
+  const fishKey = process.env.FISHAUDIO_API_KEY;
+  const elevenKey = process.env.ELEVENLABS_API_KEY;
+  const activeProvider = process.env.AURA_ACTIVE_TTS_PROVIDER ?? (fishKey ? 'fishaudio' : 'elevenlabs');
+
+  if (activeProvider === 'fishaudio' && !fishKey) {
+    return NextResponse.json(
+      { error: 'fishaudio_not_configured', message: 'Fish Audio is not configured.' },
+      { status: 503 }
+    );
+  }
+  if (activeProvider === 'elevenlabs' && !elevenKey) {
     return NextResponse.json(
       { error: 'tts_not_configured', message: 'ElevenLabs is not configured.' },
       { status: 503 }
@@ -80,19 +89,28 @@ export async function POST(req: Request) {
   }
 
   const samples = parsed.data.samples;
-  let elevenVoiceId: string | undefined;
+  let voiceId: string | undefined;
+
   try {
     const out = new FormData();
-    out.set('name', `${session.user.id.slice(0, 6)}-${parsed.data.name}`);
-    if (parsed.data.description) out.set('description', parsed.data.description);
-    out.set(
-      'labels',
-      JSON.stringify({
-        language: parsed.data.language,
-        gender: parsed.data.gender,
-        ...(parsed.data.accent ? { accent: parsed.data.accent } : {}),
-      })
-    );
+    if (activeProvider === 'fishaudio') {
+      out.set('type', 'tts');
+      out.set('title', `${session.user.id.slice(0, 6)}-${parsed.data.name}`);
+      if (parsed.data.description) out.set('description', parsed.data.description);
+      out.set('visibility', 'private');
+      out.set('train_mode', 'fast');
+    } else {
+      out.set('name', `${session.user.id.slice(0, 6)}-${parsed.data.name}`);
+      if (parsed.data.description) out.set('description', parsed.data.description);
+      out.set(
+        'labels',
+        JSON.stringify({
+          language: parsed.data.language,
+          gender: parsed.data.gender,
+          ...(parsed.data.accent ? { accent: parsed.data.accent } : {}),
+        })
+      );
+    }
 
     try {
       for (const sample of samples) {
@@ -106,7 +124,7 @@ export async function POST(req: Request) {
         const audioBuffer = new ArrayBuffer(bytes.byteLength);
         new Uint8Array(audioBuffer).set(bytes);
         out.append(
-          'files',
+          activeProvider === 'fishaudio' ? 'voices' : 'files',
           new Blob([audioBuffer], { type: sample.contentType }),
           sample.filename
         );
@@ -119,44 +137,67 @@ export async function POST(req: Request) {
       );
     }
 
-    try {
-      const res = await fetchWithRetry(
-        'https://api.elevenlabs.io/v1/voices/add',
-        {
-          method: 'POST',
-          headers: { 'xi-api-key': apiKey },
-          body: out,
-        },
-        { timeoutMs: 90_000 }
-      );
-      const data = (await res.json()) as {
-        voice_id?: string;
-        requires_verification?: boolean;
-      };
-      if (!data.voice_id) throw new Error('elevenlabs_missing_voice_id');
-      elevenVoiceId = data.voice_id;
-
-      if (data.requires_verification) {
-        await deleteElevenLabsVoice(apiKey, elevenVoiceId);
-        elevenVoiceId = undefined;
-        return NextResponse.json(
+    if (activeProvider === 'fishaudio') {
+      try {
+        const res = await fetchWithRetry(
+          'https://api.fish.audio/model',
           {
-            error: 'voice_verification_required',
-            message: 'ElevenLabs requires verification for this voice. Complete verification in ElevenLabs and try again.',
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${fishKey}` },
+            body: out,
           },
-          { status: 422 }
+          { timeoutMs: 90_000 }
+        );
+        const data = (await res.json()) as { id?: string };
+        if (!data.id) throw new Error('fishaudio_missing_voice_id');
+        voiceId = `fish:${data.id}`;
+      } catch (err) {
+        console.error('[voice-clone] Fish Audio response failed', err);
+        return NextResponse.json(
+          { error: 'clone_failed', message: 'Fish Audio returned an invalid response.' },
+          { status: 502 }
         );
       }
-    } catch (err) {
-      if (err instanceof FetchError) {
-        const details = parseElevenLabsCloneError(err.status, err.responseText);
-        return NextResponse.json(details, { status: err.status || 502 });
+    } else {
+      try {
+        const res = await fetchWithRetry(
+          'https://api.elevenlabs.io/v1/voices/add',
+          {
+            method: 'POST',
+            headers: { 'xi-api-key': elevenKey! },
+            body: out,
+          },
+          { timeoutMs: 90_000 }
+        );
+        const data = (await res.json()) as {
+          voice_id?: string;
+          requires_verification?: boolean;
+        };
+        if (!data.voice_id) throw new Error('elevenlabs_missing_voice_id');
+        voiceId = data.voice_id;
+
+        if (data.requires_verification) {
+          await deleteElevenLabsVoice(elevenKey!, voiceId);
+          voiceId = undefined;
+          return NextResponse.json(
+            {
+              error: 'voice_verification_required',
+              message: 'ElevenLabs requires verification for this voice. Complete verification in ElevenLabs and try again.',
+            },
+            { status: 422 }
+          );
+        }
+      } catch (err) {
+        if (err instanceof FetchError) {
+          const details = parseElevenLabsCloneError(err.status, err.responseText);
+          return NextResponse.json(details, { status: err.status || 502 });
+        }
+        console.error('[voice-clone] ElevenLabs response failed', err);
+        return NextResponse.json(
+          { error: 'clone_failed', message: 'ElevenLabs returned an invalid response.' },
+          { status: 502 }
+        );
       }
-      console.error('[voice-clone] ElevenLabs response failed', err);
-      return NextResponse.json(
-        { error: 'clone_failed', message: 'ElevenLabs returned an invalid response.' },
-        { status: 502 }
-      );
     }
 
     const baseSlug = parsed.data.name
@@ -171,7 +212,7 @@ export async function POST(req: Request) {
         .insert(voiceTable)
         .values({
           slug,
-          elevenLabsVoiceId: elevenVoiceId,
+          elevenLabsVoiceId: voiceId,
           name: parsed.data.name,
           description: parsed.data.description ?? null,
           languages: [parsed.data.language],
@@ -184,10 +225,12 @@ export async function POST(req: Request) {
         })
         .returning({ id: voiceTable.id });
 
-      return NextResponse.json({ voice: { id: created.id } });
+      return NextResponse.json({ voice: { id: created.id, elevenLabsVoiceId: voiceId } });
     } catch (err) {
       console.error('[voice-clone] database insert failed', err);
-      if (elevenVoiceId) await deleteElevenLabsVoice(apiKey, elevenVoiceId);
+      if (activeProvider === 'elevenlabs' && voiceId) {
+        await deleteElevenLabsVoice(elevenKey!, voiceId);
+      }
       return NextResponse.json(
         { error: 'persistence_failed', message: 'The cloned voice could not be saved. Please try again.' },
         { status: 500 }
