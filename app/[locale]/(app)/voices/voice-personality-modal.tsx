@@ -23,6 +23,26 @@ export interface VoiceItemForPersonality {
   accent: string | null;
 }
 
+interface StructuredPersonality {
+  essencia?: string;
+  presencaEntrega?: string;
+  assinaturasSlogans?: string;
+  interessesEditoriais?: string;
+  oQueEvitar?: string;
+}
+
+function parsePersonality(desc: string | null): StructuredPersonality {
+  if (!desc) return {};
+  try {
+    if (desc.startsWith('{') && desc.endsWith('}')) {
+      return JSON.parse(desc);
+    }
+  } catch {
+    /* fallback to free text */
+  }
+  return { essencia: desc };
+}
+
 export function VoicePersonalityModal({
   open,
   voice,
@@ -35,7 +55,12 @@ export function VoicePersonalityModal({
   onSaved: () => void;
 }) {
   const t = useTranslations('voicesPage');
-  const [description, setDescription] = useState('');
+  const [essencia, setEssencia] = useState('');
+  const [presencaEntrega, setPresencaEntrega] = useState('');
+  const [assinaturasSlogans, setAssinaturasSlogans] = useState('');
+  const [interessesEditoriais, setInteressesEditoriais] = useState('');
+  const [oQueEvitar, setOQueEvitar] = useState('');
+
   const [style, setStyle] = useState('');
   const [accent, setAccent] = useState('');
   const [pending, setPending] = useState(false);
@@ -44,7 +69,13 @@ export function VoicePersonalityModal({
 
   useEffect(() => {
     if (voice) {
-      setDescription(voice.description ?? '');
+      const parsed = parsePersonality(voice.description);
+      setEssencia(parsed.essencia ?? voice.description ?? '');
+      setPresencaEntrega(parsed.presencaEntrega ?? voice.style ?? '');
+      setAssinaturasSlogans(parsed.assinaturasSlogans ?? '');
+      setInteressesEditoriais(parsed.interessesEditoriais ?? '');
+      setOQueEvitar(parsed.oQueEvitar ?? '');
+
       setStyle(voice.style ?? '');
       setAccent(voice.accent ?? '');
       setError(null);
@@ -60,13 +91,23 @@ export function VoicePersonalityModal({
     setError(null);
     setSavedSuccess(false);
 
+    const payloadObj: StructuredPersonality = {
+      essencia: essencia.trim() || undefined,
+      presencaEntrega: presencaEntrega.trim() || undefined,
+      assinaturasSlogans: assinaturasSlogans.trim() || undefined,
+      interessesEditoriais: interessesEditoriais.trim() || undefined,
+      oQueEvitar: oQueEvitar.trim() || undefined,
+    };
+
+    const formattedDesc = JSON.stringify(payloadObj);
+
     try {
       const res = await fetch(`/api/voices/${voice.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          description: description.trim() || undefined,
-          style: style.trim() || undefined,
+          description: formattedDesc,
+          style: presencaEntrega.trim() || style.trim() || undefined,
           accent: accent.trim() || undefined,
         }),
       });
@@ -89,14 +130,14 @@ export function VoicePersonalityModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
-            <Sliders className="h-4 w-4 text-teal" />
-            Personalidade do Locutor — {voice.name}
+          <DialogTitle className="flex items-center gap-2 text-white text-lg">
+            <Sliders className="h-5 w-5 text-teal" />
+            Perfil Editorial & Personalidade do Locutor — {voice.name}
           </DialogTitle>
           <DialogDescription className="text-zinc-300">
-            Configure o tom editorial, estilo de locução e instruções de interpretação para este locutor.
+            Defina em detalhes a identidade, tom, bordões e restrições editoriais para este locutor no ar.
           </DialogDescription>
         </DialogHeader>
 
@@ -108,55 +149,76 @@ export function VoicePersonalityModal({
           )}
 
           <div>
-            <Label className="text-zinc-200 font-medium">Tom & Personalidade do Locutor (Prompt)</Label>
+            <Label className="text-zinc-200 font-medium text-sm">1. Essência do Locutor</Label>
             <textarea
-              className="mt-2 w-full rounded-md border border-zinc-700/80 bg-[#06080F] p-3 text-sm text-white placeholder:text-zinc-400 focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ex: Locutor jovem, bem-humorado, dinâmico. Ritmo de rádio FM jovem com dicção clara e entusiasmo."
-            />
-            <p className="mt-1 text-xs text-zinc-400">
-              Orienta o gerador de conteúdo sobre o comportamento e tom de voz deste locutor.
-            </p>
-          </div>
-
-          <div>
-            <Label className="text-zinc-200 font-medium">Estilo de Apresentação</Label>
-            <Input
-              className="mt-2 text-white bg-[#06080F] border-zinc-700/80 placeholder:text-zinc-400 focus:border-teal font-normal"
-              value={style}
-              onChange={(e) => setStyle(e.target.value)}
-              placeholder="Ex: Jornalístico Dinâmico, Suave, Pop & Entretenimento"
+              className="mt-1.5 w-full rounded-md border border-zinc-700/80 bg-[#06080F] p-3 text-sm text-white placeholder:text-zinc-400 focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
+              rows={2}
+              value={essencia}
+              onChange={(e) => setEssencia(e.target.value)}
+              placeholder="Ex: Quem é o locutor, a história, o personagem, vibe e valores do apresentador."
             />
           </div>
 
           <div>
-            <Label className="text-zinc-200 font-medium">Instruções de Pronúncia / Observações</Label>
-            <Input
-              className="mt-2 text-white bg-[#06080F] border-zinc-700/80 placeholder:text-zinc-400 focus:border-teal font-normal"
-              value={accent}
-              onChange={(e) => setAccent(e.target.value)}
-              placeholder="Ex: Paulista neutro, articular nomes próprios com clareza"
+            <Label className="text-zinc-200 font-medium text-sm">2. Presença & Entrega (Tom e Ritmo)</Label>
+            <textarea
+              className="mt-1.5 w-full rounded-md border border-zinc-700/80 bg-[#06080F] p-3 text-sm text-white placeholder:text-zinc-400 focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
+              rows={2}
+              value={presencaEntrega}
+              onChange={(e) => setPresencaEntrega(e.target.value)}
+              placeholder="Ex: Tom de voz, velocidade, energia, dicção, sotaque e estilo de locução no ar."
             />
           </div>
 
-          <DialogFooter className="gap-2">
+          <div>
+            <Label className="text-zinc-200 font-medium text-sm">3. Assinatura & Slogans Autorizados</Label>
+            <textarea
+              className="mt-1.5 w-full rounded-md border border-zinc-700/80 bg-[#06080F] p-3 text-sm text-white placeholder:text-zinc-400 focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
+              rows={2}
+              value={assinaturasSlogans}
+              onChange={(e) => setAssinaturasSlogans(e.target.value)}
+              placeholder="Ex: Bordões clássicos, slogans da emissora, vinhetas de abertura e encerramento autorizadas."
+            />
+          </div>
+
+          <div>
+            <Label className="text-zinc-200 font-medium text-sm">4. Interesses Editoriais</Label>
+            <textarea
+              className="mt-1.5 w-full rounded-md border border-zinc-700/80 bg-[#06080F] p-3 text-sm text-white placeholder:text-zinc-400 focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
+              rows={2}
+              value={interessesEditoriais}
+              onChange={(e) => setInteressesEditoriais(e.target.value)}
+              placeholder="Ex: Assuntos em que fala com propriedade e entusiasmo (ex: Nu-Disco, Funk 70s, Lançamentos, Tecnologia)."
+            />
+          </div>
+
+          <div>
+            <Label className="text-zinc-200 font-medium text-sm">5. O Que Evitar (Restrições)</Label>
+            <textarea
+              className="mt-1.5 w-full rounded-md border border-zinc-700/80 bg-[#06080F] p-3 text-sm text-white placeholder:text-zinc-400 focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
+              rows={2}
+              value={oQueEvitar}
+              onChange={(e) => setOQueEvitar(e.target.value)}
+              placeholder="Ex: Termos proibidos, estilos vedados, exageros a não cometer, saudações de horário engessadas."
+            />
+          </div>
+
+          <DialogFooter className="gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={onClose} disabled={pending}>
               {t('cancel')}
             </Button>
-            <Button type="submit" disabled={pending} className="bg-teal text-black hover:bg-teal/90">
+            <Button type="submit" disabled={pending} className="bg-teal text-black hover:bg-teal/90 font-medium">
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" /> Salvando...
                 </>
               ) : savedSuccess ? (
                 <>
-                  <Check className="h-4 w-4" /> Salvo!
+                  <Check className="h-4 w-4" /> Perfil Salvo!
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4" /> Salvar Personalidade
+                  <Sparkles className="h-4 w-4" /> Salvar Perfil Completo
                 </>
               )}
             </Button>
