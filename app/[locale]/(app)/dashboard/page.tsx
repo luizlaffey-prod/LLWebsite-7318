@@ -56,19 +56,31 @@ export default async function DashboardPage({
           <Card className="p-6">
             <div className="text-xs uppercase tracking-wider text-text-muted">Bulletins today</div>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-4xl font-semibold">{quota.used}</span>
-              <span className="text-text-secondary">/ {quota.limit}</span>
+              {quota.unlimited ? (
+                <span className="text-4xl font-semibold">Unlimited</span>
+              ) : (
+                <>
+                  <span className="text-4xl font-semibold">{quota.used}</span>
+                  <span className="text-text-secondary">/ {quota.limit}</span>
+                </>
+              )}
             </div>
             <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
               <div
                 className="h-full bg-aura-gradient transition-all"
                 style={{
-                  width: `${Math.min(100, (quota.used / Math.max(1, quota.limit)) * 100)}%`,
+                  width: quota.unlimited
+                    ? '0%'
+                    : `${Math.min(100, (quota.used / Math.max(1, quota.limit)) * 100)}%`,
                 }}
               />
             </div>
             <div className="mt-2 text-xs text-text-muted">
-              {quota.remaining} remaining · {PLANS[quota.tier].priceMonthly > 0 ? `${quota.tier} plan` : ''}
+              {quota.unlimited
+                ? 'Unmetered account · no generation limit'
+                : `${quota.remaining} remaining · ${
+                    PLANS[quota.tier].priceMonthly > 0 ? `${quota.tier} plan` : ''
+                  }`}
             </div>
           </Card>
 

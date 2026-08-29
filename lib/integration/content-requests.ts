@@ -120,6 +120,7 @@ export async function processContentRequest(requestId: string): Promise<void> {
       requestId,
       kind: input.kind,
       consumesBulletinQuota,
+      unlimitedAccount: quota.unlimited,
       bulletinQuotaUsed: quota.used,
       bulletinQuotaLimit: quota.limit,
     });
