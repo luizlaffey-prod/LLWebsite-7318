@@ -10,3 +10,10 @@ export function countsAgainstBulletinQuota(
 ): boolean {
   return kind === 'news_bulletin';
 }
+
+export function shouldResumeQuotaFailedRequest(
+  status: string,
+  errorCode: string | null | undefined
+): boolean {
+  return status === 'failed' && errorCode === 'quota_exceeded';
+}

@@ -12,10 +12,44 @@ import {
   integrationErrorResponse,
 } from '@/lib/integration/authorization';
 import { processContentRequest } from '@/lib/integration/content-requests';
+import { shouldResumeQuotaFailedRequest } from '@/lib/integration/content-quota-policy';
 import { requireStudioFeature } from '@/lib/integration/licensing';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
+
+async function resumeQuotaFailedRequest(
+  request: typeof integrationContentRequest.$inferSelect
+): Promise<typeof integrationContentRequest.$inferSelect | null> {
+  if (!shouldResumeQuotaFailedRequest(request.status, request.errorCode)) {
+    return null;
+  }
+  const now = new Date();
+  const [resumed] = await db
+    .update(integrationContentRequest)
+    .set({
+      status: 'pending',
+      startedAt: null,
+      completedAt: null,
+      audioId: null,
+      errorCode: null,
+      errorMessage: null,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(integrationContentRequest.id, request.id),
+        eq(integrationContentRequest.status, 'failed'),
+        eq(integrationContentRequest.errorCode, 'quota_exceeded')
+      )
+    )
+    .returning();
+  if (!resumed) return null;
+  after(async () => {
+    await processContentRequest(resumed.id);
+  });
+  return resumed;
+}
 
 export async function POST(
   req: Request,
@@ -62,6 +96,17 @@ export async function POST(
         return Response.json(
           { error: 'idempotency_key_reused_with_different_payload' },
           { status: 409 }
+        );
+      }
+      const resumed = await resumeQuotaFailedRequest(existing);
+      if (resumed) {
+        return Response.json(
+          {
+            request: contentRequestResource(resumed),
+            idempotentReplay: true,
+            resumedAfterQuota: true,
+          },
+          { status: 202 }
         );
       }
       return Response.json(
@@ -115,6 +160,17 @@ export async function POST(
         return Response.json(
           { error: 'idempotency_key_reused_with_different_payload' },
           { status: 409 }
+        );
+      }
+      const resumed = await resumeQuotaFailedRequest(raced);
+      if (resumed) {
+        return Response.json(
+          {
+            request: contentRequestResource(resumed),
+            idempotentReplay: true,
+            resumedAfterQuota: true,
+          },
+          { status: 202 }
         );
       }
       return Response.json(
