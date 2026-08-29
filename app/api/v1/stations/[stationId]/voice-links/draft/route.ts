@@ -4,6 +4,7 @@ import {
   integrationErrorResponse,
 } from '@/lib/integration/authorization';
 import { requireStudioFeature } from '@/lib/integration/licensing';
+import { buildVoiceLinkDraftEnvelope } from '@/lib/integration/voice-link-draft-contract';
 import { generateVoiceLinkDraft } from '@/lib/llm/voice-link-generator';
 
 export const runtime = 'nodejs';
@@ -31,12 +32,12 @@ export async function POST(
       );
     }
 
-    const draft = await generateVoiceLinkDraft(
+    const scriptText = await generateVoiceLinkDraft(
       parsed.data,
       parsed.data.verifiedFact,
     );
     return Response.json(
-      { draft },
+      buildVoiceLinkDraftEnvelope(scriptText, parsed.data.verifiedFact),
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
