@@ -2,6 +2,7 @@ import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
 import { concatMp3Bytes } from '@/lib/audio/server-mix';
 import type { Emotion } from '@/lib/audio/emotions';
 import type { ScriptBlock } from '@/lib/llm/script-generator';
+import { fishReferenceId } from './fish-audio-contract';
 
 const FISH_BASE = 'https://api.fish.audio/v1';
 
@@ -36,8 +37,9 @@ async function synthesizeBlock(
     text,
     format: 'mp3',
   };
-  if (opts.referenceId && opts.referenceId !== 'default') {
-    body.reference_id = opts.referenceId;
+  const referenceId = fishReferenceId(opts.referenceId);
+  if (referenceId) {
+    body.reference_id = referenceId;
   }
 
   if (typeof opts.speed === 'number') {

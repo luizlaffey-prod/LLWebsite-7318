@@ -47,10 +47,10 @@ async function reconcileCatalog(): Promise<void> {
           gender: seed.gender,
           tierRequired: seed.tierRequired,
           enabled: true,
-          name: sql`COALESCE(${voiceTable.name}, ${seed.name})`,
-          description: sql`COALESCE(${voiceTable.description}, ${seed.description})`,
-          style: sql`COALESCE(${voiceTable.style}, ${seed.style})`,
-          accent: sql`COALESCE(${voiceTable.accent}, ${seed.accent})`,
+          name: sql`COALESCE(${voiceTable.name}, excluded.name)`,
+          description: sql`COALESCE(${voiceTable.description}, excluded.description)`,
+          style: sql`COALESCE(${voiceTable.style}, excluded.style)`,
+          accent: sql`COALESCE(${voiceTable.accent}, excluded.accent)`,
         },
       });
   }

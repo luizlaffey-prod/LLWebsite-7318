@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
@@ -14,6 +14,10 @@ import {
   VOICE_CLONE_MAX_FILE_BYTES,
   VOICE_CLONE_MAX_FILES,
 } from '@/lib/tts/voice-clone-policy';
+import {
+  findReusableFishModel,
+  parseFishModelId,
+} from '@/lib/tts/fish-audio-contract';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -90,12 +94,14 @@ export async function POST(req: Request) {
 
   const samples = parsed.data.samples;
   let voiceId: string | undefined;
+  let recoveredExistingModel = false;
+  const providerTitle = `${session.user.id.slice(0, 6)}-${parsed.data.name}`;
 
   try {
     const out = new FormData();
     if (activeProvider === 'fishaudio') {
       out.set('type', 'tts');
-      out.set('title', `${session.user.id.slice(0, 6)}-${parsed.data.name}`);
+      out.set('title', providerTitle);
       if (parsed.data.description) out.set('description', parsed.data.description);
       out.set('visibility', 'private');
       out.set('train_mode', 'fast');
@@ -139,22 +145,36 @@ export async function POST(req: Request) {
 
     if (activeProvider === 'fishaudio') {
       try {
-        const res = await fetchWithRetry(
-          'https://api.fish.audio/model',
-          {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${fishKey}` },
-            body: out,
-          },
-          { timeoutMs: 90_000 }
-        );
-        const data = (await res.json()) as { id?: string; _id?: string };
-        const fishModelId = data._id || data.id;
-        if (!fishModelId) {
-          console.error('[voice-clone] Fish Audio missing model ID in payload:', data);
-          throw new Error('fishaudio_missing_voice_id');
+        const reusable = await findRecentFishModel(fishKey!, providerTitle);
+        if (reusable) {
+          voiceId = `fish:${reusable.id}`;
+          recoveredExistingModel = true;
+          console.info('[voice-clone] recovered recent Fish Audio model', {
+            title: providerTitle,
+            modelIdSuffix: reusable.id.slice(-6),
+          });
+        } else {
+          const res = await fetchWithRetry(
+            'https://api.fish.audio/model',
+            {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${fishKey}` },
+              body: out,
+            },
+            { timeoutMs: 90_000 }
+          );
+          const data: unknown = await res.json();
+          const fishModelId = parseFishModelId(data);
+          if (!fishModelId) {
+            console.error('[voice-clone] Fish Audio missing model ID', {
+              payloadType: Array.isArray(data) ? 'array' : typeof data,
+              payloadKeys:
+                data && typeof data === 'object' ? Object.keys(data).slice(0, 20) : [],
+            });
+            throw new Error('fishaudio_missing_voice_id');
+          }
+          voiceId = `fish:${fishModelId}`;
         }
-        voiceId = `fish:${fishModelId}`;
       } catch (err) {
         console.error('[voice-clone] Fish Audio response failed', err);
         const errMsg = err instanceof FetchError ? err.responseText || err.message : (err instanceof Error ? err.message : 'Fish Audio returned an invalid response.');
@@ -205,6 +225,25 @@ export async function POST(req: Request) {
       }
     }
 
+    if (voiceId) {
+      const [existing] = await db
+        .select({ id: voiceTable.id })
+        .from(voiceTable)
+        .where(
+          and(
+            eq(voiceTable.ownerUserId, session.user.id),
+            eq(voiceTable.elevenLabsVoiceId, voiceId)
+          )
+        )
+        .limit(1);
+      if (existing) {
+        return NextResponse.json({
+          voice: { id: existing.id, elevenLabsVoiceId: voiceId },
+          recoveredExistingModel: true,
+        });
+      }
+    }
+
     const baseSlug = parsed.data.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -230,7 +269,7 @@ export async function POST(req: Request) {
         })
         .returning({ id: voiceTable.id });
 
-      return NextResponse.json({ voice: { id: created.id, elevenLabsVoiceId: voiceId } });
+      return NextResponse.json({ voice: { id: created.id, elevenLabsVoiceId: voiceId }, recoveredExistingModel });
     } catch (err) {
       console.error('[voice-clone] database insert failed', err);
       if (activeProvider === 'elevenlabs' && voiceId) {
@@ -243,6 +282,44 @@ export async function POST(req: Request) {
     }
   } finally {
     await Promise.allSettled(samples.map((sample) => deleteObject(sample.key)));
+  }
+}
+
+async function findRecentFishModel(
+  apiKey: string,
+  title: string
+): Promise<{ id: string; title: string } | null> {
+  try {
+    const url = new URL('https://api.fish.audio/model');
+    url.searchParams.set('self', 'true');
+    url.searchParams.set('page_size', '10');
+    url.searchParams.set('page_number', '1');
+    url.searchParams.set('sort_by', 'created_at');
+    url.searchParams.set('title', title);
+
+    const res = await fetchWithRetry(
+      url,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'application/json',
+        },
+      },
+      {
+        timeoutMs: 20_000,
+        delays: [1000],
+      }
+    );
+    const payload: unknown = await res.json();
+    return findReusableFishModel(payload, title);
+  } catch (err) {
+    // Recovery is best-effort. A listing failure must not prevent a
+    // legitimate new clone from being created.
+    console.warn('[voice-clone] Fish Audio orphan lookup failed', {
+      status: err instanceof FetchError ? err.status : undefined,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
   }
 }
 
