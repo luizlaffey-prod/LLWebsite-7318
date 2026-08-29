@@ -21,6 +21,7 @@ import {
   type NewsBulletinInput,
   type VoiceLinkContentInput,
 } from '@/lib/integration/contracts';
+import { countsAgainstBulletinQuota } from '@/lib/integration/content-quota-policy';
 import { searchNews } from '@/lib/news/aggregator';
 import { fetchWeatherCities } from '@/lib/news/weather';
 import { generateScript } from '@/lib/llm/script-generator';
@@ -111,9 +112,17 @@ export async function processContentRequest(requestId: string): Promise<void> {
     const input = ContentRequestInputSchema.parse(context.request.input);
     const billingUserId = context.organization.billingUserId;
     const quota = await getQuota(billingUserId);
-    if (quota.remaining <= 0) {
+    const consumesBulletinQuota = countsAgainstBulletinQuota(input.kind);
+    if (consumesBulletinQuota && quota.remaining <= 0) {
       throw new ContentProcessingError('quota_exceeded');
     }
+    console.info('[studio-pro-api] content quota policy', {
+      requestId,
+      kind: input.kind,
+      consumesBulletinQuota,
+      bulletinQuotaUsed: quota.used,
+      bulletinQuotaLimit: quota.limit,
+    });
     if (!canRequestDuration(quota.tier, input.durationSeconds)) {
       throw new ContentProcessingError('duration_not_allowed');
     }
@@ -215,10 +224,12 @@ export async function processContentRequest(requestId: string): Promise<void> {
       })
       .where(eq(integrationContentRequest.id, requestId));
 
-    try {
-      await incrementUsage(billingUserId);
-    } catch (error) {
-      console.warn('[studio-pro-api] quota increment failed', requestId, error);
+    if (consumesBulletinQuota) {
+      try {
+        await incrementUsage(billingUserId);
+      } catch (error) {
+        console.warn('[studio-pro-api] quota increment failed', requestId, error);
+      }
     }
   } catch (error) {
     const completedAt = new Date();
