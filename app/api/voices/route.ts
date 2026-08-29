@@ -1,8 +1,20 @@
 import { NextResponse } from 'next/server';
-import { eq, and, or, isNull, not, like, notInArray, sql } from 'drizzle-orm';
+import { eq, and, or, isNull, not, like, notInArray, inArray, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { voice as voiceTable, voicePreference } from '@/lib/db/schema';
+import {
+  organization,
+  organizationMember,
+  station,
+  stationAnnouncerProfile,
+  voice as voiceTable,
+  voicePreference,
+} from '@/lib/db/schema';
+import {
+  EnergyLevelSchema,
+  HumorLevelSchema,
+  legacyAnnouncerProfile,
+} from '@/lib/announcers/profile';
 import { canUseVoice } from '@/lib/billing/feature-gates';
 import { getQuota } from '@/lib/billing/quota';
 import { VOICE_CATALOG } from '@/lib/tts/voice-catalog';
@@ -78,6 +90,26 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const lang = url.searchParams.get('lang');
   const includeLocked = url.searchParams.get('includeLocked') === '1';
+  const requestedStationId = url.searchParams.get('stationId');
+
+  const stations = await db
+    .select({ id: station.id, name: station.name })
+    .from(organizationMember)
+    .innerJoin(organization, eq(organization.id, organizationMember.organizationId))
+    .innerJoin(station, eq(station.organizationId, organization.id))
+    .where(
+      and(
+        eq(organizationMember.userId, session.user.id),
+        inArray(organizationMember.role, ['owner', 'admin']),
+      ),
+    )
+    .orderBy(station.name);
+  const activeStation = requestedStationId
+    ? stations.find((item) => item.id === requestedStationId)
+    : stations[0];
+  if (requestedStationId && !activeStation) {
+    return NextResponse.json({ error: 'station_not_found' }, { status: 404 });
+  }
 
   try {
     await reconcileCatalog();
@@ -152,6 +184,19 @@ export async function GET(req: Request) {
 
   const defaultPref = prefs.find((p) => p.isDefault);
 
+  const storedProfiles = activeStation && deduped.length
+    ? await db
+        .select()
+        .from(stationAnnouncerProfile)
+        .where(
+          and(
+            eq(stationAnnouncerProfile.stationId, activeStation.id),
+            inArray(stationAnnouncerProfile.voiceId, deduped.map((voice) => voice.id)),
+          ),
+        )
+    : [];
+  const profilesByVoice = new Map(storedProfiles.map((profile) => [profile.voiceId, profile]));
+
   const filteredByLang = lang
     ? deduped.filter((v) => v.languages.includes(lang))
     : deduped;
@@ -163,6 +208,29 @@ export async function GET(req: Request) {
       preferred: prefs.some((p) => p.voiceId === v.id),
       isDefault: defaultPref?.voiceId === v.id,
       isMine: v.ownerUserId === session.user.id,
+      announcerProfile: (() => {
+        if (!activeStation) return null;
+        const stored = profilesByVoice.get(v.id);
+        if (!stored) {
+          return legacyAnnouncerProfile(v.description, activeStation.id, v.id);
+        }
+        const humor = HumorLevelSchema.safeParse(stored.humorLevel);
+        const energy = EnergyLevelSchema.safeParse(stored.energyLevel);
+        return {
+          stationId: activeStation.id,
+          voiceId: v.id,
+          personality: stored.personality,
+          deliveryStyle: stored.deliveryStyle,
+          exampleScripts: stored.exampleScripts,
+          signatures: stored.signatures,
+          editorialPreferences: stored.editorialPreferences,
+          avoidances: stored.avoidances,
+          pronunciationGuide: stored.pronunciationGuide,
+          humorLevel: humor.success ? humor.data : 'balanced',
+          energyLevel: energy.success ? energy.data : 'balanced',
+          reactionsEnabled: stored.reactionsEnabled,
+        };
+      })(),
     }))
     .filter((v) => includeLocked || !v.locked)
     // Pin the user's own (cloned) voices to the top so they don't get
@@ -179,6 +247,8 @@ export async function GET(req: Request) {
     voices: enriched,
     tier: quota.tier,
     activeProvider,
+    activeStationId: activeStation?.id ?? null,
+    stations,
     defaultVoiceId: defaultPref?.voiceId ?? null,
     defaultSpeed: defaultPref?.speed ?? 1.0,
   });

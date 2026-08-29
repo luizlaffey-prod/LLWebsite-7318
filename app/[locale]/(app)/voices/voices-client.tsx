@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Play, Pause, Check, Lock, Loader2, Mic, Sparkles, Pencil, X, Sliders, Trash2 } from 'lucide-react';
+import { Play, Pause, Check, Lock, Loader2, Mic, Sparkles, Pencil, X, Settings2, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { VoiceCloneModal } from './voice-clone-modal';
-import { VoicePersonalityModal } from './voice-personality-modal';
+import {
+  AnnouncerProfileModal,
+  type AnnouncerProfileForm,
+} from './announcer-profile-modal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface VoiceItem {
   id: string;
@@ -27,6 +37,7 @@ interface VoiceItem {
   isCloned: boolean;
   isMine: boolean;
   elevenLabsVoiceId?: string;
+  announcerProfile: AnnouncerProfileForm | null;
 }
 
 interface ApiResponse {
@@ -35,6 +46,8 @@ interface ApiResponse {
   activeProvider?: string;
   defaultVoiceId: string | null;
   defaultSpeed: number;
+  activeStationId: string | null;
+  stations: Array<{ id: string; name: string }>;
 }
 
 export function VoicesClient() {
@@ -45,6 +58,8 @@ export function VoicesClient() {
   const [tier, setTier] = useState<'starter' | 'standard' | 'pro'>('starter');
   const [activeProvider, setActiveProvider] = useState<string>('elevenlabs');
   const [defaultVoiceId, setDefaultVoiceId] = useState<string | null>(null);
+  const [stations, setStations] = useState<Array<{ id: string; name: string }>>([]);
+  const [activeStationId, setActiveStationId] = useState<string>('');
   const [speed, setSpeed] = useState(1.0);
   const [pendingVoiceId, setPendingVoiceId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -52,7 +67,7 @@ export function VoicesClient() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [cloneOpen, setCloneOpen] = useState(false);
-  const [personalityVoice, setPersonalityVoice] = useState<VoiceItem | null>(null);
+  const [profileVoice, setProfileVoice] = useState<VoiceItem | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
   const [renameSaving, setRenameSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -63,7 +78,7 @@ export function VoicesClient() {
     try {
       const res = await fetch(`/api/voices/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        load();
+        load(activeStationId);
       } else {
         alert('Não foi possível excluir a voz.');
       }
@@ -74,10 +89,12 @@ export function VoicesClient() {
     }
   };
 
-  const load = async () => {
+  const load = async (stationId?: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/voices?includeLocked=1');
+      const params = new URLSearchParams({ includeLocked: '1' });
+      if (stationId) params.set('stationId', stationId);
+      const res = await fetch(`/api/voices?${params.toString()}`);
       if (!res.ok) {
         setError(t('errorLoad'));
         return;
@@ -88,6 +105,8 @@ export function VoicesClient() {
       if (data.activeProvider) setActiveProvider(data.activeProvider);
       setDefaultVoiceId(data.defaultVoiceId);
       setSpeed(data.defaultSpeed);
+      setStations(data.stations);
+      setActiveStationId(data.activeStationId ?? '');
     } catch {
       setError(t('errorLoad'));
     } finally {
@@ -150,7 +169,7 @@ export function VoicesClient() {
         return;
       }
       setRenaming(null);
-      await load();
+      await load(activeStationId);
     } catch {
       setError(t('errorSave'));
     } finally {
@@ -173,8 +192,7 @@ export function VoicesClient() {
       }
       setDefaultVoiceId(voiceId);
       // Refresh list to flip isDefault flags.
-      const refreshed = await fetch('/api/voices?includeLocked=1').then((r) => r.json());
-      setVoices(refreshed.voices);
+      await load(activeStationId);
     } catch {
       setError(t('errorSave'));
     } finally {
@@ -207,6 +225,28 @@ export function VoicesClient() {
         </div>
         <p className="text-xs text-text-muted max-w-xs">{t('speedHint')}</p>
       </div>
+
+      {!loading && stations.length > 0 && (
+        <div className="mb-6 max-w-md space-y-2">
+          <label className="text-xs uppercase tracking-wider text-text-muted">
+            {t('station')}
+          </label>
+          <Select
+            value={activeStationId}
+            onValueChange={(stationId) => {
+              setActiveStationId(stationId);
+              load(stationId);
+            }}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {stations.map((item) => (
+                <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -321,7 +361,9 @@ export function VoicesClient() {
                   </div>
                 </div>
 
-                <p className="mt-3 text-sm text-text-secondary line-clamp-2">{v.description}</p>
+                <p className="mt-3 text-sm text-text-secondary line-clamp-2">
+                  {v.announcerProfile?.personality || v.description}
+                </p>
 
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {v.languages.map((lang) => (
@@ -355,12 +397,12 @@ export function VoicesClient() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPersonalityVoice(v)}
-                      disabled={v.locked}
-                      title="Configurar Personalidade do Locutor"
+                      onClick={() => setProfileVoice(v)}
+                      disabled={v.locked || !activeStationId}
+                      title={t('configureAnnouncer')}
                       className="border-border/80 text-zinc-200 hover:border-teal/50 hover:text-white"
                     >
-                      <Sliders className="h-3.5 w-3.5 text-teal" /> Personalidade
+                      <Settings2 className="h-3.5 w-3.5 text-teal" /> {t('editAnnouncer')}
                     </Button>
                     {v.isMine && v.isCloned && (
                       <Button
@@ -428,17 +470,18 @@ export function VoicesClient() {
         onClose={() => setCloneOpen(false)}
         onCloned={() => {
           setCloneOpen(false);
-          load();
+          load(activeStationId);
         }}
       />
 
-      <VoicePersonalityModal
-        open={!!personalityVoice}
-        voice={personalityVoice}
-        onClose={() => setPersonalityVoice(null)}
+      <AnnouncerProfileModal
+        open={!!profileVoice}
+        stationId={activeStationId}
+        voice={profileVoice}
+        onClose={() => setProfileVoice(null)}
         onSaved={() => {
-          setPersonalityVoice(null);
-          load();
+          setProfileVoice(null);
+          load(activeStationId);
         }}
       />
     </div>

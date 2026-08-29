@@ -1,0 +1,60 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { VoiceLinkDraftInputSchema } from '@/lib/integration/contracts';
+import type { AnnouncerEditorialProfile } from '@/lib/announcers/profile';
+import { resolveProvider } from './provider';
+import { generateVoiceLinkDraft } from './voice-link-generator';
+
+vi.mock('./provider', () => ({
+  resolveProvider: vi.fn(),
+}));
+
+const complete = vi.fn();
+
+describe('voice-link editorial generation', () => {
+  beforeEach(() => {
+    complete.mockReset();
+    complete.mockResolvedValue('{"texto":"Locu��o personalizada."}');
+    vi.mocked(resolveProvider).mockReturnValue({
+      id: 'gemini',
+      complete,
+    });
+  });
+
+  it('sends the complete selected-announcer profile and recent links to the LLM', async () => {
+    const input = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      currentTrack: { title: 'First Song', artist: 'First Artist' },
+      nextTracks: [{ title: 'Next Song', artist: 'Next Artist' }],
+      language: 'pt',
+      voiceId: '22222222-2222-4222-8222-222222222222',
+      recentScripts: ['Uma abertura que j� foi usada.'],
+    });
+    const profile: AnnouncerEditorialProfile = {
+      stationId: '11111111-1111-4111-8111-111111111111',
+      voiceId: '22222222-2222-4222-8222-222222222222',
+      personality: 'Natural e bem-humorado',
+      deliveryStyle: 'Conversa pr�xima',
+      exampleScripts: 'Exemplo autorizado',
+      signatures: 'A melhor na web',
+      editorialPreferences: 'Bastidores da m�sica',
+      avoidances: 'N�o inventar fatos',
+      pronunciationGuide: '',
+      humorLevel: 'free',
+      energyLevel: 'balanced',
+      reactionsEnabled: true,
+    };
+
+    await expect(generateVoiceLinkDraft(input, null, profile)).resolves.toBe(
+      'Locu��o personalizada.',
+    );
+
+    expect(complete).toHaveBeenCalledOnce();
+    const request = complete.mock.calls[0][0];
+    expect(request.systemPrompt).toContain('Natural e bem-humorado');
+    expect(request.systemPrompt).toContain('A melhor na web');
+    expect(request.systemPrompt).toContain('Bastidores da m�sica');
+    expect(request.systemPrompt).toContain('N�o inventar fatos');
+    expect(request.systemPrompt).toContain('Humor is free and spontaneous');
+    expect(request.userPrompt).toContain('Uma abertura que j� foi usada.');
+  });
+});

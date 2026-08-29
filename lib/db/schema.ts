@@ -647,6 +647,44 @@ export const station = pgTable(
   })
 );
 
+
+/**
+ * Editorial identity for one voice at one station. A shared catalog voice may
+ * represent different announcers at different stations, so these settings do
+ * not belong on the global voice row.
+ */
+export const stationAnnouncerProfile = pgTable(
+  'station_announcer_profile',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stationId: uuid('station_id')
+      .notNull()
+      .references(() => station.id, { onDelete: 'cascade' }),
+    voiceId: uuid('voice_id')
+      .notNull()
+      .references(() => voice.id, { onDelete: 'cascade' }),
+    personality: text('personality').notNull().default(''),
+    deliveryStyle: text('delivery_style').notNull().default(''),
+    exampleScripts: text('example_scripts').notNull().default(''),
+    signatures: text('signatures').notNull().default(''),
+    editorialPreferences: text('editorial_preferences').notNull().default(''),
+    avoidances: text('avoidances').notNull().default(''),
+    pronunciationGuide: text('pronunciation_guide').notNull().default(''),
+    humorLevel: text('humor_level').notNull().default('balanced'),
+    energyLevel: text('energy_level').notNull().default('balanced'),
+    reactionsEnabled: boolean('reactions_enabled').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    stationVoiceIdx: uniqueIndex('station_announcer_profile_station_voice_idx').on(
+      t.stationId,
+      t.voiceId,
+    ),
+    stationIdx: index('station_announcer_profile_station_idx').on(t.stationId),
+  }),
+);
+
 export const stationDevice = pgTable(
   'station_device',
   {
@@ -986,6 +1024,7 @@ export type Organization = typeof organization.$inferSelect;
 export type OrganizationMember = typeof organizationMember.$inferSelect;
 export type StudioEntitlement = typeof studioEntitlement.$inferSelect;
 export type Station = typeof station.$inferSelect;
+export type StationAnnouncerProfile = typeof stationAnnouncerProfile.$inferSelect;
 export type StationDevice = typeof stationDevice.$inferSelect;
 export type DevicePairingCode = typeof devicePairingCode.$inferSelect;
 export type StudioLicenseChallenge = typeof studioLicenseChallenge.$inferSelect;

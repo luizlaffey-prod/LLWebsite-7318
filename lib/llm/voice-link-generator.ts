@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  announcerProfilePrompt,
+  type AnnouncerEditorialProfile,
+} from '@/lib/announcers/profile';
 import type { VoiceLinkDraftInput } from '@/lib/integration/contracts';
 import { resolveProvider } from './provider';
 
@@ -155,6 +159,7 @@ function pickShortestScript(candidates: string[]): string {
 export async function generateVoiceLinkDraft(
   input: VoiceLinkDraftInput,
   verifiedFact?: VerifiedTrackFact | null,
+  announcerProfile?: AnnouncerEditorialProfile | null,
 ): Promise<string> {
   const nextTrack = input.nextTracks[0];
   if (!nextTrack) {
@@ -170,6 +175,13 @@ export async function generateVoiceLinkDraft(
     ? `- VERIFIED SONG FACT: "${verifiedFact.text}". Integrate this fact naturally in 1 short sentence.`
     : '';
 
+  const recentScriptsInstruction = input.recentScripts.length
+    ? `Recent links from this station (do not copy their opening, wording, or structure):\n${input.recentScripts
+        .slice(-8)
+        .map((script) => `- ${JSON.stringify(script)}`)
+        .join('\n')}`
+    : '';
+
   const prompt = `Write a short radio announcer voice link in ${languageName(input.language)}.
 Tone: ${toneInstruction(input.tone)}.
 Current track just played: ${promptTrack(input.currentTrack)}
@@ -177,6 +189,7 @@ Next track to play: ${promptTrack(nextTrack)}
 ${factInstruction}
 ${phrasesBullet}
 ${input.customInstruction ? `- Additional instruction: ${input.customInstruction}` : ''}
+${recentScriptsInstruction}
 
 CRITICAL RULES:
 - Output JSON format: { "texto": "..." }
@@ -186,7 +199,11 @@ CRITICAL RULES:
   try {
     const provider = resolveProvider();
     const resultText = await provider.complete({
-      systemPrompt: 'You are a professional radio announcer. Always respond strictly in valid JSON format: { "texto": "..." }',
+      systemPrompt: [
+        'You are a professional radio announcer and editorial writer.',
+        announcerProfilePrompt(announcerProfile),
+        'Always respond strictly in valid JSON format: { "texto": "..." }',
+      ].join('\n\n'),
       userPrompt: prompt,
       temperature: 0.7,
     });

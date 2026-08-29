@@ -56,12 +56,17 @@ const VerifiedFactSchema = z.object({
 
 const VoiceLinkBaseSchema = z.object({
   mode: z.literal('between_songs'),
+  eventPosition: z
+    .enum(['before-commercial', 'after-commercial', 'before-aura', 'after-aura'])
+    .optional(),
   currentTrack: TrackMetadataSchema,
   nextTracks: z.array(TrackMetadataSchema).min(1).max(4),
   language: z.enum(['en', 'pt', 'es']),
+  voiceId: z.string().uuid().optional(),
   tone: z.enum(['natural', 'energetic', 'warm', 'institutional']).default('natural'),
   maxDurationSeconds: z.coerce.number().int().min(1).default(10).transform((v) => Math.min(v, 60)),
   customInstruction: z.string().trim().max(500).optional(),
+  recentScripts: z.array(z.string().trim().min(1).max(1_000)).max(12).default([]),
   factMode: z.enum(['off', 'verified']).default('off'),
   verifiedFact: VerifiedFactSchema.optional(),
 }).superRefine((value, ctx) => {
