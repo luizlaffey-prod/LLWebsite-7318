@@ -36,8 +36,8 @@ export interface ScriptGenerationInput {
 }
 
 export interface LlmProvider {
-  /** Identifier used in env vars + logs (e.g. "claude", "gemini"). */
-  id: 'claude' | 'gemini';
+  /** Identifier used in env vars + logs. */
+  id: 'openai' | 'claude' | 'gemini';
   /** Issues a single completion request and returns the raw JSON-ish text. */
   complete(input: {
     systemPrompt: string;

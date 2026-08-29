@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoiceLinkDraftInputSchema } from '@/lib/integration/contracts';
 import type { AnnouncerEditorialProfile } from '@/lib/announcers/profile';
 import { resolveProvider } from './provider';
-import { generateVoiceLinkDraft } from './voice-link-generator';
+import {
+  generateVoiceLinkDraft,
+  voiceLinkRepetitionScore,
+} from './voice-link-generator';
 
 vi.mock('./provider', () => ({
   resolveProvider: vi.fn(),
@@ -56,5 +59,50 @@ describe('voice-link editorial generation', () => {
     expect(request.systemPrompt).toContain('N�o inventar fatos');
     expect(request.systemPrompt).toContain('Humor is free and spontaneous');
     expect(request.userPrompt).toContain('Uma abertura que j� foi usada.');
+  });
+
+  it('retries once when the first draft repeats a recent opening', async () => {
+    const input = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      currentTrack: { title: 'First Song', artist: 'First Artist' },
+      nextTracks: [{ title: 'Next Song', artist: 'Next Artist' }],
+      language: 'en',
+      recentScripts: ['Welcome back to the best music in town tonight.'],
+    });
+    complete
+      .mockResolvedValueOnce('{"texto":"Welcome back to the best music in town tonight."}')
+      .mockResolvedValueOnce('{"texto":"First Artist just set the pace; Next Artist takes it from here."}');
+
+    await expect(generateVoiceLinkDraft(input)).resolves.toBe(
+      'First Artist just set the pace; Next Artist takes it from here.',
+    );
+    expect(complete).toHaveBeenCalledTimes(2);
+    expect(complete.mock.calls[1][0].userPrompt).toContain('first draft was rejected');
+  });
+
+  it('does not force a quoted slogan into every fallback link', async () => {
+    const input = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      currentTrack: { title: 'First Song', artist: 'First Artist' },
+      nextTracks: [{ title: 'Next Song', artist: 'Next Artist' }],
+      language: 'en',
+      customInstruction: 'Use this station slogan naturally: "Always here for you".',
+    });
+    complete.mockRejectedValueOnce(new Error('provider unavailable'));
+
+    const script = await generateVoiceLinkDraft(input);
+    expect(script).not.toContain('Always here for you');
+    expect(script).toContain('Next Song');
+  });
+
+  it('detects exact, opening, and distinctive phrase repetition', () => {
+    const recent = ['Welcome back to the best music in town tonight.'];
+    expect(voiceLinkRepetitionScore(recent[0], recent)).toBe(1);
+    expect(voiceLinkRepetitionScore(
+      'Welcome back to the best music in town with another track.', recent,
+    )).toBeGreaterThanOrEqual(0.5);
+    expect(voiceLinkRepetitionScore(
+      'First Artist hands the night to Next Artist.', recent,
+    )).toBe(0);
   });
 });

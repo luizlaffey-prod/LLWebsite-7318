@@ -112,7 +112,7 @@ export function announcerProfilePrompt(
       ? 'Expressive vocal reactions are allowed when they genuinely fit; do not force them.'
       : 'Do not use performance tags or non-verbal reactions.',
     profile.signatures
-      ? `Authorized signatures, catchphrases, and station slogans: ${JSON.stringify(profile.signatures)}. Treat them as a rotating repertoire: use wording from it naturally when appropriate, without cramming every phrase into every link.`
+      ? `Authorized signatures, catchphrases, and station slogans: ${JSON.stringify(profile.signatures)}. Treat them as an optional rotating repertoire. Never repeat a signature, catchphrase, slogan, opening, or sign-off that appears in the recent station links supplied with this request; skip the repertoire entirely when no fresh choice fits.`
       : '',
     profile.editorialPreferences
       ? `Editorial interests and preferred angles: ${JSON.stringify(profile.editorialPreferences)}.`

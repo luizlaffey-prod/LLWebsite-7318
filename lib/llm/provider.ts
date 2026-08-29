@@ -1,64 +1,63 @@
 import type { LlmProvider } from './types';
 import { createClaudeProvider } from './providers/claude';
 import { createGeminiProvider } from './providers/gemini';
+import { createOpenAIProvider } from './providers/openai';
 
-/**
- * Wraps a primary provider with a secondary failover. If the primary throws,
- * we log the error and retry the same prompt on the secondary. Used to keep
- * generation working when one provider is rate-limited (e.g. Gemini 429).
- */
-function withFallback(primary: LlmProvider, secondary: LlmProvider): LlmProvider {
+type ProviderId = LlmProvider['id'];
+
+function withFallbacks(providers: LlmProvider[]): LlmProvider {
+  const [primary] = providers;
+  if (!primary) {
+    throw new Error(
+      'No LLM provider configured. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY.'
+    );
+  }
   return {
     id: primary.id,
     async complete(input) {
-      let primaryErr: unknown;
-      try {
-        return await primary.complete(input);
-      } catch (err) {
-        primaryErr = err;
-        const msg = err instanceof Error ? err.message : String(err);
-        console.warn(
-          `[llm] primary provider ${primary.id} failed (${msg}); failing over to ${secondary.id}`
-        );
+      const failures: string[] = [];
+      for (const provider of providers) {
+        try {
+          const result = await provider.complete(input);
+          console.info('[llm] completion provider', {
+            primary: primary.id,
+            used: provider.id,
+            fallback: provider.id !== primary.id,
+          });
+          return result;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          failures.push(`${provider.id}=${message}`);
+          console.warn(`[llm] provider ${provider.id} failed (${message})`);
+        }
       }
-      try {
-        return await secondary.complete(input);
-      } catch (err) {
-        const primaryMsg =
-          primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
-        const secondaryMsg = err instanceof Error ? err.message : String(err);
-        throw new Error(
-          `both LLM providers failed: ${primary.id}=${primaryMsg} | ${secondary.id}=${secondaryMsg}`
-        );
-      }
+      throw new Error(`all LLM providers failed: ${failures.join(' | ')}`);
     },
   };
 }
 
+function configuredProviders(): Record<ProviderId, LlmProvider | null> {
+  return {
+    openai: process.env.OPENAI_API_KEY ? createOpenAIProvider() : null,
+    claude: process.env.ANTHROPIC_API_KEY ? createClaudeProvider() : null,
+    gemini: process.env.GEMINI_API_KEY ? createGeminiProvider() : null,
+  };
+}
+
 /**
- * Resolves the active LLM provider. `LLM_PROVIDER=gemini|claude` forces a
- * specific primary (still with the other as failover when both keys exist).
- * With no override: Claude preferred, Gemini as backup, both directions.
+ * OpenAI is the production-first provider for AURA editorial generation. The
+ * other configured providers remain controlled fallbacks. LLM_PROVIDER may
+ * explicitly choose any configured provider as primary without disabling the
+ * remaining safety chain.
  */
 export function resolveProvider(): LlmProvider {
-  const hasClaude = Boolean(process.env.ANTHROPIC_API_KEY);
-  const hasGemini = Boolean(process.env.GEMINI_API_KEY);
-  const explicit = (process.env.LLM_PROVIDER ?? '').toLowerCase();
-
-  if (explicit === 'gemini') {
-    const gemini = createGeminiProvider();
-    return hasClaude ? withFallback(gemini, createClaudeProvider()) : gemini;
-  }
-  if (explicit === 'claude') {
-    const claude = createClaudeProvider();
-    return hasGemini ? withFallback(claude, createGeminiProvider()) : claude;
-  }
-  if (hasClaude && hasGemini) {
-    return withFallback(createClaudeProvider(), createGeminiProvider());
-  }
-  if (hasClaude) return createClaudeProvider();
-  if (hasGemini) return createGeminiProvider();
-  throw new Error(
-    'No LLM provider configured. Set ANTHROPIC_API_KEY or GEMINI_API_KEY.'
+  const providers = configuredProviders();
+  const explicit = (process.env.LLM_PROVIDER ?? '').trim().toLowerCase() as ProviderId;
+  const defaultOrder: ProviderId[] = ['openai', 'claude', 'gemini'];
+  const order = defaultOrder.includes(explicit)
+    ? [explicit, ...defaultOrder.filter((id) => id !== explicit)]
+    : defaultOrder;
+  return withFallbacks(
+    order.flatMap((id) => providers[id] ? [providers[id]!] : [])
   );
 }

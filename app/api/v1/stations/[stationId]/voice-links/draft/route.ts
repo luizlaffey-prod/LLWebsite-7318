@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import {
   EnergyLevelSchema,
@@ -22,11 +23,16 @@ import { generateVoiceLinkDraft } from '@/lib/llm/voice-link-generator';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+interface LoadedAnnouncerProfile {
+  profile: AnnouncerEditorialProfile | null;
+  version: string | null;
+}
+
 async function loadAnnouncerProfile(
   stationId: string,
   voiceId: string | null,
-): Promise<AnnouncerEditorialProfile | null> {
-  if (!voiceId) return null;
+): Promise<LoadedAnnouncerProfile> {
+  if (!voiceId) return { profile: null, version: null };
 
   const [stored] = await db
     .select()
@@ -43,18 +49,21 @@ async function loadAnnouncerProfile(
     const humor = HumorLevelSchema.safeParse(stored.humorLevel);
     const energy = EnergyLevelSchema.safeParse(stored.energyLevel);
     return {
-      stationId,
-      voiceId,
-      personality: stored.personality,
-      deliveryStyle: stored.deliveryStyle,
-      exampleScripts: stored.exampleScripts,
-      signatures: stored.signatures,
-      editorialPreferences: stored.editorialPreferences,
-      avoidances: stored.avoidances,
-      pronunciationGuide: stored.pronunciationGuide,
-      humorLevel: humor.success ? humor.data : 'balanced',
-      energyLevel: energy.success ? energy.data : 'balanced',
-      reactionsEnabled: stored.reactionsEnabled,
+      profile: {
+        stationId,
+        voiceId,
+        personality: stored.personality,
+        deliveryStyle: stored.deliveryStyle,
+        exampleScripts: stored.exampleScripts,
+        signatures: stored.signatures,
+        editorialPreferences: stored.editorialPreferences,
+        avoidances: stored.avoidances,
+        pronunciationGuide: stored.pronunciationGuide,
+        humorLevel: humor.success ? humor.data : 'balanced',
+        energyLevel: energy.success ? energy.data : 'balanced',
+        reactionsEnabled: stored.reactionsEnabled,
+      },
+      version: stored.updatedAt.toISOString(),
     };
   }
 
@@ -63,7 +72,10 @@ async function loadAnnouncerProfile(
     .from(voiceTable)
     .where(eq(voiceTable.id, voiceId))
     .limit(1);
-  return legacyAnnouncerProfile(selectedVoice?.description, stationId, voiceId);
+  return {
+    profile: legacyAnnouncerProfile(selectedVoice?.description, stationId, voiceId),
+    version: 'legacy',
+  };
 }
 
 export async function POST(
@@ -89,14 +101,27 @@ export async function POST(
     }
 
     const selectedVoiceId = parsed.data.voiceId ?? auth.station.defaultVoiceId;
-    const announcerProfile = await loadAnnouncerProfile(
+    const loadedProfile = await loadAnnouncerProfile(
       stationId,
       selectedVoiceId ?? null,
     );
+    const announcerProfile = loadedProfile.profile;
+    const requestId = req.headers.get('x-request-id')?.trim() || randomUUID();
+    const profileSerialized = announcerProfile
+      ? JSON.stringify(announcerProfile)
+      : '';
     console.info('[studio-pro-api] voice link editorial profile', {
+      requestId,
       stationId,
       voiceId: selectedVoiceId ?? null,
       profileApplied: Boolean(announcerProfile),
+      profileVersion: loadedProfile.version,
+      profileHash: profileSerialized
+        ? createHash('sha256').update(profileSerialized).digest('hex').slice(0, 16)
+        : null,
+      profileCharacters: profileSerialized.length,
+      profileTruncated: false,
+      recentScriptCount: parsed.data.recentScripts.length,
       humorLevel: announcerProfile?.humorLevel ?? null,
       signaturesConfigured: Boolean(announcerProfile?.signatures),
       editorialConfigured: Boolean(announcerProfile?.editorialPreferences),
@@ -107,6 +132,7 @@ export async function POST(
       parsed.data,
       parsed.data.verifiedFact,
       announcerProfile,
+      { requestId },
     );
     return Response.json(
       buildVoiceLinkDraftEnvelope(scriptText, parsed.data.verifiedFact),
