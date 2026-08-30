@@ -8,12 +8,49 @@ import { resolveProvider } from './provider';
 
 export interface VerifiedTrackFact {
   text: string;
+  alternatives?: string[];
   sources: Array<{ title: string; url: string }>;
 }
 
 const VoiceLinkResponse = z.object({
   texto: z.string().trim().min(1).max(1_000),
 });
+
+function parseVoiceLinkResponse(raw: string): string {
+  const unfenced = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/iu, '')
+    .replace(/\s*```$/u, '')
+    .trim();
+  return VoiceLinkResponse.parse(JSON.parse(unfenced)).texto;
+}
+
+function normalizedIncludes(haystack: string, needle: string): boolean {
+  const normalizedNeedle = normalizedWords(needle).join(' ');
+  return Boolean(
+    normalizedNeedle
+    && normalizedWords(haystack).join(' ').includes(normalizedNeedle)
+  );
+}
+
+export function matchedVerifiedFactText(
+  script: string,
+  verifiedFact?: VerifiedTrackFact | null,
+): string | null {
+  if (!verifiedFact) return null;
+  const options = [verifiedFact.text, ...(verifiedFact.alternatives ?? [])]
+    .map((fact) => fact.trim())
+    .filter(Boolean);
+  const scriptWords = new Set(normalizedWords(script));
+  return options.find((fact) => {
+    if (normalizedIncludes(script, fact)) return true;
+    const factWords = normalizedWords(fact)
+      .filter((word) => word.length >= 4);
+    if (factWords.length < 4) return false;
+    const shared = factWords.filter((word) => scriptWords.has(word)).length;
+    return shared >= 4 && shared / factWords.length >= 0.55;
+  }) ?? null;
+}
 
 function languageName(language: VoiceLinkDraftInput['language']): string {
   if (language === 'pt') return 'Brazilian Portuguese';
@@ -82,10 +119,44 @@ function promptTrack(track: VoiceLinkDraftInput['currentTrack']): string {
     : `${track.title} (artist not provided; mention only the song title)`;
 }
 
+function profileRepertoire(
+  profile: AnnouncerEditorialProfile | null | undefined,
+  recentScripts: string[],
+): string | null {
+  if (!profile?.signatures.trim()) return null;
+  const recent = recentScripts.slice(-5).join(' ');
+  return profile.signatures
+    .split(/[\r\n;|]+/u)
+    .map((phrase) => phrase.trim().replace(/^[-*•]\s*/u, ''))
+    .filter((phrase) => phrase.length >= 2 && phrase.length <= 160)
+    .find((phrase) => !normalizedIncludes(recent, phrase)) ?? null;
+}
+
+function announcerIdentityRequired(
+  profile: AnnouncerEditorialProfile | null | undefined,
+  recentScripts: string[],
+): boolean {
+  if (!profile?.announcerName?.trim()) return false;
+  return !recentScripts
+    .slice(-3)
+    .some((script) => normalizedIncludes(script, profile.announcerName!));
+}
+
+function identitySentence(
+  name: string,
+  language: VoiceLinkDraftInput['language'],
+): string {
+  if (language === 'pt') return `Aqui é ${name}.`;
+  if (language === 'es') return `Soy ${name}.`;
+  return `I'm ${name}.`;
+}
+
 function compactFallbackScripts(
   input: VoiceLinkDraftInput,
   phrases: string[],
   verifiedFact?: VerifiedTrackFact | null,
+  announcerProfile?: AnnouncerEditorialProfile | null,
+  identityRequired = false,
 ): string[] {
   const nextTrack = input.nextTracks[0];
   if (!nextTrack) throw new Error('voice_link_draft_empty');
@@ -99,46 +170,63 @@ function compactFallbackScripts(
       : input.language === 'es'
         ? `A continuación, ${asSentence(nextTrack.title)}`
         : `A seguir, ${asSentence(nextTrack.title)}`;
-  const phrase = phrases[0] ? asSentence(phrases[0]) : null;
-  const fact = verifiedFact?.text?.trim() ? asSentence(verifiedFact.text.trim()) : null;
+  const repertoire = profileRepertoire(announcerProfile, input.recentScripts);
+  const phraseText = phrases[0] ?? repertoire;
+  const phrase = phraseText ? asSentence(phraseText) : null;
+  const factOption = [verifiedFact?.text, ...(verifiedFact?.alternatives ?? [])]
+    .map((value) => value?.trim() ?? '')
+    .find(Boolean);
+  const fact = factOption ? asSentence(factOption) : null;
+  const identity = identityRequired && announcerProfile?.announcerName
+    ? identitySentence(announcerProfile.announcerName, input.language)
+    : null;
+  const prefix = [identity, phrase].filter(Boolean).join(' ');
+  const isAfterCommercial = input.eventPosition === 'after-commercial';
+
+  if (isAfterCommercial) {
+    return [
+      [prefix, fact, nextWithArtist].filter(Boolean).join(' '),
+      [identity, fact, nextTitle].filter(Boolean).join(' '),
+    ];
+  }
 
   if (phrases[0] && instructionRequestsPhraseFirst(input.customInstruction)) {
     if (fact) {
       return [
-        `${phrase} ${currentWithArtist} ${fact} ${nextWithArtist}`,
-        `${phrase} ${currentTitle} ${fact} ${nextTitle}`,
+        [phrase, identity, currentWithArtist, fact, nextWithArtist].filter(Boolean).join(' '),
+        [phrase, identity, currentTitle, fact, nextTitle].filter(Boolean).join(' '),
       ];
     }
     return [
-      `${phrase} ${currentWithArtist} ${nextWithArtist}`,
-      `${phrase} ${currentTitle} ${nextTitle}`,
+      [phrase, identity, currentWithArtist, nextWithArtist].filter(Boolean).join(' '),
+      [phrase, identity, currentTitle, nextTitle].filter(Boolean).join(' '),
     ];
   }
 
   if (phrase && fact) {
     return [
-      `${currentWithArtist} ${fact} ${phrase} ${nextWithArtist}`,
-      `${currentTitle} ${fact} ${phrase} ${nextTitle}`,
+      [currentWithArtist, fact, identity, phrase, nextWithArtist].filter(Boolean).join(' '),
+      [currentTitle, fact, identity, phrase, nextTitle].filter(Boolean).join(' '),
     ];
   }
 
   if (phrase) {
     return [
-      `${currentWithArtist} ${phrase} ${nextWithArtist}`,
-      `${currentTitle} ${phrase} ${nextTitle}`,
+      [currentWithArtist, identity, phrase, nextWithArtist].filter(Boolean).join(' '),
+      [currentTitle, identity, phrase, nextTitle].filter(Boolean).join(' '),
     ];
   }
 
   if (fact) {
     return [
-      `${currentWithArtist} ${fact} ${nextWithArtist}`,
-      `${currentTitle} ${fact} ${nextTitle}`,
+      [currentWithArtist, fact, identity, nextWithArtist].filter(Boolean).join(' '),
+      [currentTitle, fact, identity, nextTitle].filter(Boolean).join(' '),
     ];
   }
 
   return [
-    `${currentWithArtist} ${nextWithArtist}`,
-    `${currentTitle} ${nextTitle}`,
+    [currentWithArtist, identity, nextWithArtist].filter(Boolean).join(' '),
+    [currentTitle, identity, nextTitle].filter(Boolean).join(' '),
   ];
 }
 
@@ -199,6 +287,36 @@ function pickLeastRepeatedScript(
   return chosen;
 }
 
+function validateVoiceLinkCandidate(
+  raw: string,
+  input: VoiceLinkDraftInput,
+  verifiedFact: VerifiedTrackFact | null | undefined,
+  announcerProfile: AnnouncerEditorialProfile | null | undefined,
+  identityRequired: boolean,
+  phrases: string[],
+): void {
+  const script = parseVoiceLinkResponse(raw);
+  const nextTrack = input.nextTracks[0];
+  if (!nextTrack || !normalizedIncludes(script, nextTrack.title)) {
+    throw new Error('voice_link_missing_next_track');
+  }
+  if (
+    identityRequired
+    && announcerProfile?.announcerName
+    && !normalizedIncludes(script, announcerProfile.announcerName)
+  ) {
+    throw new Error('voice_link_missing_announcer_identity');
+  }
+  if (verifiedFact && !matchedVerifiedFactText(script, verifiedFact)) {
+    throw new Error('voice_link_missing_verified_fact');
+  }
+  for (const phrase of phrases) {
+    if (!normalizedIncludes(script, phrase)) {
+      throw new Error('voice_link_missing_mandatory_phrase');
+    }
+  }
+}
+
 export async function generateVoiceLinkDraft(
   input: VoiceLinkDraftInput,
   verifiedFact?: VerifiedTrackFact | null,
@@ -215,22 +333,43 @@ export async function generateVoiceLinkDraft(
     ? `- Must include these exact mandatory phrases verbatim: ${phrases.map((phrase) => `"${phrase}"`).join(', ')}`
     : '';
 
-  const factInstruction = verifiedFact?.text
-    ? `- VERIFIED SONG FACT: "${verifiedFact.text}". Integrate this fact naturally in 1 short sentence.`
+  const factOptions = verifiedFact
+    ? [verifiedFact.text, ...(verifiedFact.alternatives ?? [])]
+        .map((fact) => fact.trim())
+        .filter(Boolean)
+    : [];
+  const factInstruction = factOptions.length
+    ? [
+        '- VERIFIED MUSIC RESEARCH DOSSIER:',
+        ...factOptions.map((fact, index) => `  ${index + 1}. ${JSON.stringify(fact)}`),
+        '- Choose one fresh, relevant angle from this dossier and weave it naturally into the conversation. Preserve its factual meaning; do not invent or combine claims.',
+      ].join('\n')
+    : '';
+  const identityRequired = announcerIdentityRequired(announcerProfile, input.recentScripts);
+  const identityInstruction = announcerProfile?.announcerName
+    ? identityRequired
+      ? `- Introduce yourself naturally as ${JSON.stringify(announcerProfile.announcerName)} in this link; the name has not appeared in the last three links.`
+      : `- Your on-air name is ${JSON.stringify(announcerProfile.announcerName)}. You may omit it in this link because it was heard recently.`
     : '';
 
   const recentScriptsInstruction = input.recentScripts.length
-    ? `Recent links from this station are a hard anti-repetition constraint. Do not reuse their opening, sentence skeleton, catchphrase, slogan, sign-off, laugh/reaction pattern, or any distinctive four-word phrase:\n${input.recentScripts
+    ? `Recent links from this station are a hard anti-repetition constraint. Do not reuse their opening, sentence skeleton, catchphrase, slogan, sign-off, laugh/reaction pattern, or any distinctive four-word phrase. The announcer name and station name are identity anchors and may recur naturally:\n${input.recentScripts
         .slice(-10)
         .map((script) => `- ${JSON.stringify(script)}`)
         .join('\n')}`
     : '';
 
-  const prompt = `Write a short radio announcer voice link in ${languageName(input.language)}.
+  const trackContext = input.eventPosition === 'after-commercial'
+    ? `The commercial break has just ended. Upcoming track: ${promptTrack(nextTrack)}`
+    : `Current track just played: ${promptTrack(input.currentTrack)}\nNext track to play: ${promptTrack(nextTrack)}`;
+  const eventRule = input.eventPosition === 'after-commercial'
+    ? '- This is a fresh return from a commercial break. Do not identify, recap, or allude to any song heard before the break. Establish the announcer/station identity when requested and announce only the upcoming song.'
+    : '';
+  const prompt = `Write a broadcast-ready radio announcer voice link in ${languageName(input.language)}.
 Tone: ${toneInstruction(input.tone)}.
-Current track just played: ${promptTrack(input.currentTrack)}
-Next track to play: ${promptTrack(nextTrack)}
+${trackContext}
 ${factInstruction}
+${identityInstruction}
 ${phrasesBullet}
 ${input.customInstruction ? `- Additional instruction: ${input.customInstruction}` : ''}
 ${recentScriptsInstruction}
@@ -238,7 +377,11 @@ ${recentScriptsInstruction}
 CRITICAL RULES:
 - Output JSON format: { "texto": "..." }
 - Maximum duration is ${input.maxDurationSeconds} seconds (~${input.maxDurationSeconds * 2.5} words max).
-- Keep it concise, natural, and direct.`;
+- Mention the upcoming song title accurately.
+- Sound alive, specific, and conversational: create a small moment of chemistry with the listener instead of reading a metadata list.
+- Use the selected announcer's personality, delivery, humor policy, editorial interests, authorized repertoire, and avoidances as one coherent voice.
+${eventRule}
+- Be concise enough for the time window, but do not flatten the personality or omit the verified angle merely to be shorter.`;
 
   try {
     const provider = resolveProvider();
@@ -247,12 +390,23 @@ CRITICAL RULES:
       announcerProfilePrompt(announcerProfile),
       'Always respond strictly in valid JSON format: { "texto": "..." }',
     ].join('\n\n');
+    const validate = (raw: string) => validateVoiceLinkCandidate(
+      raw,
+      input,
+      verifiedFact,
+      announcerProfile,
+      identityRequired,
+      phrases,
+    );
     const firstText = await provider.complete({
       systemPrompt,
       userPrompt: prompt,
       temperature: 0.7,
+      maxTokens: 1_600,
+      validate,
     });
-    const first = VoiceLinkResponse.parse(JSON.parse(firstText)).texto;
+    validate(firstText);
+    const first = parseVoiceLinkResponse(firstText);
     const firstScore = voiceLinkRepetitionScore(first, input.recentScripts);
     if (firstScore < 0.5) {
       console.info('[llm] voice link editorial result', {
@@ -270,8 +424,11 @@ CRITICAL RULES:
       systemPrompt,
       userPrompt: `${prompt}\n\nThe first draft was rejected because it repeated a recent station link (score ${firstScore.toFixed(2)}). Write a genuinely different link: new opening, new sentence architecture, and no reused catchphrase or four-word phrase.`,
       temperature: 0.85,
+      maxTokens: 1_600,
+      validate,
     });
-    const retry = VoiceLinkResponse.parse(JSON.parse(retryText)).texto;
+    validate(retryText);
+    const retry = parseVoiceLinkResponse(retryText);
     const retryScore = voiceLinkRepetitionScore(retry, input.recentScripts);
     const chosen = retryScore <= firstScore ? retry : first;
     console.info('[llm] voice link editorial result', {
@@ -288,7 +445,13 @@ CRITICAL RULES:
       '[llm] voice link draft generation failed, using fallback script',
       error instanceof Error ? error.message : error,
     );
-    const candidates = compactFallbackScripts(input, phrases, verifiedFact);
+    const candidates = compactFallbackScripts(
+      input,
+      phrases,
+      verifiedFact,
+      announcerProfile,
+      identityRequired,
+    );
     const script = pickLeastRepeatedScript(candidates, input.recentScripts);
     console.info('[llm] voice link editorial result', {
       requestId: trace?.requestId ?? null,

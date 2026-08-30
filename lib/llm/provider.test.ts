@@ -48,6 +48,25 @@ describe('LLM provider policy', () => {
     expect(gemini.complete).not.toHaveBeenCalled();
   });
 
+  it('falls through when provider output fails domain validation', async () => {
+    process.env.OPENAI_API_KEY = 'configured';
+    process.env.GEMINI_API_KEY = 'configured';
+    const openai = provider('openai', async () => '{"texto":"truncated');
+    const gemini = provider('gemini', async () => '{"texto":"valid"}');
+    vi.mocked(createOpenAIProvider).mockReturnValue(openai);
+    vi.mocked(createGeminiProvider).mockReturnValue(gemini);
+
+    const selected = resolveProvider();
+    await expect(selected.complete({
+      ...input,
+      validate(result) {
+        JSON.parse(result);
+      },
+    })).resolves.toBe('{"texto":"valid"}');
+    expect(openai.complete).toHaveBeenCalledOnce();
+    expect(gemini.complete).toHaveBeenCalledOnce();
+  });
+
   it('honors an explicit configured primary without disabling fallbacks', async () => {
     process.env.OPENAI_API_KEY = 'configured';
     process.env.GEMINI_API_KEY = 'configured';

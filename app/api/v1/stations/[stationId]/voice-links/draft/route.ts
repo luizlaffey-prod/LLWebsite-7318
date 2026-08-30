@@ -34,6 +34,12 @@ async function loadAnnouncerProfile(
 ): Promise<LoadedAnnouncerProfile> {
   if (!voiceId) return { profile: null, version: null };
 
+  const [selectedVoice] = await db
+    .select({ name: voiceTable.name, description: voiceTable.description })
+    .from(voiceTable)
+    .where(eq(voiceTable.id, voiceId))
+    .limit(1);
+
   const [stored] = await db
     .select()
     .from(stationAnnouncerProfile)
@@ -52,6 +58,7 @@ async function loadAnnouncerProfile(
       profile: {
         stationId,
         voiceId,
+        announcerName: selectedVoice?.name,
         personality: stored.personality,
         deliveryStyle: stored.deliveryStyle,
         exampleScripts: stored.exampleScripts,
@@ -67,14 +74,35 @@ async function loadAnnouncerProfile(
     };
   }
 
-  const [selectedVoice] = await db
-    .select({ description: voiceTable.description })
-    .from(voiceTable)
-    .where(eq(voiceTable.id, voiceId))
-    .limit(1);
+  const legacy = legacyAnnouncerProfile(
+    selectedVoice?.description,
+    stationId,
+    voiceId,
+    selectedVoice?.name,
+  );
+  if (legacy) {
+    return { profile: legacy, version: 'legacy' };
+  }
+  if (!selectedVoice) {
+    return { profile: null, version: null };
+  }
   return {
-    profile: legacyAnnouncerProfile(selectedVoice?.description, stationId, voiceId),
-    version: 'legacy',
+    profile: {
+      stationId,
+      voiceId,
+      announcerName: selectedVoice.name,
+      personality: '',
+      deliveryStyle: '',
+      exampleScripts: '',
+      signatures: '',
+      editorialPreferences: '',
+      avoidances: '',
+      pronunciationGuide: '',
+      humorLevel: 'balanced',
+      energyLevel: 'balanced',
+      reactionsEnabled: true,
+    },
+    version: 'identity-only',
   };
 }
 
@@ -114,6 +142,14 @@ export async function POST(
       requestId,
       stationId,
       voiceId: selectedVoiceId ?? null,
+      announcerName: announcerProfile?.announcerName ?? null,
+      eventPosition: parsed.data.eventPosition ?? 'between-songs',
+      factMode: parsed.data.factMode,
+      verifiedFactPresent: Boolean(parsed.data.verifiedFact),
+      verifiedFactOptions: parsed.data.verifiedFact
+        ? 1 + parsed.data.verifiedFact.alternatives.length
+        : 0,
+      verifiedFactSources: parsed.data.verifiedFact?.sources.length ?? 0,
       profileApplied: Boolean(announcerProfile),
       profileVersion: loadedProfile.version,
       profileHash: profileSerialized

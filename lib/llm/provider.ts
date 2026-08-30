@@ -19,6 +19,7 @@ function withFallbacks(providers: LlmProvider[]): LlmProvider {
       for (const provider of providers) {
         try {
           const result = await provider.complete(input);
+          input.validate?.(result);
           console.info('[llm] completion provider', {
             primary: primary.id,
             used: provider.id,

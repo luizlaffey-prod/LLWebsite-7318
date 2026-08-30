@@ -40,6 +40,7 @@ describe('announcer editorial profile', () => {
       deliveryStyle: 'Conversa direta',
       exampleScripts: 'Que bom ter você por aqui.',
       signatures: 'A melhor na web',
+      announcerName: 'Rachel Anderson',
       editorialPreferences: 'Curiosidades musicais verificadas',
       avoidances: 'Não repetir aberturas',
       pronunciationGuide: 'Bowie: BOH-ee',
@@ -55,6 +56,8 @@ describe('announcer editorial profile', () => {
     expect(prompt).toContain('Curiosidades musicais verificadas');
     expect(prompt).toContain('Não repetir aberturas');
     expect(prompt).toContain('Humor is free and spontaneous');
+    expect(prompt).toContain('Rachel Anderson');
+    expect(prompt).toContain('stable identity anchor');
     expect(prompt).toContain('Energy: high');
     expect(prompt).toContain('Bowie: BOH-ee');
   });

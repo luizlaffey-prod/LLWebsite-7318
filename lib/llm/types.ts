@@ -44,5 +44,11 @@ export interface LlmProvider {
     userPrompt: string;
     maxTokens?: number;
     temperature?: number;
+    /**
+     * Optional domain validation. The fallback coordinator runs it before
+     * accepting a provider result, so malformed or incomplete output can move
+     * to the next configured provider instead of escaping the safety chain.
+     */
+    validate?: (result: string) => void;
   }): Promise<string>;
 }

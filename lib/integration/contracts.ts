@@ -48,6 +48,7 @@ const TrackMetadataSchema = z.object({
 
 const VerifiedFactSchema = z.object({
   text: z.string().trim().min(1).max(500),
+  alternatives: z.array(z.string().trim().min(1).max(500)).max(4).default([]),
   sources: z.array(z.object({
     title: z.string().trim().min(1).max(300),
     url: z.string().url().max(2_000),

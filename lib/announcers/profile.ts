@@ -21,6 +21,8 @@ export type AnnouncerProfileInput = z.infer<typeof AnnouncerProfileInputSchema>;
 
 export interface AnnouncerEditorialProfile extends AnnouncerProfileInput {
   voiceId: string;
+  /** Catalog identity derived by AURA. It is never supplied by StudioPro. */
+  announcerName?: string;
 }
 
 interface LegacyStructuredPersonality {
@@ -46,6 +48,7 @@ export function legacyAnnouncerProfile(
   description: string | null | undefined,
   stationId: string,
   voiceId: string,
+  announcerName?: string,
 ): AnnouncerEditorialProfile | null {
   if (!description?.trim().startsWith('{')) return null;
   try {
@@ -54,6 +57,7 @@ export function legacyAnnouncerProfile(
     const profile: AnnouncerEditorialProfile = {
       stationId,
       voiceId,
+      announcerName,
       personality: optionalString(legacy.essencia),
       deliveryStyle: optionalString(legacy.presencaEntrega),
       exampleScripts: '',
@@ -104,6 +108,9 @@ export function announcerProfilePrompt(
   }
   return [
     'The station-specific announcer profile below is authoritative. Incorporate it throughout the link instead of falling back to generic radio copy.',
+    profile.announcerName
+      ? `On-air identity: the announcer is ${JSON.stringify(profile.announcerName)}. This name is a stable identity anchor, not a disposable catchphrase.`
+      : '',
     profile.personality ? `Personality and essence: ${JSON.stringify(profile.personality)}.` : '',
     profile.deliveryStyle ? `Presence and delivery: ${JSON.stringify(profile.deliveryStyle)}.` : '',
     humorInstruction(profile.humorLevel),
@@ -112,7 +119,7 @@ export function announcerProfilePrompt(
       ? 'Expressive vocal reactions are allowed when they genuinely fit; do not force them.'
       : 'Do not use performance tags or non-verbal reactions.',
     profile.signatures
-      ? `Authorized signatures, catchphrases, and station slogans: ${JSON.stringify(profile.signatures)}. Treat them as an optional rotating repertoire. Never repeat a signature, catchphrase, slogan, opening, or sign-off that appears in the recent station links supplied with this request; skip the repertoire entirely when no fresh choice fits.`
+      ? `Authorized signatures, catchphrases, and station slogans: ${JSON.stringify(profile.signatures)}. Treat them as a rotating repertoire: use a fresh fitting choice often enough to establish identity, but never mechanically force the same one into consecutive links. The announcer name and station name may repeat naturally; only catchphrases, slogans, openings, and sign-offs are subject to repertoire rotation.`
       : '',
     profile.editorialPreferences
       ? `Editorial interests and preferred angles: ${JSON.stringify(profile.editorialPreferences)}.`

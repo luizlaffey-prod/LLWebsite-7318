@@ -33,6 +33,22 @@ describe('StudioPro voice-link draft contract', () => {
     });
   });
 
+  it('reports the alternative fact that was naturally integrated', () => {
+    const verifiedFact = {
+      text: 'The first demo was recorded at home.',
+      alternatives: ['The final arrangement was recorded with a live rhythm section.'],
+      sources: [{ title: 'Session notes', url: 'https://example.com/session' }],
+    };
+
+    expect(buildVoiceLinkDraftEnvelope(
+      'The final arrangement was recorded with a live rhythm section. Next song.',
+      verifiedFact,
+    ).draft).toMatchObject({
+      verifiedFactIncluded: true,
+      usedFactText: verifiedFact.alternatives[0],
+    });
+  });
+
   it('keeps the duration estimate aligned with StudioPro', () => {
     expect(estimateVoiceLinkDurationSeconds('')).toBe(0);
     expect(estimateVoiceLinkDurationSeconds('uma frase com cinco palavras')).toBe(3);

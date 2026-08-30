@@ -1,4 +1,7 @@
-import type { VerifiedTrackFact } from '@/lib/llm/voice-link-generator';
+import {
+  matchedVerifiedFactText,
+  type VerifiedTrackFact,
+} from '@/lib/llm/voice-link-generator';
 
 export function estimateVoiceLinkDurationSeconds(scriptText: string): number {
   const words = scriptText.trim().split(/\s+/u).filter(Boolean).length;
@@ -10,10 +13,7 @@ export function buildVoiceLinkDraftEnvelope(
   verifiedFact?: VerifiedTrackFact | null,
 ) {
   const normalizedScript = scriptText.trim();
-  const normalizedFactText = verifiedFact?.text.trim() ?? '';
-  const usedFactText = normalizedFactText && normalizedScript.includes(normalizedFactText)
-    ? normalizedFactText
-    : null;
+  const usedFactText = matchedVerifiedFactText(normalizedScript, verifiedFact);
 
   return {
     draft: {
