@@ -4,6 +4,7 @@ import type { AnnouncerEditorialProfile } from '@/lib/announcers/profile';
 import { resolveProvider } from './provider';
 import {
   generateVoiceLinkDraft,
+  voiceLinkEditorialMetrics,
   voiceLinkRepetitionScore,
 } from './voice-link-generator';
 
@@ -127,7 +128,7 @@ describe('voice-link editorial generation', () => {
       reactionsEnabled: true,
     };
     complete.mockResolvedValue(
-      '{"texto":"I am Rachel Anderson. The final arrangement was recorded with a live rhythm section. Next Song by Next Artist is ready."}',
+      '{"texto":"I am Rachel Anderson. The best on the web. The final arrangement was recorded with a live rhythm section. Next Song by Next Artist is ready."}',
     );
 
     await generateVoiceLinkDraft(input, input.verifiedFact, profile);
@@ -159,6 +160,43 @@ describe('voice-link editorial generation', () => {
     );
   });
 
+  it('requires announcer identity and a fresh authorized signature after commercials', async () => {
+    const input = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      eventPosition: 'after-commercial',
+      currentTrack: { title: 'Forbidden Old Song', artist: 'Old Artist' },
+      nextTracks: [{ title: 'Fresh Start', artist: 'Next Artist' }],
+      language: 'en',
+      recentScripts: ['Rachel Anderson was with you before the break.'],
+    });
+    const profile: AnnouncerEditorialProfile = {
+      stationId: '11111111-1111-4111-8111-111111111111',
+      voiceId: '22222222-2222-4222-8222-222222222222',
+      announcerName: 'Rachel Anderson',
+      personality: 'Warm and vivid',
+      deliveryStyle: 'Close conversation',
+      exampleScripts: '',
+      signatures: 'The best on the web | Music lives here',
+      editorialPreferences: 'Studio stories',
+      avoidances: 'No invented facts',
+      pronunciationGuide: '',
+      humorLevel: 'balanced',
+      energyLevel: 'balanced',
+      reactionsEnabled: true,
+    };
+    complete.mockResolvedValue(
+      '{"texto":"I am Rachel Anderson. The best on the web. Fresh Start by Next Artist is ready."}',
+    );
+
+    await generateVoiceLinkDraft(input, null, profile);
+
+    const request = complete.mock.calls[0][0];
+    expect(request.userPrompt).not.toContain('Forbidden Old Song');
+    expect(request.userPrompt).toContain('fresh-return');
+    expect(request.validate).toBeTypeOf('function');
+    expect(() => request.validate('{"texto":"Fresh Start by Next Artist is ready."}')).toThrow();
+  });
+
   it('detects exact, opening, and distinctive phrase repetition', () => {
     const recent = ['Welcome back to the best music in town tonight.'];
     expect(voiceLinkRepetitionScore(recent[0], recent)).toBe(1);
@@ -168,5 +206,79 @@ describe('voice-link editorial generation', () => {
     expect(voiceLinkRepetitionScore(
       'First Artist hands the night to Next Artist.', recent,
     )).toBe(0);
+  });
+
+  it('measures identity, slogan, verified depth, and basic now-next separately', () => {
+    const input = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      currentTrack: { title: 'First Song', artist: 'First Artist' },
+      nextTracks: [{ title: 'Next Song', artist: 'Next Artist' }],
+      language: 'en',
+    });
+    const profile = {
+      stationId: '11111111-1111-4111-8111-111111111111',
+      voiceId: '22222222-2222-4222-8222-222222222222',
+      announcerName: 'Rachel Anderson',
+      personality: 'Vivid', deliveryStyle: 'Natural', exampleScripts: '',
+      signatures: 'The best on the web', editorialPreferences: '', avoidances: '',
+      pronunciationGuide: '', humorLevel: 'balanced' as const,
+      energyLevel: 'balanced' as const, reactionsEnabled: true,
+    };
+    const fact = { text: 'The final arrangement used a live rhythm section.', sources: [] };
+    const metrics = voiceLinkEditorialMetrics(
+      'First Song set the mood. I am Rachel Anderson, the best on the web. The final arrangement used a live rhythm section. Next Song is ready.',
+      input,
+      profile,
+      fact,
+    );
+    expect(metrics).toMatchObject({
+      editorialDepth: true,
+      verifiedFactUsed: true,
+      sloganUsed: true,
+      selfIdentified: true,
+      personalityProfileApplied: true,
+    });
+  });
+
+  it('keeps personality, identity, and varied editorial modes across 20 multi-host links', async () => {
+    const hosts = [
+      ['Rachel Anderson', 'Warm and curious', 'The best on the web'],
+      ['Tony T', 'Witty New York energy', 'Music lives here'],
+      ['Alexis Cole', 'Elegant and playful', 'Your soundtrack, your night'],
+      ['Mike Stone', 'Direct and soulful', 'Stay close to the music'],
+    ] as const;
+    const modes = new Set<string>();
+
+    for (let index = 0; index < 20; index += 1) {
+      const [name, personality, signature] = hosts[index % hosts.length]!;
+      const input = VoiceLinkDraftInputSchema.parse({
+        mode: 'between_songs',
+        currentTrack: { title: `Current ${index}`, artist: `Artist ${index}` },
+        nextTracks: [{ title: `Next ${index}`, artist: `Next Artist ${index}` }],
+        language: 'en',
+        recentScripts: Array.from({ length: index % 4 }, (_, recent) => `Unique prior link ${index}-${recent}`),
+      });
+      const profile: AnnouncerEditorialProfile = {
+        stationId: '11111111-1111-4111-8111-111111111111',
+        voiceId: '22222222-2222-4222-8222-222222222222',
+        announcerName: name,
+        personality,
+        deliveryStyle: 'Natural conversation',
+        exampleScripts: '', signatures: signature,
+        editorialPreferences: 'Music culture', avoidances: 'No invented facts',
+        pronunciationGuide: '', humorLevel: 'balanced', energyLevel: 'balanced',
+        reactionsEnabled: true,
+      };
+      complete.mockResolvedValueOnce(
+        JSON.stringify({ texto: `Current ${index} set the mood. I'm ${name}. ${signature}. Next ${index} is ready.` }),
+      );
+      await generateVoiceLinkDraft(input, null, profile);
+      const request = complete.mock.calls.at(-1)![0];
+      expect(request.systemPrompt).toContain(personality);
+      modes.add(request.userPrompt.match(/Editorial mode: ([^.]+)/u)?.[1] ?? 'missing');
+    }
+
+    expect(complete).toHaveBeenCalledTimes(20);
+    expect(modes.size).toBe(4);
   });
 });

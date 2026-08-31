@@ -18,7 +18,10 @@ import {
 } from '@/lib/db/schema';
 import { requireStudioFeature } from '@/lib/integration/licensing';
 import { buildVoiceLinkDraftEnvelope } from '@/lib/integration/voice-link-draft-contract';
-import { generateVoiceLinkDraft } from '@/lib/llm/voice-link-generator';
+import {
+  generateVoiceLinkDraft,
+  VOICE_LINK_EDITORIAL_PROMPT_VERSION,
+} from '@/lib/llm/voice-link-generator';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -140,6 +143,7 @@ export async function POST(
       : '';
     console.info('[studio-pro-api] voice link editorial profile', {
       requestId,
+      promptVersion: VOICE_LINK_EDITORIAL_PROMPT_VERSION,
       stationId,
       voiceId: selectedVoiceId ?? null,
       announcerName: announcerProfile?.announcerName ?? null,

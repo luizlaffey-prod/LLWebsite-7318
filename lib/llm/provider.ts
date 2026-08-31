@@ -1,5 +1,4 @@
 import type { LlmProvider } from './types';
-import { createClaudeProvider } from './providers/claude';
 import { createGeminiProvider } from './providers/gemini';
 import { createOpenAIProvider } from './providers/openai';
 
@@ -9,7 +8,7 @@ function withFallbacks(providers: LlmProvider[]): LlmProvider {
   const [primary] = providers;
   if (!primary) {
     throw new Error(
-      'No LLM provider configured. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY.'
+      'No LLM provider configured. Set OPENAI_API_KEY or GEMINI_API_KEY.'
     );
   }
   return {
@@ -37,10 +36,9 @@ function withFallbacks(providers: LlmProvider[]): LlmProvider {
   };
 }
 
-function configuredProviders(): Record<ProviderId, LlmProvider | null> {
+function configuredProviders(): Partial<Record<ProviderId, LlmProvider | null>> {
   return {
     openai: process.env.OPENAI_API_KEY ? createOpenAIProvider() : null,
-    claude: process.env.ANTHROPIC_API_KEY ? createClaudeProvider() : null,
     gemini: process.env.GEMINI_API_KEY ? createGeminiProvider() : null,
   };
 }
@@ -54,7 +52,9 @@ function configuredProviders(): Record<ProviderId, LlmProvider | null> {
 export function resolveProvider(): LlmProvider {
   const providers = configuredProviders();
   const explicit = (process.env.LLM_PROVIDER ?? '').trim().toLowerCase() as ProviderId;
-  const defaultOrder: ProviderId[] = ['openai', 'claude', 'gemini'];
+  // Claude is intentionally absent from the active production chain. Keeping
+  // an old ANTHROPIC_API_KEY configured must not silently spend it.
+  const defaultOrder: ProviderId[] = ['openai', 'gemini'];
   const order = defaultOrder.includes(explicit)
     ? [explicit, ...defaultOrder.filter((id) => id !== explicit)]
     : defaultOrder;

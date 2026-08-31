@@ -1,10 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createClaudeProvider } from './providers/claude';
 import { createGeminiProvider } from './providers/gemini';
 import { createOpenAIProvider } from './providers/openai';
 import { resolveProvider } from './provider';
 
-vi.mock('./providers/claude', () => ({ createClaudeProvider: vi.fn() }));
 vi.mock('./providers/gemini', () => ({ createGeminiProvider: vi.fn() }));
 vi.mock('./providers/openai', () => ({ createOpenAIProvider: vi.fn() }));
 
@@ -29,23 +27,20 @@ describe('LLM provider policy', () => {
     process.env = { ...originalEnv };
   });
 
-  it('prefers OpenAI and falls back to Claude then Gemini', async () => {
+  it('prefers OpenAI and falls back directly to Gemini without activating Claude', async () => {
     process.env.OPENAI_API_KEY = 'configured';
     process.env.ANTHROPIC_API_KEY = 'configured';
     process.env.GEMINI_API_KEY = 'configured';
     const openai = provider('openai', async () => { throw new Error('openai down'); });
-    const claude = provider('claude', async () => 'claude result');
     const gemini = provider('gemini', async () => 'gemini result');
     vi.mocked(createOpenAIProvider).mockReturnValue(openai);
-    vi.mocked(createClaudeProvider).mockReturnValue(claude);
     vi.mocked(createGeminiProvider).mockReturnValue(gemini);
 
     const selected = resolveProvider();
-    await expect(selected.complete(input)).resolves.toBe('claude result');
+    await expect(selected.complete(input)).resolves.toBe('gemini result');
     expect(selected.id).toBe('openai');
     expect(openai.complete).toHaveBeenCalledOnce();
-    expect(claude.complete).toHaveBeenCalledOnce();
-    expect(gemini.complete).not.toHaveBeenCalled();
+    expect(gemini.complete).toHaveBeenCalledOnce();
   });
 
   it('falls through when provider output fails domain validation', async () => {
@@ -80,5 +75,11 @@ describe('LLM provider policy', () => {
     await expect(selected.complete(input)).resolves.toBe('gemini result');
     expect(selected.id).toBe('gemini');
     expect(openai.complete).not.toHaveBeenCalled();
+  });
+
+  it('does not activate Claude even when only the Anthropic key exists', () => {
+    process.env.ANTHROPIC_API_KEY = 'configured';
+    process.env.LLM_PROVIDER = 'claude';
+    expect(() => resolveProvider()).toThrow('No LLM provider configured');
   });
 });

@@ -26,7 +26,7 @@ export interface RunResult {
 
 /**
  * Runs a single automation slot: search news for the slot's categories,
- * optionally pull weather, ask Claude for an emotional script, synthesize
+ * optionally pull weather, ask the configured LLM for an emotional script, synthesize
  * audio via ElevenLabs, upload to R2, and record the execution.
  *
  * Caller provides the scheduledFor timestamp (UTC instant when the run
@@ -133,7 +133,7 @@ export async function runAutomationSlot(input: {
       shuffled = shuffleInPlace(articles.slice());
 
       if (shuffled.length > 0) {
-        // 2) Build content (4 stories Claude can weave into the
+        // 2) Build content (4 stories the editorial model can weave into the
         // bulletin). Include the per-article published date so the
         // LLM can phrase temporal references ("today", "yesterday",
         // "earlier this week") accurately rather than guessing.
@@ -238,7 +238,7 @@ export async function runAutomationSlot(input: {
       .returning({ id: generatedAudio.id });
     audioRowId = audio.id;
 
-    // 6) Claude script. Pass today's date rendered in the station's
+    // 6) Editorial script. Pass today's date rendered in the station's
     //    timezone so the model doesn't hallucinate the date from its
     //    training cutoff — tester reported a bulletin opened "Today,
     //    first of July" on June 2nd, classic LLM date drift.

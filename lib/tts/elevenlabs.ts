@@ -198,7 +198,7 @@ export async function synthesizeBulletin(
   const merged = await concatMp3Bytes(chunks);
   // Round to integer because the generated_audio.duration_seconds
   // column is integer-typed — a sum that includes 1.2s silence pads
-  // and float-valued block durations (Claude can return 9.5, 10.2,
+  // and float-valued block durations (an LLM can return 9.5, 10.2,
   // etc.) lands as a non-integer that Postgres rejects with
   // "invalid input syntax for type integer". Round to nearest;
   // sub-second drift is irrelevant for a per-block duration estimate.

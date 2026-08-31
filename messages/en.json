@@ -465,7 +465,7 @@
     "usersHint": "See who signed up, who's trialing, who converted — and export leads as CSV.",
     "openUsers": "Open panel",
     "healthSection": "Integration health",
-    "healthHint": "Verify ElevenLabs, Anthropic, news, weather, and storage are reachable. Tests run live.",
+    "healthHint": "Verify ElevenLabs, OpenAI, Gemini, news, weather, and storage are reachable. Tests run live.",
     "openHealth": "Run diagnostics",
     "errorSave": "Couldn't save your changes. Try again.",
     "downloadFolderSection": "Default download folder",

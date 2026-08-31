@@ -165,7 +165,7 @@ export async function POST(req: Request) {
   const audioId = created.id;
 
   try {
-    // 2. Generate the script with Claude.
+    // 2. Generate the script with the configured OpenAI/Gemini chain.
     const script = await generateScript({
       newsContent: `${parsed.data.article.title}\n\n${parsed.data.article.description}`,
       targetDurationSeconds: parsed.data.durationSeconds,

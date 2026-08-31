@@ -12,7 +12,7 @@ export type HealthService =
   | 'database'
   | 'auth'
   | 'elevenlabs'
-  | 'anthropic'
+  | 'openai'
   | 'gemini'
   | 'newsapi'
   | 'gnews'
@@ -111,16 +111,15 @@ export async function checkElevenLabs(): Promise<HealthResult> {
   }
 }
 
-export async function checkAnthropic(): Promise<HealthResult> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return notConfigured('anthropic', 'ANTHROPIC_API_KEY not set');
+export async function checkOpenAI(): Promise<HealthResult> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return notConfigured('openai', 'OPENAI_API_KEY not set');
   try {
     const res = await fetchWithRetry(
-      'https://api.anthropic.com/v1/models',
+      'https://api.openai.com/v1/models',
       {
         headers: {
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
+          Authorization: `Bearer ${key}`,
           Accept: 'application/json',
         },
       },
@@ -128,14 +127,14 @@ export async function checkAnthropic(): Promise<HealthResult> {
     );
     const data = (await res.json()) as { data?: { id: string }[] };
     return {
-      service: 'anthropic',
+      service: 'openai',
       configured: true,
       ok: true,
       detail: `${data.data?.length ?? 0} models available`,
     };
   } catch (err) {
     return {
-      service: 'anthropic',
+      service: 'openai',
       configured: true,
       ok: false,
       error: errorMessage(err),
@@ -448,7 +447,7 @@ const PROBES: Record<HealthService, () => Promise<HealthResult>> = {
   database: checkDatabase,
   auth: checkAuth,
   elevenlabs: checkElevenLabs,
-  anthropic: checkAnthropic,
+  openai: checkOpenAI,
   gemini: checkGemini,
   newsapi: checkNewsApi,
   gnews: checkGNews,
@@ -468,7 +467,7 @@ export const SERVICES: HealthService[] = [
   'admin',
   'cron',
   'elevenlabs',
-  'anthropic',
+  'openai',
   'gemini',
   'newsapi',
   'gnews',

@@ -1,6 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { resolveProvider } from './provider';
 
-const MODEL = process.env.AURA_ASSISTANT_MODEL ?? 'claude-haiku-4-5-20251001';
 const MAX_TOKENS = 600;
 const TEMPERATURE = 0.4;
 
@@ -20,7 +19,7 @@ export interface AssistantInput {
 }
 
 /**
- * Routes a support conversation through Anthropic with an AURA-branded
+ * Routes a support conversation through the AURA provider chain with an AURA-branded
  * system prompt. The model is deliberately presented as "AURA
  * Assistant" — under no circumstances should it surface the
  * underlying provider name to the operator, because the chat is sold
@@ -33,10 +32,6 @@ export interface AssistantInput {
 export async function askAuraAssistant(
   input: AssistantInput
 ): Promise<string> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error('ANTHROPIC_API_KEY is not set');
-  const client = new Anthropic({ apiKey: key });
-
   const systemPrompt = buildSystemPrompt(input);
 
   const trimmed = input.messages.slice(-20).map((m) => ({
@@ -44,19 +39,22 @@ export async function askAuraAssistant(
     content: m.content.slice(0, 2000),
   }));
 
-  const msg = await client.messages.create({
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
+  const provider = resolveProvider();
+  const raw = await provider.complete({
+    systemPrompt: `${systemPrompt}\n\nReturn only valid JSON: { "reply": "..." }`,
+    userPrompt: trimmed.map((message) => (
+      `${message.role === 'assistant' ? 'AURA Assistant' : 'Operator'}: ${message.content}`
+    )).join('\n\n'),
+    maxTokens: MAX_TOKENS,
     temperature: TEMPERATURE,
-    system: systemPrompt,
-    messages: trimmed,
+    validate(result) {
+      const parsed = JSON.parse(result) as { reply?: unknown };
+      if (typeof parsed.reply !== 'string' || !parsed.reply.trim()) {
+        throw new Error('aura_assistant_invalid_reply');
+      }
+    },
   });
-
-  return msg.content
-    .filter((part): part is Anthropic.TextBlock => part.type === 'text')
-    .map((p) => p.text)
-    .join('')
-    .trim();
+  return (JSON.parse(raw) as { reply: string }).reply.trim();
 }
 
 function buildSystemPrompt({ locale, tier, radioName }: AssistantInput): string {

@@ -465,7 +465,7 @@
     "usersHint": "Ver quem se cadastrou, quem está em trial, quem assinou — e exportar leads em CSV.",
     "openUsers": "Abrir painel",
     "healthSection": "Saúde das integrações",
-    "healthHint": "Verifique se ElevenLabs, Anthropic, notícias, clima e storage estão acessíveis. Testes ao vivo.",
+    "healthHint": "Verifique se ElevenLabs, OpenAI, Gemini, notícias, clima e storage estão acessíveis. Testes ao vivo.",
     "openHealth": "Rodar diagnóstico",
     "errorSave": "Não foi possível salvar. Tente novamente.",
     "downloadFolderSection": "Pasta de download padrão",
