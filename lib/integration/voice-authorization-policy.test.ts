@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { isVoiceAuthorized } from './voice-authorization-policy';
+import {
+  isVoiceAuthorized,
+  voiceAuthorizationFailureCode,
+} from './voice-authorization-policy';
 
 describe('voice authorization provider retirement', () => {
   it('authorizes an enabled global active-engine voice', () => {
@@ -12,12 +15,15 @@ describe('voice authorization provider retirement', () => {
   });
 
   it('rejects a retired-provider voice even when it remains enabled historically', () => {
-    expect(
-      isVoiceAuthorized(
-        { ownerUserId: null, enabled: true, synthesisVoiceId: 'legacy-id' },
-        false,
-      ),
-    ).toBe(false);
+    const legacyVoice = {
+      ownerUserId: null,
+      enabled: true,
+      synthesisVoiceId: 'legacy-id',
+    };
+    expect(isVoiceAuthorized(legacyVoice, false)).toBe(false);
+    expect(voiceAuthorizationFailureCode(legacyVoice, false)).toBe(
+      'voice_provider_retired',
+    );
   });
 
   it('keeps ownership and enabled checks for active-engine clones', () => {
@@ -39,5 +45,11 @@ describe('voice authorization provider retirement', () => {
         false,
       ),
     ).toBe(false);
+    expect(
+      voiceAuthorizationFailureCode(
+        { ownerUserId: 'owner', enabled: true, synthesisVoiceId: 'fish:clone' },
+        false,
+      ),
+    ).toBe('voice_not_authorized');
   });
 });

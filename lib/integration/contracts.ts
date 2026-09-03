@@ -57,6 +57,7 @@ const VerifiedFactSchema = z.object({
 
 const VoiceLinkBaseSchema = z.object({
   mode: z.literal('between_songs'),
+  correlationId: z.string().trim().min(8).max(128).optional(),
   eventPosition: z
     .enum(['before-commercial', 'after-commercial', 'before-aura', 'after-aura'])
     .optional(),
