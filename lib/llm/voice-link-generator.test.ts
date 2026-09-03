@@ -197,6 +197,43 @@ describe('voice-link editorial generation', () => {
     expect(() => request.validate('{"texto":"Fresh Start by Next Artist is ready."}')).toThrow();
   });
 
+  it('rejects a repeated announcer name and falls back to one self-identification', async () => {
+    const input = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      currentTrack: { title: 'First Song', artist: 'First Artist' },
+      nextTracks: [{ title: 'Next Song', artist: 'Next Artist' }],
+      language: 'en',
+    });
+    const profile: AnnouncerEditorialProfile = {
+      stationId: '11111111-1111-4111-8111-111111111111',
+      voiceId: '22222222-2222-4222-8222-222222222222',
+      announcerName: 'Tony T',
+      personality: 'Witty New York energy',
+      deliveryStyle: 'Natural conversation',
+      exampleScripts: '',
+      signatures: '',
+      editorialPreferences: 'Music culture',
+      avoidances: 'No repeated self-introductions',
+      pronunciationGuide: '',
+      humorLevel: 'balanced',
+      energyLevel: 'balanced',
+      reactionsEnabled: true,
+    };
+    complete.mockResolvedValue(
+      '{"texto":"I\'m Tony T, I\'m Tony T, and Next Song by Next Artist is ready."}',
+    );
+
+    const script = await generateVoiceLinkDraft(input, null, profile);
+    expect(script.match(/Tony T/gu)).toHaveLength(1);
+    expect(script).toContain('Next Song');
+
+    const request = complete.mock.calls[0][0];
+    expect(request.userPrompt).toContain('exactly once');
+    expect(() => request.validate(
+      '{"texto":"Tony T here. I\'m Tony T. Next Song is ready."}',
+    )).toThrow('voice_link_repeated_announcer_identity');
+  });
+
   it('detects exact, opening, and distinctive phrase repetition', () => {
     const recent = ['Welcome back to the best music in town tonight.'];
     expect(voiceLinkRepetitionScore(recent[0], recent)).toBe(1);

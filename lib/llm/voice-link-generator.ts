@@ -35,6 +35,20 @@ function normalizedIncludes(haystack: string, needle: string): boolean {
   );
 }
 
+function normalizedOccurrenceCount(haystack: string, needle: string): number {
+  const words = normalizedWords(haystack);
+  const target = normalizedWords(needle);
+  if (!words.length || !target.length || target.length > words.length) return 0;
+
+  let count = 0;
+  for (let index = 0; index + target.length <= words.length; index += 1) {
+    if (target.every((word, offset) => words[index + offset] === word)) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
 export function matchedVerifiedFactText(
   script: string,
   verifiedFact?: VerifiedTrackFact | null,
@@ -354,6 +368,12 @@ function validateVoiceLinkCandidate(
   ) {
     throw new Error('voice_link_missing_announcer_identity');
   }
+  if (
+    announcerProfile?.announcerName
+    && normalizedOccurrenceCount(script, announcerProfile.announcerName) > 1
+  ) {
+    throw new Error('voice_link_repeated_announcer_identity');
+  }
   if (verifiedFact && !matchedVerifiedFactText(script, verifiedFact)) {
     throw new Error('voice_link_missing_verified_fact');
   }
@@ -412,8 +432,8 @@ export async function generateVoiceLinkDraft(
   const selectedEditorialMode = editorialMode(input, factOptions.length > 0);
   const identityInstruction = announcerProfile?.announcerName
     ? identityRequired
-      ? `- Introduce yourself naturally as ${JSON.stringify(announcerProfile.announcerName)} in this link; the name has not appeared in the last three links.`
-      : `- Your on-air name is ${JSON.stringify(announcerProfile.announcerName)}. You may omit it in this link because it was heard recently.`
+      ? `- Introduce yourself naturally as ${JSON.stringify(announcerProfile.announcerName)} exactly once in this link; the name has not appeared in the last three links. Never repeat the name or stack two self-introductions.`
+      : `- Your on-air name is ${JSON.stringify(announcerProfile.announcerName)}. You may omit it in this link because it was heard recently; if you use it, say it no more than once.`
     : '';
 
   const recentScriptsInstruction = input.recentScripts.length
@@ -443,6 +463,7 @@ CRITICAL RULES:
 - Output JSON format: { "texto": "..." }
 - Maximum duration is ${input.maxDurationSeconds} seconds (~${input.maxDurationSeconds * 2.5} words max).
 - Mention the upcoming song title accurately.
+- Never say the announcer's on-air name more than once in the same link, including repeated or reformulated self-introductions.
 - Sound alive, specific, and conversational: create a small moment of chemistry with the listener instead of reading a metadata list.
 - Use the selected announcer's personality, delivery, humor policy, editorial interests, authorized repertoire, and avoidances as one coherent voice.
 ${eventRule}
