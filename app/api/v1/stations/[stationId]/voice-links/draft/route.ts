@@ -137,7 +137,9 @@ export async function POST(
       selectedVoiceId ?? null,
     );
     const announcerProfile = loadedProfile.profile;
-    const requestId = req.headers.get('x-request-id')?.trim() || randomUUID();
+    const requestId = parsed.data.correlationId
+      ?? req.headers.get('x-request-id')?.trim()
+      ?? randomUUID();
     const profileSerialized = announcerProfile
       ? JSON.stringify(announcerProfile)
       : '';

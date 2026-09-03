@@ -206,16 +206,25 @@ function compactFallbackScripts(
     .map((value) => value?.trim() ?? '')
     .find(Boolean);
   const fact = factOption ? asSentence(factOption) : null;
-  const identity = identityRequired && announcerProfile?.announcerName
+  const phraseAlreadyIdentifiesAnnouncer = Boolean(
+    phrase
+    && announcerProfile?.announcerName
+    && normalizedIncludes(phrase, announcerProfile.announcerName),
+  );
+  const identity = identityRequired
+    && announcerProfile?.announcerName
+    && !phraseAlreadyIdentifiesAnnouncer
     ? identitySentence(announcerProfile.announcerName, input.language)
     : null;
+  const identityAnchor = identity
+    ?? (identityRequired && phraseAlreadyIdentifiesAnnouncer ? phrase : null);
   const prefix = [identity, phrase].filter(Boolean).join(' ');
   const isAfterCommercial = input.eventPosition === 'after-commercial';
 
   if (isAfterCommercial) {
     return [
       [prefix, fact, nextWithArtist].filter(Boolean).join(' '),
-      [identity, fact, nextTitle].filter(Boolean).join(' '),
+      [identityAnchor, fact, nextTitle].filter(Boolean).join(' '),
     ];
   }
 
@@ -551,6 +560,14 @@ ${eventRule}
       identityRequired,
     );
     const script = pickLeastRepeatedScript(candidates, input.recentScripts);
+    validateVoiceLinkCandidate(
+      JSON.stringify({ texto: script }),
+      input,
+      verifiedFact,
+      announcerProfile,
+      identityRequired,
+      phrases,
+    );
     const metrics = voiceLinkEditorialMetrics(script, input, announcerProfile, verifiedFact);
     console.info('[llm] voice link editorial result', {
       requestId: trace?.requestId ?? null,

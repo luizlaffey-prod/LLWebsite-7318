@@ -3,8 +3,9 @@ import { and, eq, or } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { organizationMember, voice as voiceTable, type Voice } from '@/lib/db/schema';
 import { IntegrationHttpError } from '@/lib/integration/authorization';
-import { isVoiceAuthorized } from '@/lib/integration/voice-authorization-policy';
-import { resolveGlobalFishFallback } from '@/lib/tts/voice-resolution';
+import {
+  voiceAuthorizationFailureCode,
+} from '@/lib/integration/voice-authorization-policy';
 
 export { isVoiceAuthorized } from '@/lib/integration/voice-authorization-policy';
 export type { VoiceAuthzFacts } from '@/lib/integration/voice-authorization-policy';
@@ -44,12 +45,17 @@ export async function resolveAuthorizedVoice(
     ownerIsOrgMember = Boolean(member);
   }
 
-  if (!isVoiceAuthorized(voice, ownerIsOrgMember)) {
-    if (!voice.synthesisVoiceId.startsWith('fish:')) {
-      const fallback = await resolveGlobalFishFallback();
-      if (fallback) return fallback;
-    }
-    throw new IntegrationHttpError(403, 'voice_not_authorized');
+  const failureCode = voiceAuthorizationFailureCode(voice, ownerIsOrgMember);
+  if (failureCode) {
+    console.warn('[studio-pro-api] requested voice blocked', {
+      requestedVoiceId: voiceId,
+      resolvedVoiceId: voice.id,
+      reason: failureCode,
+    });
+    throw new IntegrationHttpError(
+      failureCode === 'voice_provider_retired' ? 410 : 403,
+      failureCode,
+    );
   }
   return voice;
 }

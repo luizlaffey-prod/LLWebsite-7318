@@ -10,6 +10,7 @@ import {
   type IntegrationSourceReference,
 } from '@/lib/db/schema';
 import { resolveAuthorizedVoice } from '@/lib/integration/voice-authorization';
+import { IntegrationHttpError } from '@/lib/integration/authorization';
 import { getQuota, incrementUsage } from '@/lib/billing/quota';
 import {
   canRequestDuration,
@@ -27,7 +28,10 @@ import { fetchWeatherCities } from '@/lib/news/weather';
 import { generateScript } from '@/lib/llm/script-generator';
 import type { ScriptBlock } from '@/lib/llm/types';
 import { todayForPrompt } from '@/lib/llm/today';
-import { synthesizeVoice } from '@/lib/tts/voice-synthesis';
+import {
+  synthesizeVoice,
+  VoiceSynthesisError,
+} from '@/lib/tts/voice-synthesis';
 import { audioKey, uploadAudio } from '@/lib/storage/r2';
 
 class ContentProcessingError extends Error {
@@ -35,6 +39,15 @@ class ContentProcessingError extends Error {
     super(message);
     this.name = 'ContentProcessingError';
   }
+}
+
+function contentProcessingErrorCode(error: unknown): string {
+  if (error instanceof ContentProcessingError) return error.code;
+  if (!(error instanceof VoiceSynthesisError)) return 'generation_failed';
+  if (['rate_limited', 'invalid_api_key', 'voice_provider_retired'].includes(error.message)) {
+    return error.message;
+  }
+  return 'voice_synthesis_failed';
 }
 
 export async function processContentRequest(requestId: string): Promise<void> {
@@ -77,6 +90,9 @@ export async function processContentRequest(requestId: string): Promise<void> {
   let audioId: string | null = null;
   try {
     const input = ContentRequestInputSchema.parse(context.request.input);
+    const correlationId = input.kind === 'voice_link'
+      ? input.correlationId ?? context.request.idempotencyKey
+      : context.request.idempotencyKey;
     const billingUserId = context.organization.billingUserId;
     const quota = await getQuota(billingUserId);
     const consumesBulletinQuota = countsAgainstBulletinQuota(input.kind);
@@ -85,6 +101,7 @@ export async function processContentRequest(requestId: string): Promise<void> {
     }
     console.info('[studio-pro-api] content quota policy', {
       requestId,
+      correlationId,
       kind: input.kind,
       consumesBulletinQuota,
       unlimitedAccount: quota.unlimited,
@@ -108,7 +125,10 @@ export async function processContentRequest(requestId: string): Promise<void> {
     let chosenVoice;
     try {
       chosenVoice = await resolveAuthorizedVoice(voiceId, context.organization.id);
-    } catch {
+    } catch (error) {
+      if (error instanceof IntegrationHttpError) {
+        throw new ContentProcessingError(error.code);
+      }
       throw new ContentProcessingError('voice_not_authorized');
     }
     if (!canUseVoice(quota.tier, chosenVoice)) {
@@ -129,8 +149,7 @@ export async function processContentRequest(requestId: string): Promise<void> {
         sourceArticleUrl: content.references[0]?.url,
         sourceName: content.references[0]?.source,
         originalScript: [],
-        // Record the active Fish voice when an old StudioPro configuration
-        // had to be resolved through the retirement fallback.
+        // Record the exact authorized Fish voice requested by StudioPro.
         voiceId: chosenVoice.id,
         speed: input.speed,
         durationSeconds: input.durationSeconds,
@@ -145,6 +164,19 @@ export async function processContentRequest(requestId: string): Promise<void> {
       .set({ originalScript: content.script, updatedAt: new Date() })
       .where(eq(generatedAudio.id, audio.id));
 
+    const synthesisBlocks = content.script.filter((block) => block.text.trim()).length;
+    console.info('[studio-pro-api] voice synthesis started', {
+      requestId,
+      correlationId,
+      kind: input.kind,
+      requestedVoiceId: voiceId,
+      resolvedVoiceId: chosenVoice.id,
+      resolvedVoiceName: chosenVoice.name,
+      synthesisVoiceId: chosenVoice.synthesisVoiceId,
+      provider: 'fish',
+      synthesisBlocks,
+    });
+
     const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeVoice(
       content.script,
       {
@@ -154,6 +186,18 @@ export async function processContentRequest(requestId: string): Promise<void> {
           input.kind === 'news_bulletin' && input.transitionEffects,
       }
     );
+
+    console.info('[studio-pro-api] voice synthesis completed', {
+      requestId,
+      correlationId,
+      kind: input.kind,
+      resolvedVoiceId: chosenVoice.id,
+      resolvedVoiceName: chosenVoice.name,
+      provider: 'fish',
+      synthesisBlocks,
+      durationEstimateSeconds,
+      audioBytes: voiceBytes.byteLength,
+    });
 
     // AURA no longer generates background music. Uploaded/local beds remain
     // a StudioPro playout concern; this API always returns Fish voice audio.
@@ -197,8 +241,7 @@ export async function processContentRequest(requestId: string): Promise<void> {
     }
   } catch (error) {
     const completedAt = new Date();
-    const code =
-      error instanceof ContentProcessingError ? error.code : 'generation_failed';
+    const code = contentProcessingErrorCode(error);
     const message =
       error instanceof Error ? error.message.slice(0, 500) : 'unknown_error';
 
@@ -223,7 +266,15 @@ export async function processContentRequest(requestId: string): Promise<void> {
         updatedAt: completedAt,
       })
       .where(eq(integrationContentRequest.id, requestId));
-    console.error('[studio-pro-api] content request failed', requestId, code, error);
+    const parsedInput = ContentRequestInputSchema.safeParse(context.request.input);
+    const correlationId = parsedInput.success && parsedInput.data.kind === 'voice_link'
+      ? parsedInput.data.correlationId ?? context.request.idempotencyKey
+      : context.request.idempotencyKey;
+    console.error(
+      '[studio-pro-api] content request failed',
+      { requestId, correlationId, code },
+      error,
+    );
   }
 }
 

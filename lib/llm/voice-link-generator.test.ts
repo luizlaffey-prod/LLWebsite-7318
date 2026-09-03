@@ -234,6 +234,39 @@ describe('voice-link editorial generation', () => {
     )).toThrow('voice_link_repeated_announcer_identity');
   });
 
+  it('does not duplicate identity when a fallback signature already names the announcer', async () => {
+    const input = VoiceLinkDraftInputSchema.parse({
+      mode: 'between_songs',
+      eventPosition: 'after-commercial',
+      currentTrack: { title: 'Old Song', artist: 'Old Artist' },
+      nextTracks: [{ title: 'Next Song', artist: 'Next Artist' }],
+      language: 'en',
+      recentScripts: [],
+    });
+    const profile: AnnouncerEditorialProfile = {
+      stationId: '11111111-1111-4111-8111-111111111111',
+      voiceId: '22222222-2222-4222-8222-222222222222',
+      announcerName: 'Rachel Anderson',
+      personality: 'Warm and vivid',
+      deliveryStyle: 'Natural conversation',
+      exampleScripts: '',
+      signatures: "I'm Rachel Anderson. | You're with Rachel Anderson.",
+      editorialPreferences: 'Music culture',
+      avoidances: 'No repeated self-introductions',
+      pronunciationGuide: '',
+      humorLevel: 'balanced',
+      energyLevel: 'balanced',
+      reactionsEnabled: true,
+    };
+    complete.mockRejectedValueOnce(new Error('provider unavailable'));
+
+    const script = await generateVoiceLinkDraft(input, null, profile);
+
+    expect(script.match(/Rachel Anderson/gu)).toHaveLength(1);
+    expect(script).toContain('Next Song');
+    expect(script).not.toContain('Old Song');
+  });
+
   it('detects exact, opening, and distinctive phrase repetition', () => {
     const recent = ['Welcome back to the best music in town tonight.'];
     expect(voiceLinkRepetitionScore(recent[0], recent)).toBe(1);
