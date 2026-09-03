@@ -28,12 +28,10 @@ export function VoiceCloneModal({
   open,
   onClose,
   onCloned,
-  activeProvider = 'fishaudio',
 }: {
   open: boolean;
   onClose: () => void;
   onCloned: () => void;
-  activeProvider?: string;
 }) {
   const t = useTranslations('voicesPage.clone');
   const [name, setName] = useState('');

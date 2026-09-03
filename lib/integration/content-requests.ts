@@ -26,47 +26,14 @@ import { searchNews } from '@/lib/news/aggregator';
 import { fetchWeatherCities } from '@/lib/news/weather';
 import { generateScript } from '@/lib/llm/script-generator';
 import type { ScriptBlock } from '@/lib/llm/types';
-import type { Emotion } from '@/lib/audio/emotions';
 import { todayForPrompt } from '@/lib/llm/today';
-import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
-import { generateBulletinMusic } from '@/lib/tts/elevenlabs-music';
-import { mixVoiceAndBackgroundServerSide } from '@/lib/audio/server-mix';
+import { synthesizeVoice } from '@/lib/tts/voice-synthesis';
 import { audioKey, uploadAudio } from '@/lib/storage/r2';
 
 class ContentProcessingError extends Error {
   constructor(public readonly code: string, message = code) {
     super(message);
     this.name = 'ContentProcessingError';
-  }
-}
-
-async function applyBackgroundBed(
-  voiceBytes: Uint8Array,
-  script: ScriptBlock[],
-  input: NewsBulletinInput,
-  durationSeconds: number
-): Promise<Uint8Array> {
-  if (input.backgroundMode !== 'ai') return voiceBytes;
-
-  try {
-    const music = await generateBulletinMusic({
-      durationSeconds,
-      emotions: script.map((block) => block.emotion),
-      language: input.language,
-    });
-    return await mixVoiceAndBackgroundServerSide({
-      voiceBytes,
-      bgBytes: music.bytes,
-      bgFilename: 'bed.mp3',
-      duck: input.duckBackground,
-      bgGain: input.backgroundVolume / 100,
-    });
-  } catch (error) {
-    console.warn(
-      '[studio-pro-api] background bed failed, shipping voice-only bulletin',
-      error instanceof Error ? error.message : error
-    );
-    return voiceBytes;
   }
 }
 
@@ -162,7 +129,9 @@ export async function processContentRequest(requestId: string): Promise<void> {
         sourceArticleUrl: content.references[0]?.url,
         sourceName: content.references[0]?.source,
         originalScript: [],
-        voiceId,
+        // Record the active Fish voice when an old StudioPro configuration
+        // had to be resolved through the retirement fallback.
+        voiceId: chosenVoice.id,
         speed: input.speed,
         durationSeconds: input.durationSeconds,
         language: input.language,
@@ -176,25 +145,19 @@ export async function processContentRequest(requestId: string): Promise<void> {
       .set({ originalScript: content.script, updatedAt: new Date() })
       .where(eq(generatedAudio.id, audio.id));
 
-    const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeBulletin(
+    const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeVoice(
       content.script,
       {
-        elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
+        voiceId: chosenVoice.synthesisVoiceId,
         speed: input.speed,
         transitionEffects:
           input.kind === 'news_bulletin' && input.transitionEffects,
       }
     );
 
-    const bytes =
-      input.kind === 'news_bulletin'
-        ? await applyBackgroundBed(
-            voiceBytes,
-            content.script,
-            input,
-            durationEstimateSeconds
-          )
-        : voiceBytes;
+    // AURA no longer generates background music. Uploaded/local beds remain
+    // a StudioPro playout concern; this API always returns Fish voice audio.
+    const bytes = voiceBytes;
 
     const sha256 = createHash('sha256').update(bytes).digest('hex');
     const uploaded = await uploadAudio(audioKey(billingUserId, audio.id), bytes);
@@ -320,7 +283,7 @@ async function resolveNewsBulletinContent(
 function resolveVoiceLinkContent(input: VoiceLinkContentInput): ResolvedContent {
   const title = `${input.currentTrack.title} / ${input.nextTracks[0].title}`;
   const script: ScriptBlock[] = [
-    { text: input.scriptText, emotion: 'NEUTRAL' as Emotion, duracaoSegundos: input.durationSeconds },
+    { text: input.scriptText, emotion: 'NEUTRAL', duracaoSegundos: input.durationSeconds },
   ];
   return {
     title,

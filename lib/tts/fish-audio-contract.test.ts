@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   findReusableFishModel,
   fishReferenceId,
+  isFishVoiceId,
   parseFishModelId,
 } from './fish-audio-contract';
 
@@ -21,6 +22,12 @@ describe('Fish Audio contract', () => {
     expect(fishReferenceId('fish:default')).toBeUndefined();
     expect(fishReferenceId('default')).toBeUndefined();
     expect(fishReferenceId('fish:abc123')).toBe('abc123');
+  });
+
+  it('recognizes only Fish voice identifiers', () => {
+    expect(isFishVoiceId('fish:abc123')).toBe(true);
+    expect(isFishVoiceId('fish:default')).toBe(true);
+    expect(isFishVoiceId('legacy-provider-id')).toBe(false);
   });
 
   it('recovers only a recent owned-model candidate with the exact title', () => {

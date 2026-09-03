@@ -250,7 +250,9 @@ export const voice = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     slug: text('slug').notNull().unique(),
-    elevenLabsVoiceId: text('eleven_labs_voice_id').notNull(),
+    // Keep the historical SQL column name for additive compatibility. The
+    // application-level field is provider-neutral and only accepts Fish IDs.
+    synthesisVoiceId: text('eleven_labs_voice_id').notNull(),
     name: text('name').notNull(),
     description: text('description'),
     languages: jsonb('languages').$type<string[]>().notNull(),
@@ -267,7 +269,7 @@ export const voice = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
-    elevenIdx: index('voice_eleven_idx').on(t.elevenLabsVoiceId),
+    synthesisIdx: index('voice_eleven_idx').on(t.synthesisVoiceId),
   })
 );
 

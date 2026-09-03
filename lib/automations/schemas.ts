@@ -37,7 +37,7 @@ export const AutomationInput = z.object({
   // Minutes before the slot's air time when generation should
   // start. Range matches the cron's MIN/MAX_LEAD_TIME_MIN guards.
   // Default 60 — fresh enough to feel current, with comfortable
-  // headroom for ElevenLabs synth + R2 upload + local-folder sync
+  // headroom for voice synthesis + R2 upload + local-folder sync
   // before the slot lands on air.
   leadTimeMinutes: z.number().int().min(5).max(120).default(60),
   bias: z.enum(['left', 'center', 'right']).default('center'),

@@ -26,7 +26,6 @@ const VARS: VarSpec[] = [
     group: 'LLM (one of two)',
     note: 'optional override: "openai" or "gemini"',
   },
-  { name: 'ELEVENLABS_API_KEY', required: false, group: 'TTS' },
   { name: 'FISHAUDIO_API_KEY', required: false, group: 'TTS' },
   { name: 'FISH_API_KEY', required: false, group: 'TTS' },
 

@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       or(
         eq(voiceTable.id, targetId),
         eq(voiceTable.slug, targetId),
-        eq(voiceTable.elevenLabsVoiceId, targetId)
+        eq(voiceTable.synthesisVoiceId, targetId)
       )
     )
     .limit(1);

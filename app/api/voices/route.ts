@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { eq, and, or, isNull, not, like, notInArray, inArray, sql } from 'drizzle-orm';
+import { eq, and, or, isNull, like, notInArray, inArray, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
 import {
@@ -26,14 +26,13 @@ export const runtime = 'nodejs';
  * UI always matches the code. Two passes:
  *
  *   1. UPSERT every catalog row by slug — picks up new voices, refreshed
- *      names/descriptions, and corrected elevenLabsVoiceIds.
+ *      names/descriptions, and corrected internal synthesis identifiers.
  *   2. Disable any global voice rows (ownerUserId IS NULL) whose slug is
  *      no longer in the catalog. Soft-delete (enabled=false) keeps history
  *      and lets us re-enable later by re-adding to the catalog.
  *
- * We deliberately do NOT sync the configured ElevenLabs account's personal
- * library here — "Minhas Vozes" surfaces the public preset catalog, not the
- * deployment owner's private voice collection.
+ * Provider-managed personal libraries are never imported implicitly. Only
+ * AURA's catalog and voices cloned by the signed-in user are surfaced.
  */
 async function reconcileCatalog(): Promise<void> {
   for (const seed of VOICE_CATALOG) {
@@ -41,7 +40,7 @@ async function reconcileCatalog(): Promise<void> {
       .insert(voiceTable)
       .values({
         slug: seed.slug,
-        elevenLabsVoiceId: seed.elevenLabsVoiceId,
+        synthesisVoiceId: seed.synthesisVoiceId,
         name: seed.name,
         description: seed.description,
         languages: seed.languages,
@@ -54,7 +53,7 @@ async function reconcileCatalog(): Promise<void> {
       .onConflictDoUpdate({
         target: voiceTable.slug,
         set: {
-          elevenLabsVoiceId: seed.elevenLabsVoiceId,
+          synthesisVoiceId: seed.synthesisVoiceId,
           languages: seed.languages,
           gender: seed.gender,
           tierRequired: seed.tierRequired,
@@ -119,12 +118,11 @@ export async function GET(req: Request) {
 
   const quota = await getQuota(session.user.id);
 
-  // Exclude `el-*` rows left over from the brief library-sync experiment —
-  // those are the deployment account's private ElevenLabs voices, not part
-  // of the curated preset catalog this page is meant to surface.
+  // Only the active voice namespace is selectable. Legacy rows stay in the
+  // database for generated-audio history and old foreign-key references.
   const baseWhere = and(
     eq(voiceTable.enabled, true),
-    not(like(voiceTable.slug, 'el-%')),
+    like(voiceTable.synthesisVoiceId, 'fish:%'),
     or(eq(voiceTable.ownerUserId, session.user.id), isNull(voiceTable.ownerUserId))
   );
 
@@ -140,38 +138,38 @@ export async function GET(req: Request) {
       accent: voiceTable.accent,
       tierRequired: voiceTable.tierRequired,
       previewUrl: voiceTable.previewUrl,
-      elevenLabsVoiceId: voiceTable.elevenLabsVoiceId,
+      synthesisVoiceId: voiceTable.synthesisVoiceId,
       ownerUserId: voiceTable.ownerUserId,
       isCloned: voiceTable.isCloned,
     })
     .from(voiceTable)
     .where(baseWhere);
 
-  // Dedupe by elevenLabsVoiceId. Priority order:
+  // Dedupe by internal synthesis identifier. Priority order:
   //   1. The user's own row (owned by session.user.id) — never let a
   //      global catalog row hide a voice the user explicitly cloned.
   //   2. A row with a populated previewUrl — UI plays nicer when the
   //      preview is cached.
   //   3. Otherwise first-seen wins.
-  const byElevenId = new Map<string, (typeof allVoices)[number]>();
+  const bySynthesisId = new Map<string, (typeof allVoices)[number]>();
   for (const v of allVoices) {
-    const existing = byElevenId.get(v.elevenLabsVoiceId);
+    const existing = bySynthesisId.get(v.synthesisVoiceId);
     if (!existing) {
-      byElevenId.set(v.elevenLabsVoiceId, v);
+      bySynthesisId.set(v.synthesisVoiceId, v);
       continue;
     }
     const vOwned = v.ownerUserId === session.user.id;
     const existingOwned = existing.ownerUserId === session.user.id;
     if (vOwned && !existingOwned) {
-      byElevenId.set(v.elevenLabsVoiceId, v);
+      bySynthesisId.set(v.synthesisVoiceId, v);
       continue;
     }
     if (!vOwned && existingOwned) continue;
     if (!existing.previewUrl && v.previewUrl) {
-      byElevenId.set(v.elevenLabsVoiceId, v);
+      bySynthesisId.set(v.synthesisVoiceId, v);
     }
   }
-  const deduped = Array.from(byElevenId.values());
+  const deduped = Array.from(bySynthesisId.values());
 
   const prefs = await db
     .select({
@@ -202,36 +200,40 @@ export async function GET(req: Request) {
     : deduped;
 
   const enriched = filteredByLang
-    .map((v) => ({
-      ...v,
-      locked: !canUseVoice(quota.tier, v),
-      preferred: prefs.some((p) => p.voiceId === v.id),
-      isDefault: defaultPref?.voiceId === v.id,
-      isMine: v.ownerUserId === session.user.id,
-      announcerProfile: (() => {
-        if (!activeStation) return null;
-        const stored = profilesByVoice.get(v.id);
-        if (!stored) {
-          return legacyAnnouncerProfile(v.description, activeStation.id, v.id);
-        }
-        const humor = HumorLevelSchema.safeParse(stored.humorLevel);
-        const energy = EnergyLevelSchema.safeParse(stored.energyLevel);
-        return {
-          stationId: activeStation.id,
-          voiceId: v.id,
-          personality: stored.personality,
-          deliveryStyle: stored.deliveryStyle,
-          exampleScripts: stored.exampleScripts,
-          signatures: stored.signatures,
-          editorialPreferences: stored.editorialPreferences,
-          avoidances: stored.avoidances,
-          pronunciationGuide: stored.pronunciationGuide,
-          humorLevel: humor.success ? humor.data : 'balanced',
-          energyLevel: energy.success ? energy.data : 'balanced',
-          reactionsEnabled: stored.reactionsEnabled,
-        };
-      })(),
-    }))
+    .map((voice) => {
+      const { synthesisVoiceId, ...v } = voice;
+      void synthesisVoiceId;
+      return {
+        ...v,
+        locked: !canUseVoice(quota.tier, v),
+        preferred: prefs.some((p) => p.voiceId === v.id),
+        isDefault: defaultPref?.voiceId === v.id,
+        isMine: v.ownerUserId === session.user.id,
+        announcerProfile: (() => {
+          if (!activeStation) return null;
+          const stored = profilesByVoice.get(v.id);
+          if (!stored) {
+            return legacyAnnouncerProfile(v.description, activeStation.id, v.id);
+          }
+          const humor = HumorLevelSchema.safeParse(stored.humorLevel);
+          const energy = EnergyLevelSchema.safeParse(stored.energyLevel);
+          return {
+            stationId: activeStation.id,
+            voiceId: v.id,
+            personality: stored.personality,
+            deliveryStyle: stored.deliveryStyle,
+            exampleScripts: stored.exampleScripts,
+            signatures: stored.signatures,
+            editorialPreferences: stored.editorialPreferences,
+            avoidances: stored.avoidances,
+            pronunciationGuide: stored.pronunciationGuide,
+            humorLevel: humor.success ? humor.data : 'balanced',
+            energyLevel: energy.success ? energy.data : 'balanced',
+            reactionsEnabled: stored.reactionsEnabled,
+          };
+        })(),
+      };
+    })
     .filter((v) => includeLocked || !v.locked)
     // Pin the user's own (cloned) voices to the top so they don't get
     // lost in an alphabetic mix with the catalog. Tie-break by name.
@@ -240,13 +242,9 @@ export async function GET(req: Request) {
       return a.name.localeCompare(b.name);
     });
 
-  const fishKey = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
-  const activeProvider = process.env.AURA_ACTIVE_TTS_PROVIDER ?? (fishKey ? 'fishaudio' : 'elevenlabs');
-
   return NextResponse.json({
     voices: enriched,
     tier: quota.tier,
-    activeProvider,
     activeStationId: activeStation?.id ?? null,
     stations,
     defaultVoiceId: defaultPref?.voiceId ?? null,

@@ -24,7 +24,7 @@ const Input = z.object({
  *
  * Returns both the upload URL (signed, ~5 min TTL) and the public
  * URL the file will be reachable at after upload. The mix endpoint
- * then takes that public URL the same way it handles AI-music URLs.
+ * then takes that public URL and performs the server-side mix.
  */
 export async function POST(req: Request) {
   const session = await getSession();

@@ -21,7 +21,7 @@ export const maxDuration = 60;
  * Implementation: fetch the cached MP3 from R2, run ffmpeg to
  * transcode in-place. We're not regenerating from the original blocks
  * because the MP3 was already encoded at 192k from the raw TTS
- * output — re-rendering would burn ElevenLabs credits to produce
+   * output — re-rendering would consume synthesis credits to produce
  * an audio bit-stream that the listener can't distinguish from the
  * MP3-sourced one. Same audible content, container differs.
  */

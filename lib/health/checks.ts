@@ -11,7 +11,7 @@ import { db } from '@/lib/db/client';
 export type HealthService =
   | 'database'
   | 'auth'
-  | 'elevenlabs'
+  | 'voice'
   | 'openai'
   | 'gemini'
   | 'newsapi'
@@ -79,31 +79,29 @@ export async function checkAuth(): Promise<HealthResult> {
   return { service: 'auth', configured: true, ok: true, detail: 'Secret length OK' };
 }
 
-export async function checkElevenLabs(): Promise<HealthResult> {
-  const key = process.env.ELEVENLABS_API_KEY;
-  if (!key) return notConfigured('elevenlabs', 'ELEVENLABS_API_KEY not set');
+export async function checkVoiceSynthesis(): Promise<HealthResult> {
+  const key = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
+  if (!key) return notConfigured('voice', 'FISHAUDIO_API_KEY not set');
   try {
+    const url = new URL('https://api.fish.audio/model');
+    url.searchParams.set('self', 'true');
+    url.searchParams.set('page_size', '1');
+    url.searchParams.set('page_number', '1');
     const res = await fetchWithRetry(
-      'https://api.elevenlabs.io/v1/user/subscription',
-      { headers: { 'xi-api-key': key, Accept: 'application/json' } },
+      url,
+      { headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' } },
       { timeoutMs: 10_000, retryOn: [503] }
     );
-    const data = (await res.json()) as {
-      tier?: string;
-      character_count?: number;
-      character_limit?: number;
-    };
-    const used = data.character_count ?? 0;
-    const limit = data.character_limit ?? 0;
+    await res.json();
     return {
-      service: 'elevenlabs',
+      service: 'voice',
       configured: true,
       ok: true,
-      detail: `Tier: ${data.tier ?? '—'} · characters ${used.toLocaleString()} / ${limit.toLocaleString()}`,
+      detail: 'Voice synthesis reachable',
     };
   } catch (err) {
     return {
-      service: 'elevenlabs',
+      service: 'voice',
       configured: true,
       ok: false,
       error: errorMessage(err),
@@ -446,7 +444,7 @@ export async function checkCron(): Promise<HealthResult> {
 const PROBES: Record<HealthService, () => Promise<HealthResult>> = {
   database: checkDatabase,
   auth: checkAuth,
-  elevenlabs: checkElevenLabs,
+  voice: checkVoiceSynthesis,
   openai: checkOpenAI,
   gemini: checkGemini,
   newsapi: checkNewsApi,
@@ -466,7 +464,7 @@ export const SERVICES: HealthService[] = [
   'auth',
   'admin',
   'cron',
-  'elevenlabs',
+  'voice',
   'openai',
   'gemini',
   'newsapi',

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   isAllowedVoiceSample,
   isVoiceAvailableToUser,
-  parseElevenLabsCloneError,
   VOICE_CLONE_MAX_FILE_BYTES,
 } from './voice-clone-policy';
 
@@ -42,26 +41,10 @@ describe('voice clone policy', () => {
   });
 
   it('allows global voices and the current user own voice only', () => {
-    expect(isVoiceAvailableToUser({ ownerUserId: null, enabled: true }, 'user-a')).toBe(true);
-    expect(isVoiceAvailableToUser({ ownerUserId: 'user-a', enabled: true }, 'user-a')).toBe(true);
-    expect(isVoiceAvailableToUser({ ownerUserId: 'user-b', enabled: true }, 'user-a')).toBe(false);
-    expect(isVoiceAvailableToUser({ ownerUserId: null, enabled: false }, 'user-a')).toBe(false);
-  });
-
-  it('turns ElevenLabs error bodies into actionable errors', () => {
-    expect(
-      parseElevenLabsCloneError(
-        400,
-        JSON.stringify({
-          detail: {
-            status: 'voice_limit_reached',
-            message: 'Maximum number of voices reached',
-          },
-        })
-      ).error
-    ).toBe('voice_limit_reached');
-
-    expect(parseElevenLabsCloneError(401, '').error).toBe('invalid_api_key');
-    expect(parseElevenLabsCloneError(422, '').error).toBe('invalid_sample');
+    expect(isVoiceAvailableToUser({ ownerUserId: null, enabled: true, synthesisVoiceId: 'fish:default' }, 'user-a')).toBe(true);
+    expect(isVoiceAvailableToUser({ ownerUserId: 'user-a', enabled: true, synthesisVoiceId: 'fish:mine' }, 'user-a')).toBe(true);
+    expect(isVoiceAvailableToUser({ ownerUserId: 'user-b', enabled: true, synthesisVoiceId: 'fish:theirs' }, 'user-a')).toBe(false);
+    expect(isVoiceAvailableToUser({ ownerUserId: null, enabled: false, synthesisVoiceId: 'fish:default' }, 'user-a')).toBe(false);
+    expect(isVoiceAvailableToUser({ ownerUserId: null, enabled: true, synthesisVoiceId: 'retired-id' }, 'user-a')).toBe(false);
   });
 });

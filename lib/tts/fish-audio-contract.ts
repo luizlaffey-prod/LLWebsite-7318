@@ -7,6 +7,10 @@ export interface FishModelSummary {
   created_at?: unknown;
 }
 
+export function isFishVoiceId(value: string): boolean {
+  return value.startsWith('fish:');
+}
+
 export function parseFishModelId(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null;
 
@@ -19,6 +23,7 @@ export function parseFishModelId(payload: unknown): string | null {
 }
 
 export function fishReferenceId(value: string): string | undefined {
+  if (!isFishVoiceId(value)) return undefined;
   const referenceId = value.replace(/^fish:/, '').trim();
   return referenceId && referenceId !== 'default' ? referenceId : undefined;
 }

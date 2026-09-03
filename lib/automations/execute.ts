@@ -4,15 +4,14 @@ import {
   automationExecution,
   automationSchedule,
   generatedAudio,
-  voice as voiceTable,
   type ScheduleSlot,
 } from '@/lib/db/schema';
 import { searchNews } from '@/lib/news/aggregator';
 import { fetchWeatherCities } from '@/lib/news/weather';
 import { generateScript } from '@/lib/llm/script-generator';
 import { todayForPrompt } from '@/lib/llm/today';
-import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
-import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
+import { synthesizeVoice } from '@/lib/tts/voice-synthesis';
+import { resolveFishVoiceForUser } from '@/lib/tts/voice-resolution';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { incrementUsage } from '@/lib/billing/quota';
 import { dispatchAudioToEndpoints } from '@/lib/delivery/dispatch';
@@ -27,7 +26,7 @@ export interface RunResult {
 /**
  * Runs a single automation slot: search news for the slot's categories,
  * optionally pull weather, ask the configured LLM for an emotional script, synthesize
- * audio via ElevenLabs, upload to R2, and record the execution.
+ * audio through AURA's Fish-only synthesis boundary, upload to R2, and record the execution.
  *
  * Caller provides the scheduledFor timestamp (UTC instant when the run
  * was due) and the slot definition so the same routine works for both
@@ -198,12 +197,11 @@ export async function runAutomationSlot(input: {
 
     // 4) Voice.
     if (!automation.voiceId) throw new Error('no_voice_configured');
-    const [chosenVoice] = await db
-      .select()
-      .from(voiceTable)
-      .where(eq(voiceTable.id, automation.voiceId))
-      .limit(1);
-    if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, automation.userId)) {
+    const chosenVoice = await resolveFishVoiceForUser(
+      automation.voiceId,
+      automation.userId,
+    );
+    if (!chosenVoice) {
       throw new Error('voice_not_found');
     }
 
@@ -228,7 +226,8 @@ export async function runAutomationSlot(input: {
         sourceName: headline?.source ?? null,
         sourceArticleUrl: headline?.url ?? null,
         originalScript: [],
-        voiceId: automation.voiceId,
+        // Record the active Fish voice, not a retired schedule reference.
+        voiceId: chosenVoice.id,
         speed: automation.speed,
         bgTrackUrl: automation.bgTrackUrl,
         durationSeconds: automation.durationSeconds,
@@ -255,9 +254,9 @@ export async function runAutomationSlot(input: {
       .set({ originalScript: blocks, updatedAt: new Date() })
       .where(eq(generatedAudio.id, audio.id));
 
-    // 7) ElevenLabs synth.
-    const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeBulletin(blocks, {
-      elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
+    // 7) Voice synthesis through AURA's single active engine.
+    const { audio: voiceBytes, durationEstimateSeconds } = await synthesizeVoice(blocks, {
+      voiceId: chosenVoice.synthesisVoiceId,
       speed: automation.speed,
       transitionEffects: automation.transitionEffects,
     });

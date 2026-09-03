@@ -1,7 +1,7 @@
-import { and, eq, isNull, like, not, or } from 'drizzle-orm';
+import { and, eq, isNull, like, or } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { station, voice as voiceTable, voicePreference } from '@/lib/db/schema';
+import { voice as voiceTable, voicePreference } from '@/lib/db/schema';
 import {
   authenticateDevice,
   integrationErrorResponse,
@@ -33,10 +33,13 @@ export async function GET(
     const baseWhere = userId
       ? and(
           eq(voiceTable.enabled, true),
-          not(like(voiceTable.slug, 'el-%')),
+          like(voiceTable.synthesisVoiceId, 'fish:%'),
           or(eq(voiceTable.ownerUserId, userId), isNull(voiceTable.ownerUserId))
         )
-      : and(eq(voiceTable.enabled, true), not(like(voiceTable.slug, 'el-%')));
+      : and(
+          eq(voiceTable.enabled, true),
+          like(voiceTable.synthesisVoiceId, 'fish:%'),
+        );
 
     const allVoices = await db
       .select({
@@ -50,33 +53,33 @@ export async function GET(
         accent: voiceTable.accent,
         tierRequired: voiceTable.tierRequired,
         previewUrl: voiceTable.previewUrl,
-        elevenLabsVoiceId: voiceTable.elevenLabsVoiceId,
+        synthesisVoiceId: voiceTable.synthesisVoiceId,
         ownerUserId: voiceTable.ownerUserId,
         isCloned: voiceTable.isCloned,
       })
       .from(voiceTable)
       .where(baseWhere);
 
-    // Dedupe by elevenLabsVoiceId
-    const byElevenId = new Map<string, (typeof allVoices)[number]>();
+    // Dedupe by the internal synthesis identifier.
+    const bySynthesisId = new Map<string, (typeof allVoices)[number]>();
     for (const v of allVoices) {
-      const existing = byElevenId.get(v.elevenLabsVoiceId);
+      const existing = bySynthesisId.get(v.synthesisVoiceId);
       if (!existing) {
-        byElevenId.set(v.elevenLabsVoiceId, v);
+        bySynthesisId.set(v.synthesisVoiceId, v);
         continue;
       }
       const vOwned = userId ? v.ownerUserId === userId : false;
       const existingOwned = userId ? existing.ownerUserId === userId : false;
       if (vOwned && !existingOwned) {
-        byElevenId.set(v.elevenLabsVoiceId, v);
+        bySynthesisId.set(v.synthesisVoiceId, v);
         continue;
       }
       if (!vOwned && existingOwned) continue;
       if (!existing.previewUrl && v.previewUrl) {
-        byElevenId.set(v.elevenLabsVoiceId, v);
+        bySynthesisId.set(v.synthesisVoiceId, v);
       }
     }
-    const deduped = Array.from(byElevenId.values());
+    const deduped = Array.from(bySynthesisId.values());
 
     let defaultVoiceId: string | null = null;
     let defaultSpeed = 1.0;

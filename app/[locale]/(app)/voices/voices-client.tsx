@@ -36,14 +36,12 @@ interface VoiceItem {
   isDefault: boolean;
   isCloned: boolean;
   isMine: boolean;
-  elevenLabsVoiceId?: string;
   announcerProfile: AnnouncerProfileForm | null;
 }
 
 interface ApiResponse {
   voices: VoiceItem[];
   tier: 'starter' | 'standard' | 'pro';
-  activeProvider?: string;
   defaultVoiceId: string | null;
   defaultSpeed: number;
   activeStationId: string | null;
@@ -56,7 +54,6 @@ export function VoicesClient() {
   const [loading, setLoading] = useState(true);
   const [voices, setVoices] = useState<VoiceItem[]>([]);
   const [tier, setTier] = useState<'starter' | 'standard' | 'pro'>('starter');
-  const [activeProvider, setActiveProvider] = useState<string>('elevenlabs');
   const [defaultVoiceId, setDefaultVoiceId] = useState<string | null>(null);
   const [stations, setStations] = useState<Array<{ id: string; name: string }>>([]);
   const [activeStationId, setActiveStationId] = useState<string>('');
@@ -102,7 +99,6 @@ export function VoicesClient() {
       const data = (await res.json()) as ApiResponse;
       setVoices(data.voices);
       setTier(data.tier);
-      if (data.activeProvider) setActiveProvider(data.activeProvider);
       setDefaultVoiceId(data.defaultVoiceId);
       setSpeed(data.defaultSpeed);
       setStations(data.stations);
@@ -466,7 +462,6 @@ export function VoicesClient() {
 
       <VoiceCloneModal
         open={cloneOpen}
-        activeProvider={activeProvider}
         onClose={() => setCloneOpen(false)}
         onCloned={() => {
           setCloneOpen(false);

@@ -17,7 +17,7 @@ async function main() {
       .insert(voice)
       .values({
         slug: seed.slug,
-        elevenLabsVoiceId: seed.elevenLabsVoiceId,
+        synthesisVoiceId: seed.synthesisVoiceId,
         name: seed.name,
         description: seed.description,
         languages: seed.languages,
@@ -30,7 +30,7 @@ async function main() {
       .onConflictDoUpdate({
         target: voice.slug,
         set: {
-          elevenLabsVoiceId: sql`excluded.eleven_labs_voice_id`,
+          synthesisVoiceId: sql`excluded.eleven_labs_voice_id`,
           name: sql`excluded.name`,
           description: sql`excluded.description`,
           languages: sql`excluded.languages`,

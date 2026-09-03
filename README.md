@@ -4,12 +4,12 @@ B2B SaaS for radio stations to generate AI-voiced news bulletins on demand.
 
 ## One-click deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fluizlaffey-prod%2FLLWebsite-7318&root-directory=aura&project-name=aura&repository-name=aura&env=DATABASE_URL,BETTER_AUTH_SECRET,BETTER_AUTH_URL,NEXT_PUBLIC_APP_URL,ELEVENLABS_API_KEY,ANTHROPIC_API_KEY,GEMINI_API_KEY&envDescription=Minimum%20vars%20to%20boot%20AURA.%20DATABASE_URL%20from%20Neon%20(free%20tier).%20BETTER_AUTH_SECRET%20%3D%20openssl%20rand%20-base64%2032.%20Leave%20BETTER_AUTH_URL%20and%20NEXT_PUBLIC_APP_URL%20blank%20on%20first%20deploy.%20Use%20EITHER%20ANTHROPIC_API_KEY%20OR%20GEMINI_API_KEY%20(the%20one%20you%20left%20blank%20can%20stay%20blank).&envLink=https%3A%2F%2Fgithub.com%2Fluizlaffey-prod%2FLLWebsite-7318%2Fblob%2Fclaude%2Fnews-aggregator-app-TIwT9%2Faura%2FREADME.md%23deploying-to-vercel-production-access-in-20-minutes)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fluizlaffey-prod%2FLLWebsite-7318&root-directory=aura&project-name=aura&repository-name=aura&env=DATABASE_URL,BETTER_AUTH_SECRET,BETTER_AUTH_URL,NEXT_PUBLIC_APP_URL,FISHAUDIO_API_KEY,OPENAI_API_KEY,GEMINI_API_KEY&envDescription=Minimum%20vars%20to%20boot%20AURA.%20DATABASE_URL%20from%20Neon%20(free%20tier).%20BETTER_AUTH_SECRET%20%3D%20openssl%20rand%20-base64%2032.%20Leave%20BETTER_AUTH_URL%20and%20NEXT_PUBLIC_APP_URL%20blank%20on%20first%20deploy.%20Configure%20Fish%20Audio%20for%20voice%20synthesis%20and%20OpenAI%20or%20Gemini%20for%20editorial%20text.)
 
 The button above clones the repo, scaffolds the project on Vercel with
 `aura/` as the root directory, and pops up a form pre-filled with every
 env var you need to enter. Total time: ~10 minutes once you have the
-Neon/ElevenLabs/Anthropic keys ready (see [the full walkthrough](#deploying-to-vercel-production-access-in-20-minutes)).
+Neon, Fish Audio, and LLM keys ready (see [the full walkthrough](#deploying-to-vercel-production-access-in-20-minutes)).
 
 ## Stack
 
@@ -18,8 +18,8 @@ Neon/ElevenLabs/Anthropic keys ready (see [the full walkthrough](#deploying-to-v
 - **Postgres** (Neon) + **Drizzle ORM**
 - **Better Auth** (email/password)
 - **Stripe** (primary) + **PayPal** (optional) for billing
-- **Claude Sonnet 4.6** (Anthropic SDK) for script generation
-- **ElevenLabs** Multilingual v2 for TTS
+- **OpenAI** or **Gemini** for script generation
+- **Fish Audio** for voice synthesis and cloning
 - **NewsAPI** + **GNews** + curated RSS for news aggregation
 - **OpenWeatherMap** for weather
 - **Resend** for transactional email
@@ -55,7 +55,7 @@ aura/
 │   ├── auth/                    # Better Auth server + client
 │   ├── db/                      # Drizzle schema + client
 │   ├── news/                    # Aggregator (NewsAPI + GNews + RSS + bias)
-│   ├── tts/                     # ElevenLabs client
+│   ├── tts/                     # Fish Audio synthesis client
 │   ├── llm/                     # Claude script generator
 │   ├── billing/                 # Stripe + PayPal + quota engine
 │   ├── audio/                   # Mix, duck, encode
@@ -91,32 +91,30 @@ See `.env.example`. The most critical for the foundation phase:
 - `BETTER_AUTH_SECRET` — `openssl rand -base64 32`
 - `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` — base URL of the app
 
-The remaining keys (Anthropic, ElevenLabs, Stripe, NewsAPI, GNews, OpenWeather, Resend, R2, Inngest) are needed as their respective phases land.
+The remaining keys (Fish Audio, OpenAI or Gemini, Stripe, NewsAPI, GNews, OpenWeather, Resend, R2, Inngest) are needed as their respective phases land.
 
-## Wiring ElevenLabs (testing the voice engine)
+## Wiring Fish Audio (testing the voice engine)
 
-ElevenLabs is the only service that produces audio. Get it working before
+Fish Audio is the only service that produces voice audio. Get it working before
 testing the full bulletin flow.
 
-1. Create an account at https://elevenlabs.io and grab your API key from
-   **Profile → API Key**.
-2. Add `ELEVENLABS_API_KEY=sk_...` to `.env.local`.
+1. Create a Fish Audio account and obtain an API key.
+2. Add `FISHAUDIO_API_KEY=...` to `.env.local` (`FISH_API_KEY` is also accepted).
 3. Seed the voice catalog so AURA knows which presets to expose:
    ```bash
    bun run db:seed
    ```
 4. Restart the dev server (`bun dev`).
-5. Open `/en/settings/health` while logged in. The ElevenLabs row should
-   show `OK` with your tier + character usage. Click **Play test sample**
+5. Open `/en/settings/health` while logged in. The voice synthesis row should
+   show `OK`. Click **Play test sample**
    — if you hear audio, the full pipeline is live.
 
 Troubleshooting:
-- `unauthorized (check the API key)` → wrong key, paste again from the
-  ElevenLabs dashboard.
+- `unauthorized (check the API key)` → verify the Fish Audio key.
 - `forbidden` → your plan doesn't allow the voice you picked (e.g. some
   presets are gated on the free tier). Try a different voice in `/voices`.
 - `rate limited` → too many calls in a short window; wait a minute.
-- `upstream 5xx` → ElevenLabs is degraded; retry in a few minutes.
+- `upstream 5xx` → the synthesis service is degraded; retry in a few minutes.
 
 The same diagnostics page tests every other integration (Anthropic, Gemini,
 NewsAPI, GNews, OpenWeather, Resend, R2, Stripe, Postgres, Better Auth).
@@ -171,7 +169,7 @@ bun env:check      # checklist of required + optional env vars
 ## Deploying to Vercel (production access in ~20 minutes)
 
 The fastest path from "code in GitHub" to "URL my browser can hit". You'll
-need accounts on: Vercel (free), Neon (free tier), ElevenLabs (free tier).
+need accounts on: Vercel, Neon, Fish Audio, and the configured LLM provider.
 
 ### 1. Provision Postgres on Neon (5 min)
 
@@ -189,11 +187,11 @@ openssl rand -base64 32
 
 Save the output as `BETTER_AUTH_SECRET`.
 
-### 3. Get the ElevenLabs API key (2 min)
+### 3. Get the Fish Audio API key (2 min)
 
-1. Sign up at https://elevenlabs.io.
-2. Profile → API Keys → Copy.
-3. Save as `ELEVENLABS_API_KEY`.
+1. Sign in to Fish Audio.
+2. Open API Keys and copy a key.
+3. Save it as `FISHAUDIO_API_KEY`.
 
 ### 4. Deploy on Vercel (5 min)
 
@@ -210,8 +208,8 @@ Save the output as `BETTER_AUTH_SECRET`.
    | `BETTER_AUTH_SECRET` | Output of `openssl rand -base64 32` |
    | `BETTER_AUTH_URL` | Leave blank for now, fill in after first deploy |
    | `NEXT_PUBLIC_APP_URL` | Same as `BETTER_AUTH_URL` |
-   | `ELEVENLABS_API_KEY` | From step 3 |
-   | `ANTHROPIC_API_KEY` *or* `GEMINI_API_KEY` | Script generator — Claude (https://console.anthropic.com) **or** Gemini (https://aistudio.google.com/apikey). Pick one. |
+   | `FISHAUDIO_API_KEY` | From step 3 |
+   | `OPENAI_API_KEY` *or* `GEMINI_API_KEY` | Editorial script generator. Pick one. |
 
 6. Click **Deploy**. First build takes ~3 minutes.
 
@@ -235,13 +233,13 @@ Save the output as `BETTER_AUTH_SECRET`.
 2. Click **Start free** → fill out signup → no real card required at
    this point if Stripe vars are unset (the plan page will still load).
 3. After signup, you'll land on `/dashboard`.
-4. Navigate to `/settings/health` → ElevenLabs row should be green with
-   your tier + character usage. Click **Play test sample** to confirm
+4. Navigate to `/settings/health` → the voice synthesis row should be green.
+   Click **Play test sample** to confirm
    audio plays.
 5. Go to `/news`, pick a category, hit **Search news**. If you set
    `NEWSAPI_KEY` or `GNEWS_KEY` you get real articles; otherwise add
    them later — every other piece of the flow works either way once
-   ElevenLabs + Anthropic are wired.
+   Fish Audio and the editorial LLM are wired.
 
 ### Optional integrations (add anytime)
 
@@ -265,8 +263,8 @@ Hit these in order. Each one stresses a different part of the stack.
 
 - [ ] Landing page (`/`) loads, locale switcher works (`/en`, `/pt`, `/es`).
 - [ ] Signup at `/en/signup` creates a user in Neon.
-- [ ] `/en/settings/health` shows ElevenLabs **OK** with your tier.
-- [ ] `/en/voices` shows 10 voices (if you ran `db:seed`); Preview plays.
+- [ ] `/en/settings/health` shows voice synthesis **OK**.
+- [ ] `/en/voices` shows the Fish Audio catalog; Preview plays.
 - [ ] `/en/news` returns articles for `Politics, bias=Center`.
 - [ ] Generate Bulletin produces a script + plays audio in the drawer.
 - [ ] `/en/audios` lists the bulletin you just generated.

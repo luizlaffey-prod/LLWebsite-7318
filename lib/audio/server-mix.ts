@@ -38,10 +38,10 @@ export async function concatMp3Bytes(
     const outPath = join(dir, 'out.mp3');
 
     // Common encode args:
-    //   -ac 2            stereo output. ElevenLabs returns mono per
+    //   -ac 2            stereo output. The voice engine returns mono per
     //                    voice call; libmp3lame upmixes by duplicating.
     //   -af volume+alimiter
-    //                    +4dB simple gain (raises ElevenLabs' ~-23
+    //                    +4dB simple gain (raises the voice input's ~-23
     //                    dBFS peak to ~-19, still no clipping) plus a
     //                    safety limiter at 0.92 in case any block
     //                    runs hotter. Earlier we used loudnorm here

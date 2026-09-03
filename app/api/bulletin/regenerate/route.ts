@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { generatedAudio, voice as voiceTable } from '@/lib/db/schema';
-import { synthesizeBulletin } from '@/lib/tts/elevenlabs';
+import { generatedAudio } from '@/lib/db/schema';
+import { synthesizeVoice } from '@/lib/tts/voice-synthesis';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { EMOTIONS, type Emotion } from '@/lib/audio/emotions';
-import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
+import { resolveFishVoiceForUser } from '@/lib/tts/voice-resolution';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -46,18 +46,15 @@ export async function POST(req: Request) {
   if (!row.voiceId) {
     return NextResponse.json({ error: 'no_voice' }, { status: 400 });
   }
-  const [chosenVoice] = await db
-    .select()
-    .from(voiceTable)
-    .where(eq(voiceTable.id, row.voiceId))
-    .limit(1);
-  if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, session.user.id)) {
+  const chosenVoice = await resolveFishVoiceForUser(row.voiceId, session.user.id);
+  if (!chosenVoice) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
 
   await db
     .update(generatedAudio)
     .set({
+      voiceId: chosenVoice.id,
       editedScript: parsed.data.blocks,
       status: 'generating',
       updatedAt: new Date(),
@@ -65,10 +62,10 @@ export async function POST(req: Request) {
     .where(eq(generatedAudio.id, row.id));
 
   try {
-    const { audio, durationEstimateSeconds } = await synthesizeBulletin(
+    const { audio, durationEstimateSeconds } = await synthesizeVoice(
       parsed.data.blocks,
       {
-        elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
+        voiceId: chosenVoice.synthesisVoiceId,
         speed: row.speed,
         fast: true, // regenerations use Flash model to keep cost down
         transitionEffects: parsed.data.transitionEffects,

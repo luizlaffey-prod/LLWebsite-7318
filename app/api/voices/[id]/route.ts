@@ -94,7 +94,7 @@ export async function DELETE(
       id: voiceTable.id,
       ownerUserId: voiceTable.ownerUserId,
       isCloned: voiceTable.isCloned,
-      elevenLabsVoiceId: voiceTable.elevenLabsVoiceId,
+      synthesisVoiceId: voiceTable.synthesisVoiceId,
     })
     .from(voiceTable)
     .where(eq(voiceTable.id, id))
@@ -107,10 +107,12 @@ export async function DELETE(
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
-  // Attempt upstream model cleanup if applicable (best effort)
-  if (target.elevenLabsVoiceId?.startsWith('fish:')) {
+  // Attempt active-engine model cleanup when applicable (best effort).
+  // Retired-provider rows are removed locally only; AURA never calls the
+  // retired provider again.
+  if (target.synthesisVoiceId?.startsWith('fish:')) {
     const fishKey = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
-    const modelId = target.elevenLabsVoiceId.replace(/^fish:/, '');
+    const modelId = target.synthesisVoiceId.replace(/^fish:/, '');
     if (fishKey && modelId && modelId !== 'default') {
       try {
         await fetch(`https://api.fish.audio/model/${modelId}`, {
@@ -118,19 +120,7 @@ export async function DELETE(
           headers: { Authorization: `Bearer ${fishKey}` },
         });
       } catch (err) {
-        console.warn('[voice-delete] Fish Audio upstream model delete warning:', err);
-      }
-    }
-  } else if (target.elevenLabsVoiceId) {
-    const elevenKey = process.env.ELEVENLABS_API_KEY;
-    if (elevenKey) {
-      try {
-        await fetch(`https://api.elevenlabs.io/v1/voices/${target.elevenLabsVoiceId}`, {
-          method: 'DELETE',
-          headers: { 'xi-api-key': elevenKey },
-        });
-      } catch (err) {
-        console.warn('[voice-delete] ElevenLabs upstream model delete warning:', err);
+        console.warn('[voice-delete] upstream model delete warning:', err);
       }
     }
   }

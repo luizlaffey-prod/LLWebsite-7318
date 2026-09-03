@@ -30,67 +30,16 @@ export function isAllowedVoiceSample(
 }
 
 export function isVoiceAvailableToUser(
-  voice: { ownerUserId: string | null; enabled: boolean },
+  voice: {
+    ownerUserId: string | null;
+    enabled: boolean;
+    synthesisVoiceId: string;
+  },
   userId: string
 ): boolean {
-  return voice.enabled && (!voice.ownerUserId || voice.ownerUserId === userId);
-}
-
-export type VoiceCloneErrorCode =
-  | 'invalid_api_key'
-  | 'quota_exceeded'
-  | 'voice_limit_reached'
-  | 'missing_permissions'
-  | 'invalid_sample'
-  | 'clone_failed';
-
-export function parseElevenLabsCloneError(
-  status: number,
-  responseText: string | undefined
-): { error: VoiceCloneErrorCode; message: string } {
-  let upstreamStatus = '';
-  let upstreamMessage = '';
-  try {
-    const parsed = JSON.parse(responseText ?? '') as {
-      detail?: { status?: string; message?: string } | string;
-    };
-    if (typeof parsed.detail === 'string') {
-      upstreamMessage = parsed.detail;
-    } else {
-      upstreamStatus = parsed.detail?.status ?? '';
-      upstreamMessage = parsed.detail?.message ?? '';
-    }
-  } catch {
-    // Some upstream/proxy failures are not JSON. Use the HTTP status below.
-  }
-
-  const normalized = upstreamStatus.toLowerCase();
-  if (status === 401 || normalized.includes('invalid_api_key')) {
-    return { error: 'invalid_api_key', message: 'The ElevenLabs API key is invalid.' };
-  }
-  if (status === 429 || normalized.includes('quota')) {
-    return { error: 'quota_exceeded', message: 'The ElevenLabs quota is exhausted.' };
-  }
-  if (normalized.includes('voice_limit') || normalized.includes('voice_slots')) {
-    return {
-      error: 'voice_limit_reached',
-      message: 'The ElevenLabs voice limit was reached. Delete an unused cloned voice and try again.',
-    };
-  }
-  if (status === 403 || normalized.includes('permission')) {
-    return {
-      error: 'missing_permissions',
-      message: 'This ElevenLabs API key cannot create cloned voices.',
-    };
-  }
-  if (status === 400 || status === 413 || status === 422) {
-    return {
-      error: 'invalid_sample',
-      message: upstreamMessage.slice(0, 240) || 'ElevenLabs rejected the audio sample.',
-    };
-  }
-  return {
-    error: 'clone_failed',
-    message: upstreamMessage.slice(0, 240) || 'ElevenLabs could not clone this voice.',
-  };
+  return (
+    voice.enabled &&
+    voice.synthesisVoiceId.startsWith('fish:') &&
+    (!voice.ownerUserId || voice.ownerUserId === userId)
+  );
 }

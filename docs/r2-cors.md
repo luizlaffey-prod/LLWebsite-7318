@@ -45,7 +45,7 @@ background, and confirm:
   200. If you see 403/CORS errors, the policy didn't take effect.
 - Repeat from the voice cloning modal and confirm the `PUT` under
   `voice-clones/...` returns 200. The server downloads that private object,
-  sends it to ElevenLabs, and deletes it after the attempt completes.
+  sends it to the configured Fish Audio clone endpoint, and deletes it after the attempt completes.
 
 ## Temporary voice-sample lifecycle
 

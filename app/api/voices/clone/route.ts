@@ -10,7 +10,6 @@ import { deleteObject, downloadObject } from '@/lib/storage/r2';
 import { fetchWithRetry, FetchError } from '@/lib/utils/retry';
 import {
   isAllowedVoiceSample,
-  parseElevenLabsCloneError,
   VOICE_CLONE_MAX_FILE_BYTES,
   VOICE_CLONE_MAX_FILES,
 } from '@/lib/tts/voice-clone-policy';
@@ -60,18 +59,9 @@ export async function POST(req: Request) {
   }
 
   const fishKey = process.env.FISHAUDIO_API_KEY || process.env.FISH_API_KEY;
-  const elevenKey = process.env.ELEVENLABS_API_KEY;
-  const activeProvider = process.env.AURA_ACTIVE_TTS_PROVIDER ?? (fishKey ? 'fishaudio' : 'elevenlabs');
-
-  if (activeProvider === 'fishaudio' && !fishKey) {
+  if (!fishKey) {
     return NextResponse.json(
-      { error: 'fishaudio_not_configured', message: 'Fish Audio is not configured.' },
-      { status: 503 }
-    );
-  }
-  if (activeProvider === 'elevenlabs' && !elevenKey) {
-    return NextResponse.json(
-      { error: 'tts_not_configured', message: 'ElevenLabs is not configured.' },
+      { error: 'voice_engine_not_configured', message: 'Voice synthesis is not configured.' },
       { status: 503 }
     );
   }
@@ -99,24 +89,11 @@ export async function POST(req: Request) {
 
   try {
     const out = new FormData();
-    if (activeProvider === 'fishaudio') {
-      out.set('type', 'tts');
-      out.set('title', providerTitle);
-      if (parsed.data.description) out.set('description', parsed.data.description);
-      out.set('visibility', 'private');
-      out.set('train_mode', 'fast');
-    } else {
-      out.set('name', `${session.user.id.slice(0, 6)}-${parsed.data.name}`);
-      if (parsed.data.description) out.set('description', parsed.data.description);
-      out.set(
-        'labels',
-        JSON.stringify({
-          language: parsed.data.language,
-          gender: parsed.data.gender,
-          ...(parsed.data.accent ? { accent: parsed.data.accent } : {}),
-        })
-      );
-    }
+    out.set('type', 'tts');
+    out.set('title', providerTitle);
+    if (parsed.data.description) out.set('description', parsed.data.description);
+    out.set('visibility', 'private');
+    out.set('train_mode', 'fast');
 
     try {
       for (const sample of samples) {
@@ -130,7 +107,7 @@ export async function POST(req: Request) {
         const audioBuffer = new ArrayBuffer(bytes.byteLength);
         new Uint8Array(audioBuffer).set(bytes);
         out.append(
-          activeProvider === 'fishaudio' ? 'voices' : 'files',
+          'voices',
           new Blob([audioBuffer], { type: sample.contentType }),
           sample.filename
         );
@@ -143,86 +120,44 @@ export async function POST(req: Request) {
       );
     }
 
-    if (activeProvider === 'fishaudio') {
-      try {
-        const reusable = await findRecentFishModel(fishKey!, providerTitle);
-        if (reusable) {
-          voiceId = `fish:${reusable.id}`;
-          recoveredExistingModel = true;
-          console.info('[voice-clone] recovered recent Fish Audio model', {
-            title: providerTitle,
-            modelIdSuffix: reusable.id.slice(-6),
-          });
-        } else {
-          const res = await fetchWithRetry(
-            'https://api.fish.audio/model',
-            {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${fishKey}` },
-              body: out,
-            },
-            { timeoutMs: 90_000 }
-          );
-          const data: unknown = await res.json();
-          const fishModelId = parseFishModelId(data);
-          if (!fishModelId) {
-            console.error('[voice-clone] Fish Audio missing model ID', {
-              payloadType: Array.isArray(data) ? 'array' : typeof data,
-              payloadKeys:
-                data && typeof data === 'object' ? Object.keys(data).slice(0, 20) : [],
-            });
-            throw new Error('fishaudio_missing_voice_id');
-          }
-          voiceId = `fish:${fishModelId}`;
-        }
-      } catch (err) {
-        console.error('[voice-clone] Fish Audio response failed', err);
-        const errMsg = err instanceof FetchError ? err.responseText || err.message : (err instanceof Error ? err.message : 'Fish Audio returned an invalid response.');
-        return NextResponse.json(
-          { error: 'clone_failed', message: `Fish Audio error: ${errMsg}` },
-          { status: 502 }
-        );
-      }
-    } else {
-      try {
+    try {
+      const reusable = await findRecentFishModel(fishKey, providerTitle);
+      if (reusable) {
+        voiceId = `fish:${reusable.id}`;
+        recoveredExistingModel = true;
+        console.info('[voice-clone] recovered recent voice model', {
+          title: providerTitle,
+          modelIdSuffix: reusable.id.slice(-6),
+        });
+      } else {
         const res = await fetchWithRetry(
-          'https://api.elevenlabs.io/v1/voices/add',
+          'https://api.fish.audio/model',
           {
             method: 'POST',
-            headers: { 'xi-api-key': elevenKey! },
+            headers: { Authorization: `Bearer ${fishKey}` },
             body: out,
           },
           { timeoutMs: 90_000 }
         );
-        const data = (await res.json()) as {
-          voice_id?: string;
-          requires_verification?: boolean;
-        };
-        if (!data.voice_id) throw new Error('elevenlabs_missing_voice_id');
-        voiceId = data.voice_id;
-
-        if (data.requires_verification) {
-          await deleteElevenLabsVoice(elevenKey!, voiceId);
-          voiceId = undefined;
-          return NextResponse.json(
-            {
-              error: 'voice_verification_required',
-              message: 'ElevenLabs requires verification for this voice. Complete verification in ElevenLabs and try again.',
-            },
-            { status: 422 }
-          );
+        const data: unknown = await res.json();
+        const fishModelId = parseFishModelId(data);
+        if (!fishModelId) {
+          console.error('[voice-clone] missing model ID', {
+            payloadType: Array.isArray(data) ? 'array' : typeof data,
+            payloadKeys:
+              data && typeof data === 'object' ? Object.keys(data).slice(0, 20) : [],
+          });
+          throw new Error('voice_engine_missing_voice_id');
         }
-      } catch (err) {
-        if (err instanceof FetchError) {
-          const details = parseElevenLabsCloneError(err.status, err.responseText);
-          return NextResponse.json(details, { status: err.status || 502 });
-        }
-        console.error('[voice-clone] ElevenLabs response failed', err);
-        return NextResponse.json(
-          { error: 'clone_failed', message: 'ElevenLabs returned an invalid response.' },
-          { status: 502 }
-        );
+        voiceId = `fish:${fishModelId}`;
       }
+    } catch (err) {
+      console.error('[voice-clone] voice engine response failed', err);
+      const errMsg = err instanceof FetchError ? err.responseText || err.message : (err instanceof Error ? err.message : 'Voice engine returned an invalid response.');
+      return NextResponse.json(
+        { error: 'clone_failed', message: `Voice engine error: ${errMsg}` },
+        { status: 502 }
+      );
     }
 
     if (voiceId) {
@@ -232,16 +167,24 @@ export async function POST(req: Request) {
         .where(
           and(
             eq(voiceTable.ownerUserId, session.user.id),
-            eq(voiceTable.elevenLabsVoiceId, voiceId)
+            eq(voiceTable.synthesisVoiceId, voiceId)
           )
         )
         .limit(1);
       if (existing) {
         return NextResponse.json({
-          voice: { id: existing.id, elevenLabsVoiceId: voiceId },
+          voice: { id: existing.id },
           recoveredExistingModel: true,
         });
       }
+    }
+
+    if (!voiceId) {
+      console.error('[voice-clone] voice engine completed without a model ID');
+      return NextResponse.json(
+        { error: 'clone_failed', message: 'Voice engine returned an invalid response.' },
+        { status: 502 }
+      );
     }
 
     const baseSlug = parsed.data.name
@@ -256,7 +199,7 @@ export async function POST(req: Request) {
         .insert(voiceTable)
         .values({
           slug,
-          elevenLabsVoiceId: voiceId,
+          synthesisVoiceId: voiceId,
           name: parsed.data.name,
           description: parsed.data.description ?? null,
           languages: [parsed.data.language],
@@ -269,12 +212,9 @@ export async function POST(req: Request) {
         })
         .returning({ id: voiceTable.id });
 
-      return NextResponse.json({ voice: { id: created.id, elevenLabsVoiceId: voiceId }, recoveredExistingModel });
+      return NextResponse.json({ voice: { id: created.id }, recoveredExistingModel });
     } catch (err) {
       console.error('[voice-clone] database insert failed', err);
-      if (activeProvider === 'elevenlabs' && voiceId) {
-        await deleteElevenLabsVoice(elevenKey!, voiceId);
-      }
       return NextResponse.json(
         { error: 'persistence_failed', message: 'The cloned voice could not be saved. Please try again.' },
         { status: 500 }
@@ -315,24 +255,10 @@ async function findRecentFishModel(
   } catch (err) {
     // Recovery is best-effort. A listing failure must not prevent a
     // legitimate new clone from being created.
-    console.warn('[voice-clone] Fish Audio orphan lookup failed', {
+    console.warn('[voice-clone] orphan lookup failed', {
       status: err instanceof FetchError ? err.status : undefined,
       message: err instanceof Error ? err.message : String(err),
     });
     return null;
-  }
-}
-
-async function deleteElevenLabsVoice(apiKey: string, voiceId: string): Promise<void> {
-  try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/voices/${voiceId}`, {
-      method: 'DELETE',
-      headers: { 'xi-api-key': apiKey },
-    });
-    if (!res.ok) {
-      console.error('[voice-clone] orphan cleanup failed', voiceId, res.status);
-    }
-  } catch (err) {
-    console.error('[voice-clone] orphan cleanup failed', voiceId, err);
   }
 }

@@ -11,7 +11,7 @@ export interface MixOptions {
   voiceUrl: string;
   /** Local file (upload path). */
   bgFile?: File;
-  /** Remote URL (AI-generated music path). */
+  /** Remote URL for a previously uploaded background track. */
   bgUrl?: string;
   /** Background gain 0..1 — keep low so the voice stays on top. */
   bgGain?: number;

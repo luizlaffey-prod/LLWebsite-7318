@@ -9,7 +9,7 @@ export const maxDuration = 120;
 
 /**
  * Server-side mix endpoint. Accepts either:
- *   - JSON: { voiceUrl, bgUrl }  — for AI-bg regenerate paths
+ *   - JSON: { voiceUrl, bgUrl }  — for already-uploaded background beds
  *   - FormData: voiceUrl + bgFile (and/or bgUrl)
  *      — when the user uploaded their own bg in the browser. We take
  *        the bytes directly and avoid the upload-to-R2 round trip.

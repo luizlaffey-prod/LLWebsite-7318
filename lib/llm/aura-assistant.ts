@@ -63,7 +63,7 @@ function buildSystemPrompt({ locale, tier, radioName }: AssistantInput): string 
 
   const tierDescription =
     tier === 'pro'
-      ? 'Pro ($129.99/mo): up to 20 bulletins/day, 3-min runtime, full voice catalog + custom voice cloning, full automation with per-weekday scheduling, unlimited destinations (FTP, webhook, local folder, RSS, email), MP3 + WAV (lossless) export, white-label branding, AI background music, dual-anchor voice coming soon.'
+      ? 'Pro ($129.99/mo): up to 20 bulletins/day, 3-min runtime, full voice catalog + custom voice cloning, full automation with per-weekday scheduling, unlimited destinations (FTP, webhook, local folder, RSS, email), MP3 + WAV (lossless) export, white-label branding, uploaded background beds, dual-anchor voice coming soon.'
       : tier === 'standard'
         ? 'Standard ($59.99/mo): up to 10 bulletins/day, 2-min runtime, 5 preset voices, multi-category bulletins, simple automation (fires every day, no per-weekday selection), 1 delivery destination max, MP3 export, email + chat support.'
         : 'Starter ($19.99/mo): up to 5 bulletins/day, 1-min runtime, 2 preset voices, 1 category per bulletin, NO automation, NO delivery destinations, MP3 export only, email support.';

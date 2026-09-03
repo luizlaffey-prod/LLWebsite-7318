@@ -94,6 +94,8 @@ export const NewsBulletinInputSchema = z.object({
   weatherFormat: z.enum(['separate', 'integrated']).default('separate'),
   weatherLocation: z.string().trim().min(1).max(500).optional(),
   transitionEffects: z.boolean().default(false),
+  // `ai` remains accepted for backward compatibility with installed
+  // StudioPro clients, but AURA no longer generates background music.
   backgroundMode: z.enum(['none', 'ai']).default('none'),
   backgroundVolume: z.number().int().min(0).max(100).default(20),
   duckBackground: z.boolean().default(true),

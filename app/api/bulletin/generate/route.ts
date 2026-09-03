@@ -3,16 +3,16 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth/server';
 import { db } from '@/lib/db/client';
-import { generatedAudio, voice as voiceTable, user } from '@/lib/db/schema';
+import { generatedAudio, user } from '@/lib/db/schema';
 import { generateScript } from '@/lib/llm/script-generator';
 import { todayForPrompt } from '@/lib/llm/today';
-import { synthesizeBulletin, ElevenLabsError } from '@/lib/tts/elevenlabs';
+import { synthesizeVoice, VoiceSynthesisError } from '@/lib/tts/voice-synthesis';
 import { fetchWeatherCities } from '@/lib/news/weather';
 import { uploadAudio, audioKey } from '@/lib/storage/r2';
 import { getQuota, incrementUsage } from '@/lib/billing/quota';
 import { canRequestDuration, canUseVoice } from '@/lib/billing/feature-gates';
 import { recordOverage } from '@/lib/billing/overage';
-import { isVoiceAvailableToUser } from '@/lib/tts/voice-clone-policy';
+import { resolveFishVoiceForUser } from '@/lib/tts/voice-resolution';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -91,12 +91,8 @@ export async function POST(req: Request) {
   }
 
   // Verify the voice exists and is accessible
-  const [chosenVoice] = await db
-    .select()
-    .from(voiceTable)
-    .where(eq(voiceTable.id, parsed.data.voiceId))
-    .limit(1);
-  if (!chosenVoice || !isVoiceAvailableToUser(chosenVoice, session.user.id)) {
+  const chosenVoice = await resolveFishVoiceForUser(parsed.data.voiceId, session.user.id);
+  if (!chosenVoice) {
     return NextResponse.json({ error: 'voice_not_found' }, { status: 404 });
   }
 
@@ -153,7 +149,9 @@ export async function POST(req: Request) {
       sourceArticleUrl: parsed.data.article.url,
       sourceName: parsed.data.article.source,
       originalScript: [],
-      voiceId: parsed.data.voiceId,
+      // Persist the voice that will actually be synthesized. This matters
+      // when a stale legacy selection was transparently migrated to Fish.
+      voiceId: chosenVoice.id,
       speed: parsed.data.speed,
       bgTrackUrl: parsed.data.bgTrackUrl,
       durationSeconds: parsed.data.durationSeconds,
@@ -180,8 +178,8 @@ export async function POST(req: Request) {
       .where(eq(generatedAudio.id, audioId));
 
     // 3. Synthesize each block then concatenate.
-    const { audio, durationEstimateSeconds } = await synthesizeBulletin(script, {
-      elevenLabsVoiceId: chosenVoice.elevenLabsVoiceId,
+    const { audio, durationEstimateSeconds } = await synthesizeVoice(script, {
+      voiceId: chosenVoice.synthesisVoiceId,
       speed: parsed.data.speed,
       transitionEffects: parsed.data.transitionEffects,
     });
@@ -216,7 +214,7 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     const message =
-      err instanceof ElevenLabsError
+      err instanceof VoiceSynthesisError
         ? err.message
         : err instanceof Error
           ? err.message

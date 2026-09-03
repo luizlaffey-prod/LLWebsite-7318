@@ -4,6 +4,7 @@ import { db } from '@/lib/db/client';
 import { organizationMember, voice as voiceTable, type Voice } from '@/lib/db/schema';
 import { IntegrationHttpError } from '@/lib/integration/authorization';
 import { isVoiceAuthorized } from '@/lib/integration/voice-authorization-policy';
+import { resolveGlobalFishFallback } from '@/lib/tts/voice-resolution';
 
 export { isVoiceAuthorized } from '@/lib/integration/voice-authorization-policy';
 export type { VoiceAuthzFacts } from '@/lib/integration/voice-authorization-policy';
@@ -19,7 +20,7 @@ export async function resolveAuthorizedVoice(
       or(
         eq(voiceTable.id, voiceId),
         eq(voiceTable.slug, voiceId),
-        eq(voiceTable.elevenLabsVoiceId, voiceId)
+        eq(voiceTable.synthesisVoiceId, voiceId)
       )
     )
     .limit(1);
@@ -44,6 +45,10 @@ export async function resolveAuthorizedVoice(
   }
 
   if (!isVoiceAuthorized(voice, ownerIsOrgMember)) {
+    if (!voice.synthesisVoiceId.startsWith('fish:')) {
+      const fallback = await resolveGlobalFishFallback();
+      if (fallback) return fallback;
+    }
     throw new IntegrationHttpError(403, 'voice_not_authorized');
   }
   return voice;

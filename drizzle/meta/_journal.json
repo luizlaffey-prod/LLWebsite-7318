@@ -106,6 +106,13 @@
       "when": 1787967000000,
       "tag": "0019_station_announcer_profile_restore",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788372000000,
+      "tag": "0020_retire_legacy_voice_provider",
+      "breakpoints": true
     }
   ]
 }

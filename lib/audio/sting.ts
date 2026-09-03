@@ -16,7 +16,7 @@ const R2_KEY = 'system/transition-silence-v2.mp3';
 // not feel like dead air. Stereo 44.1kHz / 192kbps matches the encode
 // pipeline so the concat demuxer sees identical stream params on
 // both sides of the silence and doesn't produce the "scratched
-// record" artifact we were getting when stitching the ElevenLabs SFX
+// record" artifact we were getting when stitching the old SFX
 // sting in.
 const SILENCE_DURATION_S = 1.2;
 
@@ -27,7 +27,7 @@ let cachedBytes: Uint8Array | null = null;
 /**
  * Returns the MP3 bytes of the transition gap that gets stitched
  * between consecutive blocks whose story (categoria) changes. Was
- * an ElevenLabs SFX whoosh — that produced audible glitches at the
+ * a generated SFX whoosh — that produced audible glitches at the
  * concat boundary because the sting's stream params differed from
  * the voice MP3 enough to confuse the demuxer. Now it's just clean
  * silence at exactly the same sample-rate / channel-layout / bitrate
@@ -65,7 +65,7 @@ export async function getTransitionStingBytes(): Promise<Uint8Array | null> {
   const outPath = join(dir, 'silence.mp3');
   try {
     // Mono silence (not stereo) on purpose — voice blocks come back
-    // from ElevenLabs as mono, so matching the channel count is what
+    // from the synthesis engine as mono, so matching the channel count is what
     // lets the concat demuxer stitch them without artifacts. The
     // final encode in concatMp3Bytes upmixes the whole thing to
     // stereo via -ac 2.

@@ -35,8 +35,7 @@ const nextConfig = {
   // platform binary alongside each Node route that needs it. Without
   // this, a "successful" build can still 500 at runtime because Vercel
   // strips files it thinks are unused. Every route that imports
-  // lib/audio/server-mix directly OR transitively (via lib/tts/
-  // elevenlabs's concatMp3Bytes) must appear here. Moved out of
+  // lib/audio/server-mix directly or transitively must appear here. Moved out of
   // experimental for Next 15 (the experimental.* form is silently
   // ignored now and emitted a warning the user already saw).
   outputFileTracingIncludes: {

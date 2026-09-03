@@ -14,8 +14,6 @@ export interface PlanDefinition {
   whiteLabel: boolean;
   support: 'email' | 'email-chat' | 'priority';
   stripePriceEnvVar: string;
-  /** Premium AI-generated background tracks per calendar month. 0 = locked. */
-  musicTracksPerMonth: number;
 }
 
 export const PLANS: Record<PlanTier, PlanDefinition> = {
@@ -33,7 +31,6 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     whiteLabel: false,
     support: 'email',
     stripePriceEnvVar: 'STRIPE_PRICE_STARTER',
-    musicTracksPerMonth: 0,
   },
   standard: {
     tier: 'standard',
@@ -49,7 +46,6 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     whiteLabel: false,
     support: 'email-chat',
     stripePriceEnvVar: 'STRIPE_PRICE_STANDARD',
-    musicTracksPerMonth: 0,
   },
   pro: {
     tier: 'pro',
@@ -65,7 +61,6 @@ export const PLANS: Record<PlanTier, PlanDefinition> = {
     whiteLabel: true,
     support: 'priority',
     stripePriceEnvVar: 'STRIPE_PRICE_PRO',
-    musicTracksPerMonth: 30,
   },
 };
 
@@ -80,7 +75,7 @@ export const OVERAGE_PRICE_CENTS = 50;
  * Daily bulletin cap applied during the trial window only. The
  * effective tier is Pro (so users see every Pro feature: WAV,
  * cloning, dual-voice catalogs, etc.) but the volume limit is
- * tightened to guard against runaway ElevenLabs costs over the
+ * tightened to guard against runaway synthesis costs over the
  * 14-day trial. After conversion to a paid plan the cap returns
  * to whatever the chosen tier's bulletinsPerDay says.
  */
