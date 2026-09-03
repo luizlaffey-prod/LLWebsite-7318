@@ -149,8 +149,7 @@ export async function POST(req: Request) {
       sourceArticleUrl: parsed.data.article.url,
       sourceName: parsed.data.article.source,
       originalScript: [],
-      // Persist the voice that will actually be synthesized. This matters
-      // when a stale legacy selection was transparently migrated to Fish.
+      // Persist the exact authorized Fish voice that will be synthesized.
       voiceId: chosenVoice.id,
       speed: parsed.data.speed,
       bgTrackUrl: parsed.data.bgTrackUrl,
